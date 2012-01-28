@@ -1,2 +1,4 @@
 ^TSPLIB/
 ^\.idea/
+\.pyc$
+\.pyo$
