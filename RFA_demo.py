@@ -26,25 +26,24 @@ def main():
     #main_tsplib(seed=0)
     
 def main_random(seed=0):
-    #######################
-    #######################
-    ### KONFIGURATION: ####
+    # KONFIGURATION:
     
-    # Gibt an, wie groß die X- bzw. Y-Koordinaten maximal sein dürfen.
-    # Die Koordinaten werden dann im Intervall [0, max_size] liegen.
-    # Empfohlen: 500
+    """
+    Gibt an, wie groß die X- bzw. Y-Koordinaten maximal sein dürfen.
+    Die Koordinaten werden dann im Intervall [0, max_size] liegen.
+
+    Empfohlen: 500.
+    """
     max_size = 500
     
-    ### ENDE KONFIGURATION!
-    #######################
-    #######################
+    # ENDE DER KONFIGURATION.
     
     nodes = generate_random_nodes(100, max_size=max_size)
     
-    # zur Reproduzierbarkeit
+    # Zur Reproduzierbarkeit.
     random.seed(seed)
     
-    # RFA ausführen
+    # RFA ausführen.
     rfa = RFABasic(nodes)
     route = rfa.run()
     
@@ -59,34 +58,36 @@ def main_random(seed=0):
     paint_turtle(route, max_size=max_size)
     
 def main_tsplib(seed=0):
-    #######################
-    #######################
-    ### KONFIGURATION: ####
+    # KONFIGURATION:
     
-    # TSPLIB-Instanzen, die ausgeführt werden sollen.
-    # -- Achtung, es werden nur "EUC_2D"-Instanzen unterstützt!
-    #
-    # Empfohlen: "a280,berlin52,bier127,ch150,eil51,pr76,pr107,pr439,pr1002,rat99,rat783"
+    """
+    TSPLIB-Instanzen, die ausgeführt werden sollen.
+
+    Achtung: Es werden nur "EUC_2D"-Instanzen unterstützt!
+
+    Empfohlen: "a280,berlin52,bier127,ch150,eil51,pr76,pr107,pr439,pr1002,rat99,rat783"
+    """
     tsplib = "a280,berlin52,bier127,ch150,eil51,pr76,pr107,pr439,pr1002,rat99,rat783"
     #tsplib = "a280,berlin52,bier127,ch150,eil51,pr76,pr107,pr439,pr1002,rat99,rat783,brd14051,d18512"
     
-    # Ausgabeformat
-    # Empfohlen: "Instance:\t%(instance)s\nTotal costs:\t%(total_costs)s\nRuntime:\t%(runtime)ss\n"
+    """
+    Ausgabeformat für die Ergebnisse.
+
+    Empfohlen: "Instance:\t%(instance)s\nTotal costs:\t%(total_costs)s\nRuntime:\t%(runtime)ss\n"
+    """
     format = "Instance:\t%(instance)s\nTotal costs:\t%(total_costs)s\nRuntime:\t%(runtime)ss\n"
     # format = "<tr><td>%(instance)s</td><td>%(optimal_costs)s</td><td>%(total_costs)s</td><td>%(factor)s%%</td><td>%(runtime)ss</td></tr>"
     
     # Ordner mit den TSPLIB-Instanzen (in entpackter Form)
     tsplib_folder = '../TSPLIB'
     
-    ### ENDE KONFIGURATION!
-    #######################
-    #######################
+    # ENDE DER KONFIGURATION.
     
-    # zur Reproduzierbarkeit
+    # Zur Reproduzierbarkeit.
     random.seed(seed)
-    
+
+    # Anwenden des RFA auf die angegebenen TSPLIB-Instanzen.
     for tspi in tsplib.split(","):
-        
         nodes = load_nodes_from_tsplib_file(os.path.join(tsplib_folder,
                                                          "%s.tsp" % tspi))
         
@@ -109,7 +110,7 @@ def paint_turtle(route, max_size=500):
     turtle.setup(width=max_size+100, height=max_size+100)
     turtle.title("RFA demo (click to close)")
     
-    # for transforming coordinates to fit turtle's screen
+    # For transforming coordinates to fit turtle's screen.
     tc = lambda c: int(c-(max_size/2))
     
     turtle.hideturtle()
