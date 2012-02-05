@@ -79,7 +79,7 @@ def main_tsplib(seed=0):
     # format = "<tr><td>%(instance)s</td><td>%(optimal_costs)s</td><td>%(total_costs)s</td><td>%(factor)s%%</td><td>%(runtime)ss</td></tr>"
 
     # Ordner mit den TSPLIB-Instanzen (in entpackter Form)
-    tsplib_folder = '../TSPLIB'
+    tsplib_folder = './TSPLIB'
 
     # ENDE DER KONFIGURATION.
 
