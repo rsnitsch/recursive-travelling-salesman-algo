@@ -19,6 +19,7 @@ class Node(object):
     """Abstract TSP Node."""
     def __init__(self, *args, **kwargs):
         pass
+
     def get_travel_costs(self, other_node):
         """
         Returns the costs for traveling from this node to the given node.
@@ -26,6 +27,7 @@ class Node(object):
         Raises NotImplemented unless overwritten.
         """
         raise NotImplemented
+
     def get_nearest_neighbor(self, candidates):
         """
         Calculates the travel costs for each of the given candidate nodes
@@ -54,9 +56,11 @@ class CoordinateNode(Node):
     def __init__(self, x, y, *args, **kwargs):
         self.x = x
         self.y = y
+
     def get_travel_costs(self, other_node):
         return int(sqrt((other_node.x - self.x)**2 + (other_node.y - self.y)**2))
         #return sqrt((other_node.x - self.x)**2 + (other_node.y - self.y)**2)
+
     def __str__(self):
         return "CN(%s, %s)" % (self.x, self.y)
     
@@ -77,25 +81,26 @@ class TSPAlgorithm(object):
         self.nodes      = tuple(nodes)
         self.t_started  = 0
         self.t_end      = 0
+
     def run(self):
         """Returns a Route containing all the nodes which have been
         handed over to the constructor."""
         raise NotImplemented
-    
+
     def save_start_time(self):
         """Children should execute this method each time run() is called."""
         self.t_started = time.time()
-        
+
     def save_end_time(self):
         """Children should execute this method after each time run() has been
         executed."""
         self.t_end = time.time()
-        
+
     def get_runtime(self):
         """Calculates the time difference between the most recent calls of
         save_start_time() and save_end_time()."""
         return round(self.t_end - self.t_started, 3)
-        
+
 def generate_random_nodes(count, seed=0, max_size=500):
     """
     Generates count nodes with coordinates between 0 and max_size.
@@ -105,12 +110,12 @@ def generate_random_nodes(count, seed=0, max_size=500):
     Returns a list of nodes.
     """
     random.seed(seed)
-    
+
     nodes = []
     for i in range(count):
         nodes.append(CoordinateNode(random.randint(0,max_size),
                                     random.randint(0,max_size)))
-        
+
     return nodes
 
 def load_nodes_from_tsplib_file(filename):
@@ -120,24 +125,24 @@ def load_nodes_from_tsplib_file(filename):
     Only EUC_2D-format is supported.
     """
     nodes = []
-    
+
     with open(filename, "r") as fh:
         for line in fh:
             line = line.strip()
-            
+
             assert len(line) > 0
-            
+
             if line.startswith("EDGE_WEIGHT_TYPE"):
                 assert line.endswith("EUC_2D"), \
                        "only EUC_2D instances can be loaded"
                 continue
-            
+
             if line[0].isdigit():
                 index, x, y = [float(i) for i in filter(lambda x: len(x) > 0, line.strip().split(" "))]
                 nodes.append(CoordinateNode(x, y))
             elif line == "EOF":
                 break
-    
+
     return nodes
 
 optimal_solutions = {
