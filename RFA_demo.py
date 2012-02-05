@@ -4,7 +4,7 @@
 """
 Package:    RFA demonstration
 Author:     Robert Nitsch
-Source:     http://www.robertnitsch.de/?p=483
+Source:     http://www.robertnitsch.de/de:informatik:rfa-traveling-salesman
 
 This package demonstrates the recursive fold algorithm (RFA) for metric
 traveling-salesman-problems. See the URL above for details (german).
