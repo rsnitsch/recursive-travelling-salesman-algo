@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding=UTF-8
 
 """
@@ -50,9 +50,9 @@ def main_random(seed=0):
     total_costs   = route.get_total_costs()
     runtime       = rfa.get_runtime()
 
-    print "Total costs:\t%s" % total_costs
-    print "Runtime:\t%ss" % runtime
-    print
+    print("Total costs:\t%s" % total_costs)
+    print("Runtime:\t%ss" % runtime)
+    print()
 
     # Darstellen der Route
     paint_turtle(route, max_size=max_size)
@@ -100,11 +100,11 @@ def main_tsplib(seed=0):
         factor        = round(float(total_costs) / optimal_costs * 100, 2)
         runtime       = rfa.get_runtime()
 
-        print format % {'instance':         tspi,
+        print(format % {'instance':         tspi,
                         'total_costs':      total_costs,
                         'runtime':          runtime,
                         'optimal_costs':    optimal_costs,
-                        'factor':           factor}
+                        'factor':           factor})
 
 def paint_turtle(route, max_size=500):
     turtle.setup(width=max_size+100, height=max_size+100)
