@@ -16,14 +16,23 @@ import turtle
 from common import *
 from RFA import *
 
-def main():
-    # Zum 'seed':
-    # Bei gleichem Seed liefert der Zufallszahlengenerator immer die gleichen
-    # Zahlen. Dadurch werden alle Experimente trotz zufälliger Komponenten
-    # reproduzierbar.
+def main(argv):
+    if len(argv) == 1:
+        selected = "random"
+    elif len(argv) == 2:
+        selected = argv[1]
+    else:
+        print("Usage: %s [random|tsplib]")
+        return 1
 
-    main_random(seed=0)
-    #main_tsplib(seed=0)
+    if selected == "random":
+        main_random(seed=0)
+    elif selected == "tsplib":
+        main_tsplib(seed=0)
+    else:
+        print("Invalid selection: '%s'." % selected, file=sys.stderr)
+
+    return 0
 
 def main_random(seed=0):
     # KONFIGURATION:
@@ -129,4 +138,4 @@ def paint_turtle(route, max_size=500):
     turtle.exitonclick()
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main(sys.argv))
