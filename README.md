@@ -48,6 +48,7 @@ rat783                          8806                 10164  115.42%        0.535
 ```
 
 Remarks:
+
 - A random number generator seed is used even in benchmark mode, because the algorithm itself uses random numbers for calculating a route.
 - The `no-rendering` switch disables the on-screen rendering of the calculated route. If you remove this switch, you will be able to review the calculated route.
 
