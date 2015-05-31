@@ -64,7 +64,7 @@ def main_random(seed=0):
     print()
 
     # Darstellen der Route
-    paint_turtle(route, max_size=max_size)
+    paint_turtle(route)
 
 def main_tsplib(seed=0):
     # KONFIGURATION:
@@ -115,28 +115,46 @@ def main_tsplib(seed=0):
                         'optimal_costs':    optimal_costs,
                         'factor':           factor})
 
-def paint_turtle(route, max_size=500, scale=1.5):
-    w = max_size+100
-    h = max_size+100
+def paint_turtle(route, scale=1.5):
+    min_x = min([node.x for node in route])
+    max_x = max([node.x for node in route])
+    min_y = min([node.y for node in route])
+    max_y = max([node.y for node in route])
+    
+    data_width = max_x - min_x
+    data_height = max_y - min_y
+    data_aspect = data_width / float(data_height)
+    
+    MAX_DISPLAY_DIMENSION = 500
+    display_padding = MAX_DISPLAY_DIMENSION * 0.1
+    if data_width > data_height:
+        display_width = MAX_DISPLAY_DIMENSION
+        display_height = display_width / data_aspect
+    else:
+        display_height = MAX_DISPLAY_DIMENSION
+        display_width = display_height * data_aspect
+    w = display_width + 2 * display_padding
+    h = display_height + 2 * display_padding
     
     turtle.setup(width=w*scale, height=h*scale)
     turtle.title("RFA demo (click to close)")
 
-    # For transforming coordinates to fit turtle's screen.
-    tc = lambda c: int(c-(max_size/2)) * scale
+    # For transforming data coordinates to turtle's screen coordinates.
+    tc_x = lambda x: int((x - min_x) / data_width * display_width - display_width / 2.0) * scale
+    tc_y = lambda y: int((y - min_y) / data_height * display_height - display_height / 2.0) * scale
 
     turtle.hideturtle()
-    turtle.goto(tc(route[0].x), tc(route[0].y))
+    turtle.goto(tc_x(route[0].x), tc_y(route[0].y))
     turtle.clear()
 
-    turtle.speed(10)
+    turtle.speed("fastest")
     turtle.tracer(len(route)/20, 500)
 
     for i in range(1,len(route)):
-        turtle.goto(tc(route[i].x), tc(route[i].y))
+        turtle.goto(tc_x(route[i].x), tc_y(route[i].y))
         turtle.dot()
 
-    turtle.goto(tc(route[0].x), tc(route[0].y))
+    turtle.goto(tc_x(route[0].x), tc_y(route[0].y))
     turtle.dot()
     turtle.exitonclick()
 
