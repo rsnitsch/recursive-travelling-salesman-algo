@@ -120,8 +120,18 @@ def main_tsplib(seed=0, rendering_enabled=True):
 
     # ENDE DER KONFIGURATION.
 
+    try:
+        from tabulate import tabulate
+        tabulate_available = True
+    except ImportError:
+        print("Warning: tabulate module could not be imported. Benchmark results will not be pretty-printed.")
+        tabulate_available = False
+
     # Zur Reproduzierbarkeit.
     random.seed(seed)
+
+    # Zeilen für Ergebnis-Tabelle sammeln.
+    rows = list()
 
     # Anwenden des RFA auf die angegebenen TSPLIB-Instanzen.
     for tspi in tsplib.split(","):
@@ -138,11 +148,31 @@ def main_tsplib(seed=0, rendering_enabled=True):
         factor        = round(float(total_costs) / optimal_costs * 100, 2)
         runtime       = rfa.get_runtime()
 
+        rows.append([tspi,
+                     optimal_costs,
+                     total_costs,
+                     "%.2f%%" % factor,
+                     "%.3fs" % runtime])
+
         print(format % {'instance':         tspi,
                         'total_costs':      total_costs,
                         'runtime':          runtime,
                         'optimal_costs':    optimal_costs,
                         'factor':           factor})
+
+    # Ergebnis-Tabelle ausgeben.
+    headers=["Instance",
+             "Costs of optimal route",
+             "Costs of RFA route",
+             "Cost factor",
+             "Runtime"]
+    if tabulate_available:
+        print(tabulate(rows, headers=headers))
+    else:
+        # Fallback if tabulate module is not available.
+        import pprint
+        rows.insert(0, headers)
+        pprint.pprint(rows)
 
 def paint_turtle(route, scale=1.5, title="Route rendering (click to close)"):
     min_x = min([node.x for node in route])
