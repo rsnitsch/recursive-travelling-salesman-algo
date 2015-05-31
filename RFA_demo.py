@@ -115,12 +115,15 @@ def main_tsplib(seed=0):
                         'optimal_costs':    optimal_costs,
                         'factor':           factor})
 
-def paint_turtle(route, max_size=500):
-    turtle.setup(width=max_size+100, height=max_size+100)
+def paint_turtle(route, max_size=500, scale=1.5):
+    w = max_size+100
+    h = max_size+100
+    
+    turtle.setup(width=w*scale, height=h*scale)
     turtle.title("RFA demo (click to close)")
 
     # For transforming coordinates to fit turtle's screen.
-    tc = lambda c: int(c-(max_size/2))
+    tc = lambda c: int(c-(max_size/2)) * scale
 
     turtle.hideturtle()
     turtle.goto(tc(route[0].x), tc(route[0].y))
