@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Recursive-fold-algorithm (RFA) for metric traveling-salesman-problems.
+Recursive-fold-algorithm (RFA) for metric travelling-salesman-problems.
 """
 from common import CoordinateNode, TSPAlgorithm
 

@@ -17,7 +17,7 @@ class Node(object):
 
     def get_travel_costs(self, other_node):
         """
-        Returns the costs for traveling from this node to the given node.
+        Returns the costs for travelling from this node to the given node.
         
         Raises NotImplemented unless overwritten.
         """

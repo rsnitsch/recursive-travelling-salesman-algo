@@ -1,6 +1,6 @@
 # RFA_demo
 
-RFA_demo is a demonstration of the recursive-fold-algorithm (RFA) implemented in Python. The RFA is an algorithm for calculating routes for the metric traveling-salesman-problem (TSP).
+RFA_demo is a demonstration of the recursive-fold-algorithm (RFA) implemented in Python. The RFA is an algorithm for calculating routes for the metric travelling-salesman-problem (TSP).
 
 A detailed description of the RFA and some screenshots are available on my [homepage] (in German language).
 

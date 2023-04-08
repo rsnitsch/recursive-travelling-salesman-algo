@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Script for executing the recursive-fold-algorithm (RFA) for metric traveling-salesman-problems
+Script for executing the recursive-fold-algorithm (RFA) for metric travelling-salesman-problems
 and displaying visualizations/benchmarks.
 """
 import argparse
@@ -17,7 +17,7 @@ from RFA import RFABasic
 def create_option_parser():
     kwargs = {
         "description":
-        "Calculate and display routes for metric traveling-salesman-problems using the recursive-fold-algorithm."
+        "Calculate and display routes for metric travelling-salesman-problems using the recursive-fold-algorithm."
     }
 
     parser = argparse.ArgumentParser(**kwargs)
