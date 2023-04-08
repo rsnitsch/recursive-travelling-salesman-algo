@@ -11,11 +11,11 @@ The scripts require
 - Python 3.2 or above.
 - optionally: the [tabulate] module (for pretty results in benchmark mode)
 
-##Usage
+## Usage
 
 The main script is RFA_demo.py and it features multiple commandline arguments. There is only one obligatory argument, namely the mode, which may be `demo` or `benchmark`.
 
-###'demo' mode
+### 'demo' mode
 The following command runs a simple demonstration based on 100 randomly generated nodes with a random number generator seed of 17:
 
 ```
@@ -26,7 +26,7 @@ Runtime:        0.013s
 
 By default, the generated nodes and the resulting route will also be rendered on-screen (using Python's `turtle` module).
 
-###'benchmark' mode
+### 'benchmark' mode
 The following command runs a benchmark using a subset of the [TSPLIB] instances (a280, berlin52, bier127, ch150, eil51, pr76, pr107, pr439, pr1002, rat99, and rat783):
 
 ```
