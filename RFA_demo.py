@@ -17,11 +17,12 @@ import turtle
 from common import *
 from RFA import *
 
+
 def create_option_parser():
-    kwargs =  {
-              "description":
-              "Calculate and display routes for metric traveling-salesman-problems using the recursive-fold-algorithm."
-              }
+    kwargs = {
+        "description":
+        "Calculate and display routes for metric traveling-salesman-problems using the recursive-fold-algorithm."
+    }
 
     parser = argparse.ArgumentParser(**kwargs)
 
@@ -29,31 +30,42 @@ def create_option_parser():
     parser.add_argument("mode", type=str, action="store", help="Either 'demo' or 'benchmark'.")
 
     DEFAULT_NUMBER_OF_NODES = 100
-    parser.add_argument("-n", "--nodes", type=int, action="store",
-                      dest="number_of_nodes", default=DEFAULT_NUMBER_OF_NODES,
-                      help=("Number of nodes for demo mode (default = %d)" % DEFAULT_NUMBER_OF_NODES))
-    
-    DEFAULT_SEED = 0
-    parser.add_argument("-s", "--seed", type=int, action="store",
-                      dest="seed", default=DEFAULT_SEED,
-                      help="Random number generator seed (default = %d)" % DEFAULT_SEED)
+    parser.add_argument("-n",
+                        "--nodes",
+                        type=int,
+                        action="store",
+                        dest="number_of_nodes",
+                        default=DEFAULT_NUMBER_OF_NODES,
+                        help=("Number of nodes for demo mode (default = %d)" % DEFAULT_NUMBER_OF_NODES))
 
-    parser.add_argument("--no-rendering", action="store_true",
-                      dest="no_rendering", default=False,
-                      help="Do not render calculated routes")
-    
+    DEFAULT_SEED = 0
+    parser.add_argument("-s",
+                        "--seed",
+                        type=int,
+                        action="store",
+                        dest="seed",
+                        default=DEFAULT_SEED,
+                        help="Random number generator seed (default = %d)" % DEFAULT_SEED)
+
+    parser.add_argument("--no-rendering",
+                        action="store_true",
+                        dest="no_rendering",
+                        default=False,
+                        help="Do not render calculated routes")
+
     return parser
+
 
 def main(argv):
     parser = create_option_parser()
-    args = parser.parse_args(args = argv[1:])
+    args = parser.parse_args(args=argv[1:])
 
     if not args.mode in ("demo", "benchmark"):
         parser.error("Ungültiger Modus gewählt. Nur 'demo' oder 'benchmark' erlaubt.")
-    
+
     if args.number_of_nodes <= 2:
         parser.error("Anzahl der nodes muss größer-gleich 3 sein.")
-    
+
     if args.mode == "demo":
         main_random(args.number_of_nodes, args.seed, not args.no_rendering)
     elif args.mode == "benchmark":
@@ -61,9 +73,9 @@ def main(argv):
 
     return 0
 
+
 def main_random(number_of_nodes, seed=0, rendering_enabled=True):
     # KONFIGURATION:
-
     """
     Gibt an, wie groß die X- bzw. Y-Koordinaten maximal sein dürfen.
     Die Koordinaten werden dann im Intervall [0, max_size] liegen.
@@ -73,7 +85,7 @@ def main_random(number_of_nodes, seed=0, rendering_enabled=True):
     max_size = 500
 
     # ENDE DER KONFIGURATION.
-    
+
     nodes = generate_random_nodes(number_of_nodes, max_size=max_size)
 
     # Zur Reproduzierbarkeit.
@@ -83,8 +95,8 @@ def main_random(number_of_nodes, seed=0, rendering_enabled=True):
     rfa = RFABasic(nodes)
     route = rfa.run()
 
-    total_costs   = route.get_total_costs()
-    runtime       = rfa.get_runtime()
+    total_costs = route.get_total_costs()
+    runtime = rfa.get_runtime()
 
     print("Total costs:\t%s" % total_costs)
     print("Runtime:\t%ss" % runtime)
@@ -94,9 +106,9 @@ def main_random(number_of_nodes, seed=0, rendering_enabled=True):
     if rendering_enabled:
         paint_turtle(route, title="RFA demo with %d nodes and seed = %d (click to close)" % (number_of_nodes, seed))
 
+
 def main_tsplib(seed=0, rendering_enabled=True):
     # KONFIGURATION:
-
     """
     TSPLIB-Instanzen, die ausgeführt werden sollen.
 
@@ -106,7 +118,6 @@ def main_tsplib(seed=0, rendering_enabled=True):
     """
     tsplib = "a280,berlin52,bier127,ch150,eil51,pr76,pr107,pr439,pr1002,rat99,rat783"
     #tsplib = "a280,berlin52,bier127,ch150,eil51,pr76,pr107,pr439,pr1002,rat99,rat783,brd14051,d18512"
-
     """
     Ausgabeformat für die Ergebnisse.
 
@@ -135,37 +146,32 @@ def main_tsplib(seed=0, rendering_enabled=True):
 
     # Anwenden des RFA auf die angegebenen TSPLIB-Instanzen.
     for tspi in tsplib.split(","):
-        nodes = load_nodes_from_tsplib_file(os.path.join(tsplib_folder,
-                                                         "%s.tsp" % tspi))
+        nodes = load_nodes_from_tsplib_file(os.path.join(tsplib_folder, "%s.tsp" % tspi))
 
         rfa = RFABasic(nodes)
         route = rfa.run()
         if rendering_enabled:
-            paint_turtle(route, title="RFA route for TSPLIB instance '%s' with seed = %d (click to close)" % (tspi, seed))
+            paint_turtle(route,
+                         title="RFA route for TSPLIB instance '%s' with seed = %d (click to close)" % (tspi, seed))
 
         optimal_costs = tsplib_get_optimal_solution(tspi)
-        total_costs   = route.get_total_costs()
-        factor        = round(float(total_costs) / optimal_costs * 100, 2)
-        runtime       = rfa.get_runtime()
+        total_costs = route.get_total_costs()
+        factor = round(float(total_costs) / optimal_costs * 100, 2)
+        runtime = rfa.get_runtime()
 
-        rows.append([tspi,
-                     optimal_costs,
-                     total_costs,
-                     "%.2f%%" % factor,
-                     "%.3fs" % runtime])
+        rows.append([tspi, optimal_costs, total_costs, "%.2f%%" % factor, "%.3fs" % runtime])
 
-        print(format % {'instance':         tspi,
-                        'total_costs':      total_costs,
-                        'runtime':          runtime,
-                        'optimal_costs':    optimal_costs,
-                        'factor':           factor})
+        print(
+            format % {
+                'instance': tspi,
+                'total_costs': total_costs,
+                'runtime': runtime,
+                'optimal_costs': optimal_costs,
+                'factor': factor
+            })
 
     # Ergebnis-Tabelle ausgeben.
-    headers=["Instance",
-             "Costs of optimal route",
-             "Costs of RFA route",
-             "Cost factor",
-             "Runtime"]
+    headers = ["Instance", "Costs of optimal route", "Costs of RFA route", "Cost factor", "Runtime"]
     if tabulate_available:
         print(tabulate(rows, headers=headers))
     else:
@@ -174,16 +180,17 @@ def main_tsplib(seed=0, rendering_enabled=True):
         rows.insert(0, headers)
         pprint.pprint(rows)
 
+
 def paint_turtle(route, scale=1.5, title="Route rendering (click to close)"):
     min_x = min([node.x for node in route])
     max_x = max([node.x for node in route])
     min_y = min([node.y for node in route])
     max_y = max([node.y for node in route])
-    
+
     data_width = max_x - min_x
     data_height = max_y - min_y
     data_aspect = data_width / float(data_height)
-    
+
     MAX_DISPLAY_DIMENSION = 500
     display_padding = MAX_DISPLAY_DIMENSION * 0.1
     if data_width > data_height:
@@ -194,8 +201,8 @@ def paint_turtle(route, scale=1.5, title="Route rendering (click to close)"):
         display_width = display_height * data_aspect
     w = display_width + 2 * display_padding
     h = display_height + 2 * display_padding
-    
-    turtle.setup(width=w*scale, height=h*scale)
+
+    turtle.setup(width=w * scale, height=h * scale)
     turtle.title(title)
 
     # For transforming data coordinates to turtle's screen coordinates.
@@ -207,15 +214,16 @@ def paint_turtle(route, scale=1.5, title="Route rendering (click to close)"):
     turtle.clear()
 
     turtle.speed("fastest")
-    turtle.tracer(len(route)/20, 500)
+    turtle.tracer(len(route) / 20, 500)
 
-    for i in range(1,len(route)):
+    for i in range(1, len(route)):
         turtle.goto(tc_x(route[i].x), tc_y(route[i].y))
         turtle.dot()
 
     turtle.goto(tc_x(route[0].x), tc_y(route[0].y))
     turtle.dot()
     turtle.exitonclick()
+
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))

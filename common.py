@@ -14,8 +14,10 @@ import random
 
 from math import *
 
+
 class Node(object):
     """Abstract TSP Node."""
+
     def __init__(self, *args, **kwargs):
         pass
 
@@ -42,7 +44,8 @@ class Node(object):
                 nearest_distance = candidate_distance
                 nearest_neighbor = candidates[i]
         return (nearest_neighbor, nearest_distance)
-    
+
+
 class CoordinateNode(Node):
     """
     TSP Node for the metric TSP with a X- and a Y-coordinate.
@@ -51,7 +54,7 @@ class CoordinateNode(Node):
     Pythagoras' theorem (and converting the result to integer for
     TSPLIB compatibility).
     """
-    
+
     def __init__(self, x, y, *args, **kwargs):
         self.x = x
         self.y = y
@@ -62,24 +65,28 @@ class CoordinateNode(Node):
 
     def __str__(self):
         return "CN(%s, %s)" % (self.x, self.y)
-    
+
+
 class Route(list):
+
     def get_total_costs(self):
         """Returns the total travel costs for this route."""
         sum = 0
-        
-        for i in range(len(self)-1):
-            sum += self[i].get_travel_costs(self[i+1])
-        sum += self[len(self)-1].get_travel_costs(self[0])
-        
+
+        for i in range(len(self) - 1):
+            sum += self[i].get_travel_costs(self[i + 1])
+        sum += self[len(self) - 1].get_travel_costs(self[0])
+
         return sum
-    
+
+
 class TSPAlgorithm(object):
     """Abstract TSPAlgorithm."""
+
     def __init__(self, nodes):
-        self.nodes      = tuple(nodes)
-        self.t_started  = 0
-        self.t_end      = 0
+        self.nodes = tuple(nodes)
+        self.t_started = 0
+        self.t_end = 0
 
     def run(self):
         """Returns a Route containing all the nodes which have been
@@ -100,6 +107,7 @@ class TSPAlgorithm(object):
         save_start_time() and save_end_time()."""
         return round(self.t_end - self.t_started, 3)
 
+
 def generate_random_nodes(count, seed=0, max_size=500):
     """
     Generates count nodes with coordinates between 0 and max_size.
@@ -112,10 +120,10 @@ def generate_random_nodes(count, seed=0, max_size=500):
 
     nodes = []
     for i in range(count):
-        nodes.append(CoordinateNode(random.randint(0,max_size),
-                                    random.randint(0,max_size)))
+        nodes.append(CoordinateNode(random.randint(0, max_size), random.randint(0, max_size)))
 
     return nodes
+
 
 def load_nodes_from_tsplib_file(filename):
     """
@@ -143,6 +151,7 @@ def load_nodes_from_tsplib_file(filename):
                 break
 
     return nodes
+
 
 optimal_solutions = {
     'a280': 2579,
@@ -257,6 +266,7 @@ optimal_solutions = {
     'vm1084': 239297,
     'vm1748': 336556
 }
+
 
 def tsplib_get_optimal_solution(tsp_instance):
     global optimal_solutions

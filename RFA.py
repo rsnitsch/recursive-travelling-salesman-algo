@@ -10,26 +10,32 @@ traveling-salesman-problems. See the URL above for details (german).
 """
 from common import *
 
+
 class RFANode(CoordinateNode):
+
     def __init__(self, x, y, children):
         CoordinateNode.__init__(self, x, y)
         self.children = children
 
+
 class RFA(TSPAlgorithm):
     """Recursive-Fold-Algorithm"""
+
     def fold(self):
         pass
 
     def unfold(self):
         pass
 
+
 class RFABasic(RFA):
     """A very simple RFA."""
+
     def run(self):
         self.save_start_time()
 
         folded = self.fold()
-        route  = Route(self.unfold(folded))
+        route = Route(self.unfold(folded))
 
         self.save_end_time()
 
@@ -45,11 +51,7 @@ class RFABasic(RFA):
             node2, dist = node1.get_nearest_neighbor(nodes)
             nodes.remove(node2)
 
-            nodes.append(
-                RFANode(
-                    (node1.x + node2.x)/2,
-                    (node1.y + node2.y)/2,
-                    (node1, node2)))
+            nodes.append(RFANode((node1.x + node2.x) / 2, (node1.y + node2.y) / 2, (node1, node2)))
 
         return nodes
 
@@ -62,8 +64,8 @@ class RFABasic(RFA):
                 if not isinstance(nodes[i], RFANode):
                     continue
 
-                before = nodes[i-1] if i > 0 else nodes[len(nodes)-1]
-                after  = nodes[i+1] if i < len(nodes)-1 else nodes[0]
+                before = nodes[i - 1] if i > 0 else nodes[len(nodes) - 1]
+                after = nodes[i + 1] if i < len(nodes) - 1 else nodes[0]
 
                 node1, node2 = nodes[i].children
                 route1 = Route([before, node1, node2, after])
