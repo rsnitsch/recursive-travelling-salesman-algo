@@ -1,17 +1,56 @@
 # RFA_demo
 
-RFA_demo is a demonstration of the recursive-fold-algorithm (RFA) implemented in Python. The RFA is an algorithm for calculating routes for the metric travelling-salesman-problem (TSP).
+The recursive-fold-algorithm (RFA) is a recursive algorithm for the metric travelling-salesman-problem (TSP). The objective of the TSP is to find a
+round trip through a number of cities/locations (more generally referred to as **nodes**). The round trip should be as short as possible. The TSP
+is a very hard problem with difficult computational properties (TSP belongs to the NP-hard problem class).
 
-A detailed description of the RFA and some screenshots are available on my [homepage] (in German language).
+Recursive algorithms naturally split a problem into a series of smaller steps that are easier to solve individually. As such, they're often
+very elegant.
 
-## Requirements
+## Idea
+
+RFA exploits the fact that the TSP can be trivially solved if there are only 3 nodes, because only a single round trip route exists
+for 3 nodes. The solution is self-evident:
+
+![alt](docs/rfa_00_tsp_trivial_problem_size.png)
+
+This **trivial case** is the **recursion anchor** for the algorithm.
+
+But how to deal with larger problem sizes? The answer is to **fold
+nodes**. Folding means that two nodes that are in close proximity to each other are fused into an artifical new node. This new node gets placed in the middle
+between the two original nodes. By remembering the original nodes it is also possible to reverse such a folding operation later on (referred to as **unfolding**). Of course, folded nodes can be folded again themselves (recursively).
+
+Once only 3 nodes remain, a preliminary solution (route) can be constructed. Again, this is self-evident:
+
+![alt](docs/rfa_00_tsp_trivial_problem_size.png)
+
+The key to RFA is that the nodes are now unfolded step by step. Each unfolding
+removes a node and replaces it with two new nodes. These new nodes can be inserted
+into the preliminary route in two alternative orders only. In the following picture the artificial node in the bottom-right corner (blue) is unfolded:
+
+![alt](docs/rfa_01_tsp_unfold_possibilities.png)
+
+It is obvious that the new nodes (red) can only be inserted in two different orders. It is also easy to determine which of these orders gives the shorter route (the green one).
+
+The complete process can be described as follows:
+
+- **Folding:** Pick a node and fold it with a neighboring node. Repeat folding nodes until the number of nodes has been reduced to 3.
+- **Recursion anchor:** Create a preliminary round trip route through the 3 remaining nodes.
+- **Unfolding:** Unfold the nodes until the original nodes have been restored. At each unfolding step, insert the new nodes in the preliminary route. Choose the insertion order that gives the shorter route length.
+
+## Implementation details
+
+This repository contains `RFABasic`, a naive / greedy implementation of the RFA:
+
+- **Folding:** Nodes are picked in random order. Each node is folded with its nearest neighbor. This process is repeated until 3 nodes remain.
+- **Unfolding:** The nodes in the preliminary route are unfolded sequentially (breadth-first approach). This process is repeated until all of the original nodes have been restored.
+
+## Install
 
 The scripts require
 
 - Python 3.2 or above.
 - optionally: the [tabulate] module (for pretty results in benchmark mode)
-
-## Install
 
 The easiest way is to use `pipenv`. A `Pipfile` is included in the project. You can simply download the code and run `pipenv install` in the top-level
 project folder. Then switch to the project's Python environment by executing `pipenv shell`. You can now execute the main script `RFA_demo.py` as described
@@ -67,5 +106,4 @@ rat783                          8806                 10164  115.42%        0.535
 You may download and execute the RFA_demo scripts.
 
 [tabulate]:https://pypi.python.org/pypi/tabulate
-[homepage]:https://www.robertnitsch.de/de/notes/rfa-traveling-salesman
 [TSPLIB]:http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/

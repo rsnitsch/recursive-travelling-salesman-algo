@@ -3,6 +3,8 @@
 """
 Script for executing the recursive-fold-algorithm (RFA) for metric travelling-salesman-problems
 and displaying visualizations/benchmarks.
+
+@todo: Implement "animation mode" that allows to observe how the algorithm works step by step.
 """
 import argparse
 import os

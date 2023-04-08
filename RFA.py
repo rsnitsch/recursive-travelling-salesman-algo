@@ -25,7 +25,17 @@ class RFA(TSPAlgorithm):
 
 
 class RFABasic(RFA):
-    """A very simple RFA."""
+    """
+    A very simple RFA implementation.
+    
+    *Folding:* Nodes are picked in random order. Each node is folded with its nearest neighbor. This process
+    is repeated until 3 nodes remain.
+
+    *Unfolding:* The nodes in the preliminary route are unfolded sequentially (breadth-first approach). This process
+    is repeated until all of the original nodes have been restored.
+
+    @todo: Try to use kdtree for faster nearest-neighbor search.
+    """
 
     def run(self):
         self.save_start_time()
