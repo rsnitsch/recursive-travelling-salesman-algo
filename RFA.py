@@ -3,7 +3,8 @@
 """
 Recursive-fold-algorithm (RFA) for metric travelling-salesman-problems.
 """
-from common import CoordinateNode, TSPAlgorithm
+import random
+from common import CoordinateNode, Route, TSPAlgorithm
 
 
 class RFANode(CoordinateNode):

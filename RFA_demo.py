@@ -10,7 +10,7 @@ import random
 import sys
 import turtle
 
-from common import generate_random_nodes
+from common import generate_random_nodes, tsplib_get_optimal_solution, load_nodes_from_tsplib_file
 from RFA import RFABasic
 
 
