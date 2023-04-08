@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
-# coding=UTF-8
+# -*- coding: utf-8 -*-
 """
-Package:    RFA demonstration
-Author:     Robert Nitsch
-Source:     http://www.robertnitsch.de/de:informatik:rfa-traveling-salesman
-
-This package demonstrates the recursive fold algorithm (RFA) for metric
-traveling-salesman-problems. See the URL above for details (german).
+Script for executing the recursive-fold-algorithm (RFA) for metric traveling-salesman-problems
+and displaying visualizations/benchmarks.
 """
 import argparse
 import os
@@ -14,8 +10,8 @@ import random
 import sys
 import turtle
 
-from common import *
-from RFA import *
+from common import generate_random_nodes
+from RFA import RFABasic
 
 
 def create_option_parser():
