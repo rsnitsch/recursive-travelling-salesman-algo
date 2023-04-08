@@ -198,27 +198,31 @@ def paint_turtle(route, scale=1.5, title="Route rendering (click to close)"):
     w = display_width + 2 * display_padding
     h = display_height + 2 * display_padding
 
-    turtle.setup(width=w * scale, height=h * scale)
-    turtle.title(title)
+    try:
+        turtle.setup(width=w * scale, height=h * scale)
+        turtle.title(title)
 
-    # For transforming data coordinates to turtle's screen coordinates.
-    tc_x = lambda x: int((x - min_x) / data_width * display_width - display_width / 2.0) * scale
-    tc_y = lambda y: int((y - min_y) / data_height * display_height - display_height / 2.0) * scale
+        # For transforming data coordinates to turtle's screen coordinates.
+        tc_x = lambda x: int((x - min_x) / data_width * display_width - display_width / 2.0) * scale
+        tc_y = lambda y: int((y - min_y) / data_height * display_height - display_height / 2.0) * scale
 
-    turtle.hideturtle()
-    turtle.goto(tc_x(route[0].x), tc_y(route[0].y))
-    turtle.clear()
+        turtle.hideturtle()
+        turtle.goto(tc_x(route[0].x), tc_y(route[0].y))
+        turtle.clear()
 
-    turtle.speed("fastest")
-    turtle.tracer(len(route) / 20, 500)
+        turtle.speed("fastest")
+        turtle.tracer(len(route) / 20, 500)
 
-    for i in range(1, len(route)):
-        turtle.goto(tc_x(route[i].x), tc_y(route[i].y))
+        for i in range(1, len(route)):
+            turtle.goto(tc_x(route[i].x), tc_y(route[i].y))
+            turtle.dot()
+
+        turtle.goto(tc_x(route[0].x), tc_y(route[0].y))
         turtle.dot()
 
-    turtle.goto(tc_x(route[0].x), tc_y(route[0].y))
-    turtle.dot()
-    turtle.exitonclick()
+        turtle.exitonclick()
+    except turtle.Terminator:
+        pass
 
 
 if __name__ == "__main__":
