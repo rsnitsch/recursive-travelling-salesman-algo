@@ -3,7 +3,6 @@
 """
 Common functionality for travelling-salesman-problem algorithms.
 """
-import time
 import random
 
 from math import sqrt
@@ -21,7 +20,7 @@ class Node(object):
         
         Raises NotImplemented unless overwritten.
         """
-        raise NotImplemented
+        raise NotImplementedError("get_travel_costs() must be implemented in subclasses")
 
     def get_nearest_neighbor(self, candidates):
         """
