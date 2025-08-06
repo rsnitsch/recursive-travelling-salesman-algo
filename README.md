@@ -1,4 +1,4 @@
-# RFA_demo
+# RFA_demo <!-- omit from toc -->
 
 The recursive-fold-algorithm (RFA) is a recursive algorithm for the metric travelling-salesman-problem (TSP). The objective of the TSP is to find a
 round trip through a number of cities/locations (more generally referred to as **nodes**). The round trip should be as short as possible. The TSP
@@ -6,6 +6,17 @@ is a very hard problem with difficult computational properties (TSP belongs to t
 
 Recursive algorithms naturally split a problem into a series of smaller steps that are easier to solve individually. As such, they're often
 very elegant.
+
+## Contents <!-- omit from toc -->
+
+- [Idea](#idea)
+  - [Folding strategies](#folding-strategies)
+  - [Unfolding strategies](#unfolding-strategies)
+- [Install](#install)
+- [Usage](#usage)
+  - ['demo' mode](#demo-mode)
+  - ['benchmark' mode](#benchmark-mode)
+- [License](#license)
 
 ## Idea
 
@@ -38,16 +49,16 @@ The complete process can be described as follows:
 - **Recursion anchor:** Create a preliminary round trip route through the 3 remaining nodes.
 - **Unfolding:** Unfold the nodes until the original nodes have been restored. At each unfolding step, insert the new nodes in the preliminary route. Choose the insertion order that gives the shorter route length.
 
-## Folding strategies
+### Folding strategies
 
-- FoldingStrategyRandomWithNearestNeighbor: A very simple yet highly efficient method which
+- `FoldingStrategyRandomWithNearestNeighbor`: A very simple yet highly efficient method which
   randomly picks a node and folds it with the nearest-neighbor.
-- FoldingStrategyOutsideIn: The node furthest from the center point is folded with its nearest-neighbor. The center
+- `FoldingStrategyOutsideIn`: The node furthest from the center point is folded with its nearest-neighbor. The center
   point is only calculated once at the beginning.
 
-## Unfolding strategies
+### Unfolding strategies
 
-- UnfoldingStrategyBreadthFirst: The list of folded nodes is processed repeatedly. During each iteration, only
+- `UnfoldingStrategyBreadthFirst`: The list of folded nodes is processed repeatedly. During each iteration, only
   the nodes with the maximum depth are unfolded.
 
 ## Install
