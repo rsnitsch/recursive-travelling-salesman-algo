@@ -11,7 +11,6 @@ import os
 import random
 import sys
 import time
-import turtle
 
 from common import generate_random_nodes, tsplib_get_optimal_solution, load_nodes_from_tsplib_file, Route
 from RFA import FoldingStrategyRandomWithNearestNeighbor, FoldingStrategyMST, FoldingStrategyMSTBottomUp, UnfoldingStrategyBreadthFirst
@@ -53,11 +52,7 @@ def create_option_parser():
                         default=DEFAULT_SEED,
                         help="Random number generator seed (default = %d)" % DEFAULT_SEED)
 
-    parser.add_argument("--no-rendering",
-                        action="store_true",
-                        dest="no_rendering",
-                        default=False,
-                        help="Do not render calculated routes")
+    parser.add_argument("--renderer", type=str, default="disabled", choices=["disabled", "turtle"])
 
     return parser
 
@@ -80,6 +75,16 @@ def get_unfolding_strategy_by_name(name):
         raise ValueError("Unknown unfolding strategy: %s" % name)
 
 
+def get_renderer_by_name(name):
+    if name == "turtle":
+        from ui import RendererTurtle
+        return RendererTurtle()
+    elif name == "disabled":
+        return None
+    else:
+        raise ValueError("Unknown renderer: %s" % name)
+
+
 def main(argv):
     parser = create_option_parser()
     args = parser.parse_args(args=argv[1:])
@@ -91,15 +96,14 @@ def main(argv):
         parser.error("Anzahl der nodes muss größer-gleich 3 sein.")
 
     if args.mode == "demo":
-        main_random(args.folding_strategy, args.unfolding_strategy, args.number_of_nodes, args.seed,
-                    not args.no_rendering)
+        main_random(args.folding_strategy, args.unfolding_strategy, args.renderer, args.number_of_nodes, args.seed)
     elif args.mode == "benchmark":
-        main_tsplib(args.folding_strategy, args.unfolding_strategy, args.seed, not args.no_rendering)
+        main_tsplib(args.folding_strategy, args.unfolding_strategy, args.renderer, args.seed)
 
     return 0
 
 
-def main_random(folding_strategy, unfolding_strategy, number_of_nodes, seed=0, rendering_enabled=True):
+def main_random(folding_strategy, unfolding_strategy, renderer, number_of_nodes, seed=0):
     # KONFIGURATION:
     """
     Gibt an, wie groß die X- bzw. Y-Koordinaten maximal sein dürfen.
@@ -119,10 +123,12 @@ def main_random(folding_strategy, unfolding_strategy, number_of_nodes, seed=0, r
     # RFA ausführen.
     folding_strategy_instance = get_folding_strategy_by_name(folding_strategy)
     unfolding_strategy_instance = get_unfolding_strategy_by_name(unfolding_strategy)
+    renderer_instance = get_renderer_by_name(renderer)
 
     start_time = time.time()
-    folded = folding_strategy_instance.fold(nodes)
-    route = Route(unfolding_strategy_instance.unfold(folded))
+    folded = folding_strategy_instance.fold(nodes, renderer_instance)
+    assert len(folded) <= 3, "Folding did not reduce number of nodes to 3."
+    route = Route(unfolding_strategy_instance.unfold(folded, renderer_instance))
     end_time = time.time()
 
     total_costs = route.get_total_costs()
@@ -132,12 +138,11 @@ def main_random(folding_strategy, unfolding_strategy, number_of_nodes, seed=0, r
     print("Runtime:\t%.3fs" % runtime)
     print()
 
-    # Darstellen der Route
-    if rendering_enabled:
-        paint_turtle(route, title="RFA demo with %d nodes and seed = %d (click to close)" % (number_of_nodes, seed))
+    if renderer_instance:
+        renderer_instance.wait_until_closed()
 
 
-def main_tsplib(folding_strategy, unfolding_strategy, seed=0, rendering_enabled=True):
+def main_tsplib(folding_strategy, unfolding_strategy, renderer, seed=0):
     # KONFIGURATION:
     """
     TSPLIB-Instanzen, die ausgeführt werden sollen.
@@ -180,18 +185,16 @@ def main_tsplib(folding_strategy, unfolding_strategy, seed=0, rendering_enabled=
 
         folding_strategy_instance = get_folding_strategy_by_name(folding_strategy)
         unfolding_strategy_instance = get_unfolding_strategy_by_name(unfolding_strategy)
+        renderer_instance = get_renderer_by_name(renderer)
 
         start_time = time.time()
-        folded = folding_strategy_instance.fold(nodes)
-        route = Route(unfolding_strategy_instance.unfold(folded))
+        folded = folding_strategy_instance.fold(nodes, renderer_instance)
+        assert len(folded) <= 3, "Folding did not reduce number of nodes to 3."
+        route = Route(unfolding_strategy_instance.unfold(folded, renderer_instance))
         end_time = time.time()
 
         total_costs = route.get_total_costs()
         runtime = end_time - start_time
-
-        if rendering_enabled:
-            paint_turtle(route,
-                         title="RFA route for TSPLIB instance '%s' with seed = %d (click to close)" % (tspi, seed))
 
         optimal_costs = tsplib_get_optimal_solution(tspi)
         factor = round(float(total_costs) / optimal_costs * 100, 2)
@@ -207,6 +210,9 @@ def main_tsplib(folding_strategy, unfolding_strategy, seed=0, rendering_enabled=
                 'factor': factor
             })
 
+        if renderer_instance:
+            renderer_instance.wait_until_closed()
+
     # Ergebnis-Tabelle ausgeben.
     headers = ["Instance", "Costs of optimal route", "Costs of RFA route", "Cost factor", "Runtime"]
     if tabulate_available:
@@ -216,54 +222,6 @@ def main_tsplib(folding_strategy, unfolding_strategy, seed=0, rendering_enabled=
         import pprint
         rows.insert(0, headers)
         pprint.pprint(rows)
-
-
-def paint_turtle(route, scale=1.5, title="Route rendering (click to close)"):
-    min_x = min([node.x for node in route])
-    max_x = max([node.x for node in route])
-    min_y = min([node.y for node in route])
-    max_y = max([node.y for node in route])
-
-    data_width = max_x - min_x
-    data_height = max_y - min_y
-    data_aspect = data_width / float(data_height)
-
-    MAX_DISPLAY_DIMENSION = 500
-    display_padding = MAX_DISPLAY_DIMENSION * 0.1
-    if data_width > data_height:
-        display_width = MAX_DISPLAY_DIMENSION
-        display_height = display_width / data_aspect
-    else:
-        display_height = MAX_DISPLAY_DIMENSION
-        display_width = display_height * data_aspect
-    w = display_width + 2 * display_padding
-    h = display_height + 2 * display_padding
-
-    try:
-        turtle.setup(width=w * scale, height=h * scale)
-        turtle.title(title)
-
-        # For transforming data coordinates to turtle's screen coordinates.
-        tc_x = lambda x: int((x - min_x) / data_width * display_width - display_width / 2.0) * scale
-        tc_y = lambda y: int((y - min_y) / data_height * display_height - display_height / 2.0) * scale
-
-        turtle.hideturtle()
-        turtle.goto(tc_x(route[0].x), tc_y(route[0].y))
-        turtle.clear()
-
-        turtle.speed("fastest")
-        turtle.tracer(len(route) / 20, 500)
-
-        for i in range(1, len(route)):
-            turtle.goto(tc_x(route[i].x), tc_y(route[i].y))
-            turtle.dot()
-
-        turtle.goto(tc_x(route[0].x), tc_y(route[0].y))
-        turtle.dot()
-
-        turtle.exitonclick()
-    except turtle.Terminator:
-        pass
 
 
 if __name__ == "__main__":

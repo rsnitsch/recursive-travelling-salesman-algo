@@ -77,14 +77,11 @@ Total costs:    4398
 Runtime:        0.013s
 ```
 
-By default, the generated nodes and the resulting route will also be rendered on-screen (using Python's `turtle` module). This can be
-switched off by adding the `--no-rendering` option.
-
 ### 'benchmark' mode
 
 The following command runs a benchmark using a subset of the [TSPLIB] instances (a280, berlin52, bier127, ch150, eil51, pr76, pr107, pr439, pr1002, rat99, and rat783):
 
-    $ python RFA_demo.py benchmark -s 17 --no-rendering
+    $ python RFA_demo.py benchmark -s 17
     ...
     Instance      Costs of optimal route    Costs of RFA route  Cost factor    Runtime
     ----------  ------------------------  --------------------  -------------  ---------
@@ -100,9 +97,9 @@ The following command runs a benchmark using a subset of the [TSPLIB] instances 
     rat99                           1211                  1493  123.29%        0.011s
     rat783                          8806                 10164  115.42%        0.535s
 
-Alternatively you can use the mst folding strategy:
+Alternatively you can use the minimum-spanning-tree folding strategy:
 
-    $ python RFA_demo.py benchmark -s 17 --folding-strategy mst --no-rendering
+    $ python RFA_demo.py benchmark -s 17 --folding-strategy mst
     ...
     Instance      Costs of optimal route    Costs of RFA route  Cost factor    Runtime
     ----------  ------------------------  --------------------  -------------  ---------
@@ -118,13 +115,7 @@ Alternatively you can use the mst folding strategy:
     rat99                           1211                  2140  176.71%        0.004s
     rat783                          8806                 23841  270.74%        0.235s
 
-### Remarks
-
-- A random number generator seed is used even in benchmark mode, because the algorithm itself uses random numbers for calculating a route.
-- The `--no-rendering` option disables the on-screen rendering of the calculated route. If you remove this option, you will be able to review
-  the calculated route.
-
-# License
+## License
 
 You may download and execute the RFA_demo scripts.
 

@@ -17,7 +17,7 @@ class RFANode(CoordinateNode):
 
 class FoldingStrategy(object):
 
-    def fold(self, nodes):
+    def fold(self, nodes, renderer=None):
         """Fold nodes using the strategy defined in the subclass."""
         raise NotImplementedError("fold() must be implemented in subclasses")
 
@@ -27,8 +27,10 @@ class FoldingStrategyRandomWithNearestNeighbor(FoldingStrategy):
     Nodes are picked in random order. Each node is folded with its nearest neighbor.
     """
 
-    def fold(self, nodes):
+    def fold(self, nodes, renderer=None):
         nodes = list(nodes)
+        if renderer:
+            renderer.visualize(nodes)
 
         while not len(nodes) <= 3:
             node1 = random.choice(nodes)
@@ -38,6 +40,9 @@ class FoldingStrategyRandomWithNearestNeighbor(FoldingStrategy):
             nodes.remove(node2)
 
             nodes.append(RFANode((node1.x + node2.x) / 2, (node1.y + node2.y) / 2, (node1, node2)))
+
+            if renderer:
+                renderer.visualize(nodes)
 
         return nodes
 
@@ -50,31 +55,36 @@ class FoldingStrategyMST(FoldingStrategy):
     The folding sequence is determined by the MST edges.
     """
 
-    def fold(self, nodes):
+    def fold(self, nodes, renderer=None):
+        if renderer:
+            renderer.visualize(nodes)
+
         if len(nodes) <= 3:
             return list(nodes)
 
-        # Build MST tree
-        root = build_mst_tree(nodes)
-
-        # Get folding sequence
-        fold_sequence = mst_fold_sequence(root)
-
-        # Apply folding sequence
         remaining_nodes = list(nodes)
+        while len(remaining_nodes) > 3:
+            # Build MST tree
+            root = build_mst_tree(remaining_nodes)
 
-        for node1, node2 in fold_sequence:
-            if node1 in remaining_nodes and node2 in remaining_nodes:
-                remaining_nodes.remove(node1)
-                remaining_nodes.remove(node2)
+            # Get folding sequence
+            fold_sequence = mst_fold_sequence(root)
 
-                # Create folded node at midpoint
-                folded_node = RFANode((node1.x + node2.x) / 2, (node1.y + node2.y) / 2, (node1, node2))
-                remaining_nodes.append(folded_node)
+            for node1, node2 in fold_sequence:
+                if node1 in remaining_nodes and node2 in remaining_nodes:
+                    remaining_nodes.remove(node1)
+                    remaining_nodes.remove(node2)
 
-                # Stop if we have 3 or fewer nodes
-                if len(remaining_nodes) <= 3:
-                    break
+                    # Create folded node at midpoint
+                    folded_node = RFANode((node1.x + node2.x) / 2, (node1.y + node2.y) / 2, (node1, node2))
+                    remaining_nodes.append(folded_node)
+
+                    if renderer:
+                        renderer.visualize(remaining_nodes)
+
+                    # Stop if we have 3 or fewer nodes
+                    if len(remaining_nodes) <= 3:
+                        break
 
         return remaining_nodes
 
@@ -87,7 +97,10 @@ class FoldingStrategyMSTBottomUp(FoldingStrategy):
     starting from the leaves, folding them with their parent nodes.
     """
 
-    def fold(self, nodes):
+    def fold(self, nodes, renderer=None):
+        if renderer:
+            renderer.visualize(nodes)
+
         if len(nodes) <= 3:
             return list(nodes)
 
@@ -117,20 +130,24 @@ class FoldingStrategyMSTBottomUp(FoldingStrategy):
             folded = RFANode((node1.x + node2.x) / 2, (node1.y + node2.y) / 2, (node1, node2))
             remaining.append(folded)
 
+            if renderer:
+                renderer.visualize(remaining)
+
         return remaining
 
 
 class UnfoldingStrategy(object):
 
-    def unfold(self, nodes_to_unfold):
+    def unfold(self, nodes_to_unfold, renderer=None):
         """Unfold nodes using the strategy defined in the subclass."""
         raise NotImplementedError("unfold() must be implemented in subclasses")
 
 
 class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
 
-    def unfold(self, nodes_to_unfold):
+    def unfold(self, nodes_to_unfold, renderer=None):
         nodes = list(nodes_to_unfold)
+
         while True:
             len_before = len(nodes)
 
@@ -153,6 +170,9 @@ class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
                 else:
                     nodes.insert(i, node1)
                     nodes.insert(i, node2)
+
+                if renderer:
+                    renderer.visualize(nodes)
 
             if len_before == len(nodes):
                 return nodes
