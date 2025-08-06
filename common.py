@@ -74,38 +74,6 @@ class Route(list):
         return sum
 
 
-class TSPAlgorithm(object):
-    """Abstract TSPAlgorithm."""
-
-    def __init__(self, nodes):
-        self.nodes = tuple(nodes)
-        self.t_started = 0
-        self.t_end = 0
-
-    def run(self):
-        """Returns a Route containing all the nodes which have been
-        handed over to the constructor."""
-        raise NotImplementedError("run() must be implemented in subclasses")
-
-    def get_nodes(self):
-        """Returns the nodes which have been handed over to the constructor."""
-        return self.nodes
-
-    def save_start_time(self):
-        """Children should execute this method each time run() is called."""
-        self.t_started = time.time()
-
-    def save_end_time(self):
-        """Children should execute this method after each time run() has been
-        executed."""
-        self.t_end = time.time()
-
-    def get_runtime(self):
-        """Calculates the time difference between the most recent calls of
-        save_start_time() and save_end_time()."""
-        return round(self.t_end - self.t_started, 3)
-
-
 def generate_random_nodes(count, seed=0, max_size=500):
     """
     Generates count nodes with coordinates between 0 and max_size.

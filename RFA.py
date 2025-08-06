@@ -4,37 +4,8 @@
 Recursive-fold-algorithm (RFA) for metric travelling-salesman-problems.
 """
 import random
-from common import CoordinateNode, Route, TSPAlgorithm
+from common import CoordinateNode, Route
 from mst import build_mst_tree, mst_fold_sequence, find_foldable_leaf
-
-
-def unfold_breadth_first(nodes_to_unfold):
-    nodes = list(nodes_to_unfold)
-    while True:
-        len_before = len(nodes)
-
-        for i in range(len(nodes)):
-            if not isinstance(nodes[i], RFANode):
-                continue
-
-            before = nodes[i - 1] if i > 0 else nodes[len(nodes) - 1]
-            after = nodes[i + 1] if i < len(nodes) - 1 else nodes[0]
-
-            node1, node2 = nodes[i].children
-            route1 = Route([before, node1, node2, after])
-            route2 = Route([before, node2, node1, after])
-
-            nodes.remove(nodes[i])
-
-            if route1.get_total_costs() < route2.get_total_costs():
-                nodes.insert(i, node2)
-                nodes.insert(i, node1)
-            else:
-                nodes.insert(i, node1)
-                nodes.insert(i, node2)
-
-        if len_before == len(nodes):
-            return nodes
 
 
 class RFANode(CoordinateNode):
@@ -44,41 +15,20 @@ class RFANode(CoordinateNode):
         self.children = children
 
 
-class RFA(TSPAlgorithm):
-    """Recursive-Fold-Algorithm"""
+class FoldingStrategy(object):
 
-    def run(self):
-        self.save_start_time()
-
-        folded = self.fold()
-        route = Route(self.unfold(folded))
-
-        self.save_end_time()
-
-        return route
-
-    def fold(self):
+    def fold(self, nodes):
+        """Fold nodes using the strategy defined in the subclass."""
         raise NotImplementedError("fold() must be implemented in subclasses")
 
-    def unfold(self):
-        raise NotImplementedError("unfold() must be implemented in subclasses")
 
-
-class RFABasic(RFA):
+class FoldingStrategyRandomWithNearestNeighbor(FoldingStrategy):
     """
-    A very simple RFA implementation.
-    
-    *Folding:* Nodes are picked in random order. Each node is folded with its nearest neighbor. This process
-    is repeated until 3 nodes remain.
-
-    *Unfolding:* The nodes in the preliminary route are unfolded sequentially (breadth-first approach). This process
-    is repeated until all of the original nodes have been restored.
-
-    @todo: Try to use kdtree for faster nearest-neighbor search.
+    Nodes are picked in random order. Each node is folded with its nearest neighbor.
     """
 
-    def fold(self):
-        nodes = list(self.nodes)
+    def fold(self, nodes):
+        nodes = list(nodes)
 
         while not len(nodes) <= 3:
             node1 = random.choice(nodes)
@@ -91,35 +41,16 @@ class RFABasic(RFA):
 
         return nodes
 
-    def unfold(self, nodes_to_unfold):
-        return unfold_breadth_first(nodes_to_unfold)
 
-
-class RFAMST(RFA):
+class FoldingStrategyMST(FoldingStrategy):
     """
-    A more sophisticated RFA implementation that uses a minimum spanning tree (MST) for folding.
+    Nodes are folded using a minimum spanning tree (MST) strategy.
 
-    *Folding:* A minimum spanning tree is created from the nodes. The nodes are folded in a systematic manner
-    following the MST structure, prioritizing leaf nodes and their parents.
-
-    *Unfolding:* The nodes in the preliminary route are unfolded sequentially (breadth-first approach). This process
-    is repeated until all of the original nodes have been restored.
+    The MST is built from the nodes, and the folding is done according to the MST structure.
+    The folding sequence is determined by the MST edges.
     """
 
-    def fold(self):
-        """Fold nodes using MST-guided strategy."""
-        return RFAMST.mst_bottom_up_fold(list(self.nodes))
-
-    def unfold(self, nodes_to_unfold):
-        """Unfold using breadth-first approach."""
-        return unfold_breadth_first(nodes_to_unfold)
-
-    @staticmethod
-    def mst(nodes):
-        """
-        Main MST function for RFA folding.
-        Returns folded nodes using MST-guided strategy.
-        """
+    def fold(self, nodes):
         if len(nodes) <= 3:
             return list(nodes)
 
@@ -147,12 +78,16 @@ class RFAMST(RFA):
 
         return remaining_nodes
 
-    @staticmethod
-    def mst_bottom_up_fold(nodes):
-        """
-        Alternative MST folding that works bottom-up from leaves.
-        More systematic than the basic random approach.
-        """
+
+class FoldingStrategyMSTBottomUp(FoldingStrategy):
+    """
+    Nodes are folded using a bottom-up MST strategy.
+
+    The MST is built from the nodes, and the folding is done systematically
+    starting from the leaves, folding them with their parent nodes.
+    """
+
+    def fold(self, nodes):
         if len(nodes) <= 3:
             return list(nodes)
 
@@ -185,26 +120,39 @@ class RFAMST(RFA):
         return remaining
 
 
-# Alternative implementation with more control
-class RFAMSTAdvanced(RFA):
-    """
-    Advanced MST-based RFA with configurable folding strategy.
-    """
-
-    def __init__(self, nodes, strategy='bottom_up'):
-        super().__init__(nodes)
-        self.strategy = strategy
-
-    def fold(self):
-        """Fold nodes using specified MST strategy."""
-        if self.strategy == 'bottom_up':
-            return RFAMST.mst_bottom_up_fold(list(self.nodes))
-        elif self.strategy == 'sequence':
-            return RFAMST.mst(list(self.nodes))
-        else:
-            # Fallback to basic random folding
-            return super().fold()
+class UnfoldingStrategy(object):
 
     def unfold(self, nodes_to_unfold):
-        """Unfold using breadth-first approach."""
-        return unfold_breadth_first(nodes_to_unfold)
+        """Unfold nodes using the strategy defined in the subclass."""
+        raise NotImplementedError("unfold() must be implemented in subclasses")
+
+
+class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
+
+    def unfold(self, nodes_to_unfold):
+        nodes = list(nodes_to_unfold)
+        while True:
+            len_before = len(nodes)
+
+            for i in range(len(nodes)):  # pylint: disable=consider-using-enumerate
+                if not isinstance(nodes[i], RFANode):
+                    continue
+
+                before = nodes[i - 1] if i > 0 else nodes[len(nodes) - 1]
+                after = nodes[i + 1] if i < len(nodes) - 1 else nodes[0]
+
+                node1, node2 = nodes[i].children
+                route1 = Route([before, node1, node2, after])
+                route2 = Route([before, node2, node1, after])
+
+                nodes.remove(nodes[i])
+
+                if route1.get_total_costs() < route2.get_total_costs():
+                    nodes.insert(i, node2)
+                    nodes.insert(i, node1)
+                else:
+                    nodes.insert(i, node1)
+                    nodes.insert(i, node2)
+
+            if len_before == len(nodes):
+                return nodes

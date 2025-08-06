@@ -38,12 +38,19 @@ The complete process can be described as follows:
 - **Recursion anchor:** Create a preliminary round trip route through the 3 remaining nodes.
 - **Unfolding:** Unfold the nodes until the original nodes have been restored. At each unfolding step, insert the new nodes in the preliminary route. Choose the insertion order that gives the shorter route length.
 
-## Implementation details
+## Folding strategies
 
-This repository contains `RFABasic`, a naive / greedy implementation of the RFA:
+- FoldingStrategyRandomWithNearestNeighbor: A very simple yet highly efficient method which
+  randomly picks a node and folds it with the nearest-neighbor.
+- FoldingStrategyMST: The nodes are folded along parent-child relationships in the minimum-spanning-tree.
+- FoldingStrategyMSTBottomUp: The nodes are folded along parent-child relationships in the
+  minimum-spanning-tree but the MST is recalculated after each folding operation. Very slow.
 
-- **Folding:** Nodes are picked in random order. Each node is folded with its nearest neighbor. This process is repeated until 3 nodes remain.
-- **Unfolding:** The nodes in the preliminary route are unfolded sequentially (breadth-first approach). This process is repeated until all of the original nodes have been restored.
+## Unfolding strategies
+
+- UnfoldingStrategyBreadthFirst: The list of folded nodes is processed repeatedly. In each iteration, the 
+  nodes in the list are unfolded one by one. Newly inserted (unfolded) child nodes are only processed in
+  the next iteration.
 
 ## Install
 
@@ -77,23 +84,39 @@ switched off by adding the `--no-rendering` option.
 
 The following command runs a benchmark using a subset of the [TSPLIB] instances (a280, berlin52, bier127, ch150, eil51, pr76, pr107, pr439, pr1002, rat99, and rat783):
 
-```
-$ python RFA_demo.py benchmark -s 17 --no-rendering
-...
-Instance      Costs of optimal route    Costs of RFA route  Cost factor    Runtime
-----------  ------------------------  --------------------  -------------  ---------
-a280                            2579                  3364  130.44%        0.069s
-berlin52                        7542                 10083  133.69%        0.004s
-bier127                       118282                139393  117.85%        0.018s
-ch150                           6528                  8040  123.16%        0.024s
-eil51                            426                   461  108.22%        0.004s
-pr76                          108159                126517  116.97%        0.007s
-pr107                          44303                 46094  104.04%        0.013s
-pr439                         107217                132399  123.49%        0.179s
-pr1002                        259045                308964  119.27%        0.880s
-rat99                           1211                  1493  123.29%        0.011s
-rat783                          8806                 10164  115.42%        0.535s
-```
+    $ python RFA_demo.py benchmark -s 17 --no-rendering
+    ...
+    Instance      Costs of optimal route    Costs of RFA route  Cost factor    Runtime
+    ----------  ------------------------  --------------------  -------------  ---------
+    a280                            2579                  3364  130.44%        0.069s
+    berlin52                        7542                 10083  133.69%        0.004s
+    bier127                       118282                139393  117.85%        0.018s
+    ch150                           6528                  8040  123.16%        0.024s
+    eil51                            426                   461  108.22%        0.004s
+    pr76                          108159                126517  116.97%        0.007s
+    pr107                          44303                 46094  104.04%        0.013s
+    pr439                         107217                132399  123.49%        0.179s
+    pr1002                        259045                308964  119.27%        0.880s
+    rat99                           1211                  1493  123.29%        0.011s
+    rat783                          8806                 10164  115.42%        0.535s
+
+Alternatively you can use the mst folding strategy:
+
+    $ python RFA_demo.py benchmark -s 17 --folding-strategy mst --no-rendering
+    ...
+    Instance      Costs of optimal route    Costs of RFA route  Cost factor    Runtime
+    ----------  ------------------------  --------------------  -------------  ---------
+    a280                            2579                  4629  179.49%        0.030s
+    berlin52                        7542                 12291  162.97%        0.002s
+    bier127                       118282                190479  161.04%        0.007s
+    ch150                           6528                 20663  316.53%        0.009s
+    eil51                            426                   851  199.77%        0.001s
+    pr76                          108159                150986  139.60%        0.003s
+    pr107                          44303                 80728  182.22%        0.004s
+    pr439                         107217                222420  207.45%        0.078s
+    pr1002                        259045                501885  193.74%        0.408s
+    rat99                           1211                  2140  176.71%        0.004s
+    rat783                          8806                 23841  270.74%        0.235s
 
 ### Remarks
 

@@ -10,10 +10,11 @@ import argparse
 import os
 import random
 import sys
+import time
 import turtle
 
-from common import generate_random_nodes, tsplib_get_optimal_solution, load_nodes_from_tsplib_file
-from RFA import RFABasic, RFAMST
+from common import generate_random_nodes, tsplib_get_optimal_solution, load_nodes_from_tsplib_file, Route
+from RFA import FoldingStrategyRandomWithNearestNeighbor, FoldingStrategyMST, FoldingStrategyMSTBottomUp, UnfoldingStrategyBreadthFirst
 
 
 def create_option_parser():
@@ -27,7 +28,12 @@ def create_option_parser():
     # Add options to the OptionParser.
     parser.add_argument("mode", type=str, action="store", help="Either 'demo' or 'benchmark'.")
 
-    parser.add_argument("-a", "--algorithm", type=str, default="basic", choices=["basic", "mst"])
+    parser.add_argument("--folding-strategy",
+                        type=str,
+                        default="random-nn",
+                        choices=["random-nn", "mst", "mst-bottomup"])
+
+    parser.add_argument("--unfolding-strategy", type=str, default="breadth-first", choices=["breadth-first"])
 
     DEFAULT_NUMBER_OF_NODES = 100
     parser.add_argument("-n",
@@ -56,6 +62,24 @@ def create_option_parser():
     return parser
 
 
+def get_folding_strategy_by_name(name):
+    if name == "random-nn":
+        return FoldingStrategyRandomWithNearestNeighbor()
+    elif name == "mst":
+        return FoldingStrategyMST()
+    elif name == "mst-bottomup":
+        return FoldingStrategyMSTBottomUp()
+    else:
+        raise ValueError("Unknown folding strategy: %s" % name)
+
+
+def get_unfolding_strategy_by_name(name):
+    if name == "breadth-first":
+        return UnfoldingStrategyBreadthFirst()
+    else:
+        raise ValueError("Unknown unfolding strategy: %s" % name)
+
+
 def main(argv):
     parser = create_option_parser()
     args = parser.parse_args(args=argv[1:])
@@ -67,14 +91,15 @@ def main(argv):
         parser.error("Anzahl der nodes muss größer-gleich 3 sein.")
 
     if args.mode == "demo":
-        main_random(args.algorithm, args.number_of_nodes, args.seed, not args.no_rendering)
+        main_random(args.folding_strategy, args.unfolding_strategy, args.number_of_nodes, args.seed,
+                    not args.no_rendering)
     elif args.mode == "benchmark":
-        main_tsplib(args.algorithm, args.seed, not args.no_rendering)
+        main_tsplib(args.folding_strategy, args.unfolding_strategy, args.seed, not args.no_rendering)
 
     return 0
 
 
-def main_random(algorithm, number_of_nodes, seed=0, rendering_enabled=True):
+def main_random(folding_strategy, unfolding_strategy, number_of_nodes, seed=0, rendering_enabled=True):
     # KONFIGURATION:
     """
     Gibt an, wie groß die X- bzw. Y-Koordinaten maximal sein dürfen.
@@ -92,19 +117,19 @@ def main_random(algorithm, number_of_nodes, seed=0, rendering_enabled=True):
     random.seed(seed)
 
     # RFA ausführen.
-    if algorithm == "basic":
-        rfa = RFABasic(nodes)
-    elif algorithm == "mst":
-        rfa = RFAMST(nodes)
-    else:
-        raise ValueError("Unknown algorithm: %s" % algorithm)
-    route = rfa.run()
+    folding_strategy_instance = get_folding_strategy_by_name(folding_strategy)
+    unfolding_strategy_instance = get_unfolding_strategy_by_name(unfolding_strategy)
+
+    start_time = time.time()
+    folded = folding_strategy_instance.fold(nodes)
+    route = Route(unfolding_strategy_instance.unfold(folded))
+    end_time = time.time()
 
     total_costs = route.get_total_costs()
-    runtime = rfa.get_runtime()
+    runtime = end_time - start_time
 
     print("Total costs:\t%s" % total_costs)
-    print("Runtime:\t%ss" % runtime)
+    print("Runtime:\t%.3fs" % runtime)
     print()
 
     # Darstellen der Route
@@ -112,7 +137,7 @@ def main_random(algorithm, number_of_nodes, seed=0, rendering_enabled=True):
         paint_turtle(route, title="RFA demo with %d nodes and seed = %d (click to close)" % (number_of_nodes, seed))
 
 
-def main_tsplib(algorithm, seed=0, rendering_enabled=True):
+def main_tsplib(folding_strategy, unfolding_strategy, seed=0, rendering_enabled=True):
     # KONFIGURATION:
     """
     TSPLIB-Instanzen, die ausgeführt werden sollen.
@@ -128,7 +153,7 @@ def main_tsplib(algorithm, seed=0, rendering_enabled=True):
 
     Empfohlen: "Instance:\t%(instance)s\nTotal costs:\t%(total_costs)s\nRuntime:\t%(runtime)ss\n"
     """
-    format = "Instance:\t%(instance)s\nTotal costs:\t%(total_costs)s\nRuntime:\t%(runtime)ss\n"
+    format = "Instance:\t%(instance)s\nTotal costs:\t%(total_costs)s\nRuntime:\t%(runtime).3fs\n"
     # format = "<tr><td>%(instance)s</td><td>%(optimal_costs)s</td><td>%(total_costs)s</td><td>%(factor)s%%</td><td>%(runtime)ss</td></tr>"
 
     # Ordner mit den TSPLIB-Instanzen (in entpackter Form)
@@ -153,22 +178,23 @@ def main_tsplib(algorithm, seed=0, rendering_enabled=True):
     for tspi in tsplib.split(","):
         nodes = load_nodes_from_tsplib_file(os.path.join(tsplib_folder, "%s.tsp" % tspi))
 
-        if algorithm == "basic":
-            rfa = RFABasic(nodes)
-        elif algorithm == "mst":
-            rfa = RFAMST(nodes)
-        else:
-            raise ValueError("Unknown algorithm: %s" % algorithm)
+        folding_strategy_instance = get_folding_strategy_by_name(folding_strategy)
+        unfolding_strategy_instance = get_unfolding_strategy_by_name(unfolding_strategy)
 
-        route = rfa.run()
+        start_time = time.time()
+        folded = folding_strategy_instance.fold(nodes)
+        route = Route(unfolding_strategy_instance.unfold(folded))
+        end_time = time.time()
+
+        total_costs = route.get_total_costs()
+        runtime = end_time - start_time
+
         if rendering_enabled:
             paint_turtle(route,
                          title="RFA route for TSPLIB instance '%s' with seed = %d (click to close)" % (tspi, seed))
 
         optimal_costs = tsplib_get_optimal_solution(tspi)
-        total_costs = route.get_total_costs()
         factor = round(float(total_costs) / optimal_costs * 100, 2)
-        runtime = rfa.get_runtime()
 
         rows.append([tspi, optimal_costs, total_costs, "%.2f%%" % factor, "%.3fs" % runtime])
 
