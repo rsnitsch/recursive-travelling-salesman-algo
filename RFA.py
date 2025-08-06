@@ -5,7 +5,6 @@ Recursive-fold-algorithm (RFA) for metric travelling-salesman-problems.
 """
 import random
 from common import CoordinateNode, Route
-from mst import build_mst_tree, mst_fold_sequence, find_foldable_leaf
 
 
 class RFANode(CoordinateNode):
