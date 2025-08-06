@@ -85,7 +85,11 @@ class TSPAlgorithm(object):
     def run(self):
         """Returns a Route containing all the nodes which have been
         handed over to the constructor."""
-        raise NotImplemented
+        raise NotImplementedError("run() must be implemented in subclasses")
+
+    def get_nodes(self):
+        """Returns the nodes which have been handed over to the constructor."""
+        return self.nodes
 
     def save_start_time(self):
         """Children should execute this method each time run() is called."""

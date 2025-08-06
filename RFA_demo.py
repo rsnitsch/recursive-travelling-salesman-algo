@@ -13,7 +13,7 @@ import sys
 import turtle
 
 from common import generate_random_nodes, tsplib_get_optimal_solution, load_nodes_from_tsplib_file
-from RFA import RFABasic
+from RFA import RFABasic, RFAMST
 
 
 def create_option_parser():
@@ -26,6 +26,8 @@ def create_option_parser():
 
     # Add options to the OptionParser.
     parser.add_argument("mode", type=str, action="store", help="Either 'demo' or 'benchmark'.")
+
+    parser.add_argument("-a", "--algorithm", type=str, default="basic", choices=["basic", "mst"])
 
     DEFAULT_NUMBER_OF_NODES = 100
     parser.add_argument("-n",
@@ -65,14 +67,14 @@ def main(argv):
         parser.error("Anzahl der nodes muss größer-gleich 3 sein.")
 
     if args.mode == "demo":
-        main_random(args.number_of_nodes, args.seed, not args.no_rendering)
+        main_random(args.algorithm, args.number_of_nodes, args.seed, not args.no_rendering)
     elif args.mode == "benchmark":
-        main_tsplib(args.seed, not args.no_rendering)
+        main_tsplib(args.algorithm, args.seed, not args.no_rendering)
 
     return 0
 
 
-def main_random(number_of_nodes, seed=0, rendering_enabled=True):
+def main_random(algorithm, number_of_nodes, seed=0, rendering_enabled=True):
     # KONFIGURATION:
     """
     Gibt an, wie groß die X- bzw. Y-Koordinaten maximal sein dürfen.
@@ -90,7 +92,12 @@ def main_random(number_of_nodes, seed=0, rendering_enabled=True):
     random.seed(seed)
 
     # RFA ausführen.
-    rfa = RFABasic(nodes)
+    if algorithm == "basic":
+        rfa = RFABasic(nodes)
+    elif algorithm == "mst":
+        rfa = RFAMST(nodes)
+    else:
+        raise ValueError("Unknown algorithm: %s" % algorithm)
     route = rfa.run()
 
     total_costs = route.get_total_costs()
@@ -105,7 +112,7 @@ def main_random(number_of_nodes, seed=0, rendering_enabled=True):
         paint_turtle(route, title="RFA demo with %d nodes and seed = %d (click to close)" % (number_of_nodes, seed))
 
 
-def main_tsplib(seed=0, rendering_enabled=True):
+def main_tsplib(algorithm, seed=0, rendering_enabled=True):
     # KONFIGURATION:
     """
     TSPLIB-Instanzen, die ausgeführt werden sollen.
@@ -146,7 +153,13 @@ def main_tsplib(seed=0, rendering_enabled=True):
     for tspi in tsplib.split(","):
         nodes = load_nodes_from_tsplib_file(os.path.join(tsplib_folder, "%s.tsp" % tspi))
 
-        rfa = RFABasic(nodes)
+        if algorithm == "basic":
+            rfa = RFABasic(nodes)
+        elif algorithm == "mst":
+            rfa = RFAMST(nodes)
+        else:
+            raise ValueError("Unknown algorithm: %s" % algorithm)
+
         route = rfa.run()
         if rendering_enabled:
             paint_turtle(route,
