@@ -14,6 +14,16 @@ class RFANode(CoordinateNode):
         CoordinateNode.__init__(self, x, y)
         self.children = children
 
+        child1, child2 = children
+        if isinstance(child1, RFANode) and isinstance(child2, RFANode):
+            self.depth = max(child1.depth, child2.depth) + 1
+        elif isinstance(child1, RFANode):
+            self.depth = child1.depth + 1
+        elif isinstance(child2, RFANode):
+            self.depth = child2.depth + 1
+        else:
+            self.depth = 1
+
 
 class FoldingStrategy(object):
 
@@ -144,6 +154,11 @@ class UnfoldingStrategy(object):
 
 
 class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
+    """Unfolding strategy that processes nodes in breadth-first manner.
+
+    The list of folded nodes is processed repeatedly. During each iteration,
+    only the nodes with the maximum depth are unfolded.
+    """
 
     def unfold(self, nodes_to_unfold, renderer=None):
         nodes = list(nodes_to_unfold)
@@ -151,8 +166,20 @@ class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
         while True:
             len_before = len(nodes)
 
-            for i in range(len(nodes)):  # pylint: disable=consider-using-enumerate
+            max_depth = 0
+            for node in nodes:
+                if isinstance(node, RFANode):
+                    max_depth = max(max_depth, node.depth)
+
+            i = 0
+            len_nodes = len(nodes)
+            while i < len_nodes:
                 if not isinstance(nodes[i], RFANode):
+                    i += 1
+                    continue
+                if nodes[i].depth < max_depth:
+                    # Only unfold the nodes that are at the maximum depth.
+                    i += 1
                     continue
 
                 before = nodes[i - 1] if i > 0 else nodes[len(nodes) - 1]
@@ -170,6 +197,10 @@ class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
                 else:
                     nodes.insert(i, node1)
                     nodes.insert(i, node2)
+
+                assert len(nodes) == len_nodes + 1, "Unfolding did not increase number of nodes by 1."
+                len_nodes += 1
+                i += 2
 
                 if renderer:
                     renderer.visualize(nodes)

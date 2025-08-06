@@ -48,15 +48,14 @@ The complete process can be described as follows:
 
 ## Unfolding strategies
 
-- UnfoldingStrategyBreadthFirst: The list of folded nodes is processed repeatedly. In each iteration, the 
-  nodes in the list are unfolded one by one. Newly inserted (unfolded) child nodes are only processed in
-  the next iteration.
+- UnfoldingStrategyBreadthFirst: The list of folded nodes is processed repeatedly. During each iteration, only
+  the nodes with the maximum depth are unfolded.
 
 ## Install
 
 The scripts require
 
-- Python 3.2 or above.
+- Python 3, for example 3.13 is working.
 - optionally: the [tabulate] module (for pretty results in benchmark mode)
 
 The easiest way is to use `pipenv`. A `Pipfile` is included in the project. You can simply download the code and run `pipenv install` in the top-level
@@ -71,11 +70,9 @@ The main script is RFA_demo.py and it features multiple commandline arguments. T
 
 The following command runs a simple demonstration based on 100 randomly generated nodes with a random number generator seed of 17:
 
-```
-$ python RFA_demo.py demo -n 100 -s 17
-Total costs:    4398
-Runtime:        0.013s
-```
+    $ python RFA_demo.py demo -n 100 -s 17
+    Total costs:    4366
+    Runtime:        0.003s
 
 ### 'benchmark' mode
 
@@ -85,17 +82,17 @@ The following command runs a benchmark using a subset of the [TSPLIB] instances 
     ...
     Instance      Costs of optimal route    Costs of RFA route  Cost factor    Runtime
     ----------  ------------------------  --------------------  -------------  ---------
-    a280                            2579                  3364  130.44%        0.069s
-    berlin52                        7542                 10083  133.69%        0.004s
-    bier127                       118282                139393  117.85%        0.018s
-    ch150                           6528                  8040  123.16%        0.024s
-    eil51                            426                   461  108.22%        0.004s
-    pr76                          108159                126517  116.97%        0.007s
-    pr107                          44303                 46094  104.04%        0.013s
-    pr439                         107217                132399  123.49%        0.179s
-    pr1002                        259045                308964  119.27%        0.880s
-    rat99                           1211                  1493  123.29%        0.011s
-    rat783                          8806                 10164  115.42%        0.535s
+    a280                            2579                  3332  129.20%        0.015s
+    berlin52                        7542                 10083  133.69%        0.001s
+    bier127                       118282                145374  122.90%        0.004s
+    ch150                           6528                  7991  122.41%        0.005s
+    eil51                            426                   446  104.69%        0.001s
+    pr76                          108159                125575  116.10%        0.002s
+    pr107                          44303                 46440  104.82%        0.003s
+    pr439                         107217                131166  122.34%        0.039s
+    pr1002                        259045                305608  117.97%        0.184s
+    rat99                           1211                  1449  119.65%        0.003s
+    rat783                          8806                  9891  112.32%        0.112s
 
 Alternatively you can use the minimum-spanning-tree folding strategy:
 
