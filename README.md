@@ -42,9 +42,8 @@ The complete process can be described as follows:
 
 - FoldingStrategyRandomWithNearestNeighbor: A very simple yet highly efficient method which
   randomly picks a node and folds it with the nearest-neighbor.
-- FoldingStrategyMST: The nodes are folded along parent-child relationships in the minimum-spanning-tree.
-- FoldingStrategyMSTBottomUp: The nodes are folded along parent-child relationships in the
-  minimum-spanning-tree but the MST is recalculated after each folding operation. Very slow.
+- FoldingStrategyOutsideIn: The node furthest from the center point is folded with its nearest-neighbor. The center
+  point is only calculated once at the beginning.
 
 ## Unfolding strategies
 
@@ -94,23 +93,23 @@ The following command runs a benchmark using a subset of the [TSPLIB] instances 
     rat99                           1211                  1449  119.65%        0.003s
     rat783                          8806                  9891  112.32%        0.112s
 
-Alternatively you can use the minimum-spanning-tree folding strategy:
+Alternatively you can use the outside-in folding strategy:
 
-    $ python RFA_demo.py benchmark -s 17 --folding-strategy mst
+    $ python RFA_demo.py benchmark -s 17 --folding-strategy outside-in
     ...
     Instance      Costs of optimal route    Costs of RFA route  Cost factor    Runtime
     ----------  ------------------------  --------------------  -------------  ---------
-    a280                            2579                  4629  179.49%        0.030s
-    berlin52                        7542                 12291  162.97%        0.002s
-    bier127                       118282                190479  161.04%        0.007s
-    ch150                           6528                 20663  316.53%        0.009s
-    eil51                            426                   851  199.77%        0.001s
-    pr76                          108159                150986  139.60%        0.003s
-    pr107                          44303                 80728  182.22%        0.004s
-    pr439                         107217                222420  207.45%        0.078s
-    pr1002                        259045                501885  193.74%        0.408s
-    rat99                           1211                  2140  176.71%        0.004s
-    rat783                          8806                 23841  270.74%        0.235s
+    a280                            2579                  3353  130.01%        0.027s
+    berlin52                        7542                  9223  122.29%        0.001s
+    bier127                       118282                138397  117.01%        0.006s
+    ch150                           6528                  7861  120.42%        0.008s
+    eil51                            426                   469  110.09%        0.001s
+    pr76                          108159                125535  116.07%        0.002s
+    pr107                          44303                 47920  108.16%        0.005s
+    pr439                         107217                136940  127.72%        0.064s
+    pr1002                        259045                320124  123.58%        0.317s
+    rat99                           1211                  1440  118.91%        0.004s
+    rat783                          8806                 10756  122.14%        0.196s
 
 ## License
 

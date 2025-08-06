@@ -13,7 +13,7 @@ import sys
 import time
 
 from common import generate_random_nodes, tsplib_get_optimal_solution, load_nodes_from_tsplib_file, Route
-from RFA import FoldingStrategyRandomWithNearestNeighbor, FoldingStrategyMST, FoldingStrategyMSTBottomUp, UnfoldingStrategyBreadthFirst
+from RFA import FoldingStrategyRandomWithNearestNeighbor, FoldingStrategyOutsideIn, UnfoldingStrategyBreadthFirst
 
 
 def create_option_parser():
@@ -27,10 +27,7 @@ def create_option_parser():
     # Add options to the OptionParser.
     parser.add_argument("mode", type=str, action="store", help="Either 'demo' or 'benchmark'.")
 
-    parser.add_argument("--folding-strategy",
-                        type=str,
-                        default="random-nn",
-                        choices=["random-nn", "mst", "mst-bottomup"])
+    parser.add_argument("--folding-strategy", type=str, default="random-nn", choices=["random-nn", "outside-in"])
 
     parser.add_argument("--unfolding-strategy", type=str, default="breadth-first", choices=["breadth-first"])
 
@@ -60,10 +57,8 @@ def create_option_parser():
 def get_folding_strategy_by_name(name):
     if name == "random-nn":
         return FoldingStrategyRandomWithNearestNeighbor()
-    elif name == "mst":
-        return FoldingStrategyMST()
-    elif name == "mst-bottomup":
-        return FoldingStrategyMSTBottomUp()
+    elif name == "outside-in":
+        return FoldingStrategyOutsideIn()
     else:
         raise ValueError("Unknown folding strategy: %s" % name)
 

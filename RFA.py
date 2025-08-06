@@ -57,6 +57,47 @@ class FoldingStrategyRandomWithNearestNeighbor(FoldingStrategy):
         return nodes
 
 
+class FoldingStrategyOutsideIn(FoldingStrategy):
+    """
+    Outside-in folding with fixed center point calculated at the beginning.
+    """
+
+    def fold(self, nodes, renderer=None):
+        nodes = list(nodes)
+        if renderer:
+            renderer.visualize(nodes)
+
+        if len(nodes) <= 3:
+            return nodes
+
+        # Calculate fixed center point from initial node set
+        center_x = sum(node.x for node in nodes) / len(nodes)
+        center_y = sum(node.y for node in nodes) / len(nodes)
+
+        while len(nodes) > 3:
+            # Find the node furthest from the fixed center
+            furthest_node = max(nodes, key=lambda node: (node.x - center_x)**2 + (node.y - center_y)**2)
+
+            nodes.remove(furthest_node)
+
+            if not nodes:
+                break
+
+            # Find nearest neighbor
+            nearest_neighbor, _ = furthest_node.get_nearest_neighbor(nodes)
+            nodes.remove(nearest_neighbor)
+
+            # Create folded node
+            folded_node = RFANode((furthest_node.x + nearest_neighbor.x) / 2,
+                                  (furthest_node.y + nearest_neighbor.y) / 2, (furthest_node, nearest_neighbor))
+            nodes.append(folded_node)
+
+            if renderer:
+                renderer.visualize(nodes)
+
+        return nodes
+
+
 class FoldingStrategyMST(FoldingStrategy):
     """
     Nodes are folded using a minimum spanning tree (MST) strategy.
