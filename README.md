@@ -88,7 +88,7 @@ The following command runs a simple demonstration based on 100 randomly generate
 
 ### 'benchmark' mode
 
-The following command runs a benchmark using a subset of the [TSPLIB] instances (a280, berlin52, bier127, ch150, eil51, pr76, pr107, pr439, pr1002, rat99, and rat783):
+The following command runs a benchmark using a subset of the [TSPLIB] instances:
 
     $ python RFA_demo.py benchmark -s 17
     ...
@@ -96,17 +96,19 @@ The following command runs a benchmark using a subset of the [TSPLIB] instances 
     ----------  ------------------------  --------------------  -------------  ---------
     a280                            2579                  3378  130.98%        0.019s
     berlin52                        7542                 10098  133.89%        0.001s
-    bier127                       118282                145415  122.94%        0.005s
+    bier127                       118282                145415  122.94%        0.004s
     ch150                           6528                  7521  115.21%        0.006s
     eil51                            426                   470  110.33%        0.001s
-    pr76                          108159                125593  116.12%        0.002s
-    pr107                          44303                 46468  104.89%        0.003s
-    pr439                         107217                131246  122.41%        0.045s
-    pr1002                        259045                326184  125.92%        0.222s
-    rat99                           1211                  1519  125.43%        0.003s
-    rat783                          8806                 10937  124.20%        0.140s
+    pla7397                     23260728              29311298  126.01%        10.068s
+    pr76                          108159                117739  108.86%        0.003s
+    pr107                          44303                 45368  102.40%        0.003s
+    pr439                         107217                135217  126.12%        0.046s
+    pr1002                        259045                311410  120.21%        0.221s
+    rat99                           1211                  1414  116.76%        0.004s
+    rat783                          8806                 10283  116.77%        0.137s
+    usa13509                    19982859              24624771  123.23%        39.387s
 
-You will get much better results - at almost zero cost - by enabling local 2-opt during the unfolding phase:
+You will get much better results by enabling local 2-opt during the unfolding phase:
 
     $ python RFA_demo.py benchmark -s 17 --unfolding-strategy breadth-first-2opt
     ...
@@ -117,12 +119,14 @@ You will get much better results - at almost zero cost - by enabling local 2-opt
     bier127                       118282                129273  109.29%        0.022s
     ch150                           6528                  6947  106.42%        0.026s
     eil51                            426                   442  103.76%        0.006s
-    pr76                          108159                122328  113.10%        0.011s
-    pr107                          44303                 44800  101.12%        0.017s
-    pr439                         107217                117304  109.41%        0.110s
-    pr1002                        259045                287038  110.81%        0.385s
-    rat99                           1211                  1322  109.17%        0.015s
-    rat783                          8806                  9698  110.13%        0.258s
+    pla7397                     23260728              26968779  115.94%        11.688s
+    pr76                          108159                112468  103.98%        0.013s
+    pr107                          44303                 44326  100.05%        0.017s
+    pr439                         107217                122899  114.63%        0.111s
+    pr1002                        259045                281735  108.76%        0.389s
+    rat99                           1211                  1274  105.20%        0.015s
+    rat783                          8806                  9814  111.45%        0.264s
+    usa13509                    19982859              22460248  112.40%        42.294s
 
 ## License
 

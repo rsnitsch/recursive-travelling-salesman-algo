@@ -57,7 +57,7 @@ def create_option_parser():
     parser.add_argument(
         "--tsplib",
         type=str,
-        default="a280,berlin52,bier127,ch150,eil51,pr76,pr107,pr439,pr1002,rat99,rat783",
+        default="a280,berlin52,bier127,ch150,eil51,pla7397,pr76,pr107,pr439,pr1002,rat99,rat783,usa13509",
         help="TSPLIB instances to be executed (comma-separated) or 'all' for all instances in the TSPLIB folder.")
 
     return parser
