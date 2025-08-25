@@ -5,7 +5,7 @@ Common functionality for travelling-salesman-problem algorithms.
 """
 import random
 
-from math import sqrt
+from math import ceil, sqrt
 
 
 class Node(object):
@@ -22,7 +22,7 @@ class Node(object):
         """
         raise NotImplementedError("get_travel_costs() must be implemented in subclasses")
 
-    def get_nearest_neighbor(self, candidates):
+    def get_nearest_neighbor(self, candidates, ceil_2d):
         """
         Calculates the travel costs for each of the given candidate nodes
         and returns the candidate with the minimum costs along with the
@@ -30,9 +30,9 @@ class Node(object):
         (nearest_neighbor, nearest_distance)
         """
         nearest_neighbor = candidates[0]
-        nearest_distance = self.get_travel_costs(candidates[0])
+        nearest_distance = self.get_travel_costs(candidates[0], ceil_2d)
         for i in range(1, len(candidates)):
-            candidate_distance = self.get_travel_costs(candidates[i])
+            candidate_distance = self.get_travel_costs(candidates[i], ceil_2d)
             if candidate_distance < nearest_distance:
                 nearest_distance = candidate_distance
                 nearest_neighbor = candidates[i]
@@ -52,9 +52,12 @@ class CoordinateNode(Node):
         self.x = x
         self.y = y
 
-    def get_travel_costs(self, other_node):
-        return int(round(sqrt((other_node.x - self.x)**2 + (other_node.y - self.y)**2)))
-        #return sqrt((other_node.x - self.x)**2 + (other_node.y - self.y)**2)
+    def get_travel_costs(self, other_node, ceil_2d):
+        euc_distance = sqrt((other_node.x - self.x)**2 + (other_node.y - self.y)**2)
+        if ceil_2d:
+            return int(ceil(euc_distance))
+        else:
+            return int(round(euc_distance))
 
     def __str__(self):
         return "CN(%s, %s)" % (self.x, self.y)
@@ -62,13 +65,13 @@ class CoordinateNode(Node):
 
 class Route(list):
 
-    def get_total_costs(self):
+    def get_total_costs(self, ceil_2d):
         """Returns the total travel costs for this route."""
         sum = 0
 
         for i in range(len(self) - 1):
-            sum += self[i].get_travel_costs(self[i + 1])
-        sum += self[len(self) - 1].get_travel_costs(self[0])
+            sum += self[i].get_travel_costs(self[i + 1], ceil_2d)
+        sum += self[len(self) - 1].get_travel_costs(self[0], ceil_2d)
 
         return sum
 
@@ -94,19 +97,24 @@ def load_nodes_from_tsplib_file(filename):
     """
     Loads all nodes specified in the given tsplib-file.
     
-    Only EUC_2D-format is supported.
+    Only euclidean instances are supported (EUC_2D or CEIL_2D).
     """
     nodes = []
+    ceil_2d = None
 
-    with open(filename, "r") as fh:
+    with open(filename, "r", encoding='utf-8') as fh:
         for line in fh:
             line = line.strip()
 
             assert len(line) > 0
 
             if line.startswith("EDGE_WEIGHT_TYPE"):
-                assert line.endswith("EUC_2D"), \
-                       "only EUC_2D instances can be loaded"
+                if line.endswith("EUC_2D"):
+                    ceil_2d = False
+                elif line.endswith("CEIL_2D"):
+                    ceil_2d = True
+                else:
+                    raise ValueError("only EUC_2D or CEIL_2D instances can be loaded")
                 continue
 
             if line[0].isdigit():
@@ -115,7 +123,10 @@ def load_nodes_from_tsplib_file(filename):
             elif line == "EOF":
                 break
 
-    return nodes
+    if ceil_2d is None:
+        raise ValueError("could not determine EDGE_WEIGHT_TYPE from file")
+
+    return nodes, ceil_2d
 
 
 optimal_solutions = {

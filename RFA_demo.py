@@ -51,6 +51,12 @@ def create_option_parser():
 
     parser.add_argument("--renderer", type=str, default="disabled", choices=["disabled", "turtle"])
 
+    parser.add_argument(
+        "--tsplib",
+        type=str,
+        default="a280,berlin52,bier127,ch150,eil51,pr76,pr107,pr439,pr1002,rat99,rat783",
+        help="TSPLIB instances to be executed (comma-separated) or 'all' for all instances in the TSPLIB folder.")
+
     return parser
 
 
@@ -93,7 +99,7 @@ def main(argv):
     if args.mode == "demo":
         main_random(args.folding_strategy, args.unfolding_strategy, args.renderer, args.number_of_nodes, args.seed)
     elif args.mode == "benchmark":
-        main_tsplib(args.folding_strategy, args.unfolding_strategy, args.renderer, args.seed)
+        main_tsplib(args.tsplib, args.folding_strategy, args.unfolding_strategy, args.renderer, args.seed)
 
     return 0
 
@@ -111,6 +117,7 @@ def main_random(folding_strategy, unfolding_strategy, renderer, number_of_nodes,
     # ENDE DER KONFIGURATION.
 
     nodes = generate_random_nodes(number_of_nodes, max_size=max_size)
+    ceil_2d = False
 
     # Zur Reproduzierbarkeit.
     random.seed(seed)
@@ -121,12 +128,12 @@ def main_random(folding_strategy, unfolding_strategy, renderer, number_of_nodes,
     renderer_instance = get_renderer_by_name(renderer)
 
     start_time = time.time()
-    folded = folding_strategy_instance.fold(nodes, renderer_instance)
+    folded = folding_strategy_instance.fold(nodes, ceil_2d, renderer_instance)
     assert len(folded) <= 3, "Folding did not reduce number of nodes to 3."
-    route = Route(unfolding_strategy_instance.unfold(folded, renderer_instance))
+    route = Route(unfolding_strategy_instance.unfold(folded, ceil_2d, renderer_instance))
     end_time = time.time()
 
-    total_costs = route.get_total_costs()
+    total_costs = route.get_total_costs(ceil_2d)
     runtime = end_time - start_time
 
     print("Total costs:\t%s" % total_costs)
@@ -137,17 +144,8 @@ def main_random(folding_strategy, unfolding_strategy, renderer, number_of_nodes,
         renderer_instance.wait_until_closed()
 
 
-def main_tsplib(folding_strategy, unfolding_strategy, renderer, seed=0):
+def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, renderer, seed=0):
     # KONFIGURATION:
-    """
-    TSPLIB-Instanzen, die ausgeführt werden sollen.
-
-    Achtung: Es werden nur "EUC_2D"-Instanzen unterstützt!
-
-    Empfohlen: "a280,berlin52,bier127,ch150,eil51,pr76,pr107,pr439,pr1002,rat99,rat783"
-    """
-    tsplib = "a280,berlin52,bier127,ch150,eil51,pr76,pr107,pr439,pr1002,rat99,rat783"
-    #tsplib = "a280,berlin52,bier127,ch150,eil51,pr76,pr107,pr439,pr1002,rat99,rat783,brd14051,d18512"
     """
     Ausgabeformat für die Ergebnisse.
 
@@ -160,6 +158,9 @@ def main_tsplib(folding_strategy, unfolding_strategy, renderer, seed=0):
     tsplib_folder = './TSPLIB'
 
     # ENDE DER KONFIGURATION.
+
+    if tsplib == "all":
+        tsplib = ",".join([f[:-4] for f in os.listdir(tsplib_folder) if f.endswith(".tsp")])
 
     try:
         from tabulate import tabulate
@@ -176,19 +177,19 @@ def main_tsplib(folding_strategy, unfolding_strategy, renderer, seed=0):
 
     # Anwenden des RFA auf die angegebenen TSPLIB-Instanzen.
     for tspi in tsplib.split(","):
-        nodes = load_nodes_from_tsplib_file(os.path.join(tsplib_folder, "%s.tsp" % tspi))
+        nodes, ceil_2d = load_nodes_from_tsplib_file(os.path.join(tsplib_folder, "%s.tsp" % tspi))
 
         folding_strategy_instance = get_folding_strategy_by_name(folding_strategy)
         unfolding_strategy_instance = get_unfolding_strategy_by_name(unfolding_strategy)
         renderer_instance = get_renderer_by_name(renderer)
 
         start_time = time.time()
-        folded = folding_strategy_instance.fold(nodes, renderer_instance)
+        folded = folding_strategy_instance.fold(nodes, ceil_2d, renderer_instance)
         assert len(folded) <= 3, "Folding did not reduce number of nodes to 3."
-        route = Route(unfolding_strategy_instance.unfold(folded, renderer_instance))
+        route = Route(unfolding_strategy_instance.unfold(folded, ceil_2d, renderer_instance))
         end_time = time.time()
 
-        total_costs = route.get_total_costs()
+        total_costs = route.get_total_costs(ceil_2d)
         runtime = end_time - start_time
 
         optimal_costs = tsplib_get_optimal_solution(tspi)

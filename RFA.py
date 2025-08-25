@@ -4,7 +4,10 @@
 Recursive-fold-algorithm (RFA) for metric travelling-salesman-problems.
 """
 import random
-from common import CoordinateNode, Route
+from typing import List
+
+from common import CoordinateNode, Node, Route
+from ui import Renderer
 
 
 class RFANode(CoordinateNode):
@@ -26,7 +29,7 @@ class RFANode(CoordinateNode):
 
 class FoldingStrategy(object):
 
-    def fold(self, nodes, renderer=None):
+    def fold(self, nodes, ceil_2d, renderer):
         """Fold nodes using the strategy defined in the subclass."""
         raise NotImplementedError("fold() must be implemented in subclasses")
 
@@ -36,7 +39,7 @@ class FoldingStrategyRandomWithNearestNeighbor(FoldingStrategy):
     Nodes are picked in random order. Each node is folded with its nearest neighbor.
     """
 
-    def fold(self, nodes, renderer=None):
+    def fold(self, nodes: List[Node], ceil_2d: bool, renderer: Renderer):
         nodes = list(nodes)
         if renderer:
             renderer.visualize(nodes)
@@ -45,7 +48,7 @@ class FoldingStrategyRandomWithNearestNeighbor(FoldingStrategy):
             node1 = random.choice(nodes)
             nodes.remove(node1)
 
-            node2, dist = node1.get_nearest_neighbor(nodes)
+            node2, dist = node1.get_nearest_neighbor(nodes, ceil_2d)
             nodes.remove(node2)
 
             nodes.append(RFANode((node1.x + node2.x) / 2, (node1.y + node2.y) / 2, (node1, node2)))
@@ -61,7 +64,7 @@ class FoldingStrategyOutsideIn(FoldingStrategy):
     Outside-in folding with fixed center point calculated at the beginning.
     """
 
-    def fold(self, nodes, renderer=None):
+    def fold(self, nodes: List[Node], ceil_2d: bool, renderer):
         nodes = list(nodes)
         if renderer:
             renderer.visualize(nodes)
@@ -99,7 +102,7 @@ class FoldingStrategyOutsideIn(FoldingStrategy):
 
 class UnfoldingStrategy(object):
 
-    def unfold(self, nodes_to_unfold, renderer=None):
+    def unfold(self, nodes_to_unfold, ceil_2d, renderer):
         """Unfold nodes using the strategy defined in the subclass."""
         raise NotImplementedError("unfold() must be implemented in subclasses")
 
@@ -111,7 +114,7 @@ class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
     only the nodes with the maximum depth are unfolded.
     """
 
-    def unfold(self, nodes_to_unfold, renderer=None):
+    def unfold(self, nodes_to_unfold, ceil_2d, renderer):
         nodes = list(nodes_to_unfold)
 
         while True:
@@ -142,7 +145,7 @@ class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
 
                 nodes.remove(nodes[i])
 
-                if route1.get_total_costs() < route2.get_total_costs():
+                if route1.get_total_costs(ceil_2d) < route2.get_total_costs(ceil_2d):
                     nodes.insert(i, node2)
                     nodes.insert(i, node1)
                 else:
