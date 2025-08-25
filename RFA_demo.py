@@ -12,6 +12,8 @@ import random
 import sys
 import time
 
+from tabulate import tabulate
+
 from common import generate_random_nodes, tsplib_get_optimal_solution, load_nodes_from_tsplib_file, Route
 from RFA import FoldingStrategyRandomWithNearestNeighbor, FoldingStrategyOutsideIn, UnfoldingStrategyBreadthFirst, UnfoldingStrategyBreadthFirstWithLocal2Opt
 
@@ -175,13 +177,6 @@ def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, intersection_
     if tsplib == "all":
         tsplib = ",".join([f[:-4] for f in os.listdir(tsplib_folder) if f.endswith(".tsp")])
 
-    try:
-        from tabulate import tabulate
-        tabulate_available = True
-    except ImportError:
-        print("Warning: tabulate module could not be imported. Benchmark results will not be pretty-printed.")
-        tabulate_available = False
-
     # Zeilen für Ergebnis-Tabelle sammeln.
     rows = list()
 
@@ -228,13 +223,7 @@ def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, intersection_
 
     # Ergebnis-Tabelle ausgeben.
     headers = ["Instance", "Costs of optimal route", "Costs of RFA route", "Cost factor", "Runtime"]
-    if tabulate_available:
-        print(tabulate(rows, headers=headers))
-    else:
-        # Fallback if tabulate module is not available.
-        import pprint
-        rows.insert(0, headers)
-        pprint.pprint(rows)
+    print(tabulate(rows, headers=headers))
 
 
 if __name__ == "__main__":

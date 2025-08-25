@@ -68,8 +68,7 @@ The complete process can be described as follows:
 The scripts require
 
 - Python 3, for example 3.13 is working.
-- PyPI packages `rtree` and `shapely`
-- optionally: the PyPI [tabulate] package (for pretty results in benchmark mode)
+- PyPI packages `rtree`, `shapely`, and `tabulate`
 
 The easiest way is to use `pipenv`. A `Pipfile` is included in the project. You can simply download the code and run `pipenv install` in the top-level
 project folder. Then switch to the project's Python environment by executing `pipenv shell`. You can now execute the main script `RFA_demo.py` as described
