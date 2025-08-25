@@ -51,7 +51,7 @@ The complete process can be described as follows:
 
 ### Folding strategies
 
-- `FoldingStrategyRandomWithNearestNeighbor`: A very simple yet highly efficient method which
+- `FoldingStrategyRandomWithNearestNeighbor` (default): A very simple yet highly efficient method which
   randomly picks a node and folds it with the nearest-neighbor.
 - `FoldingStrategyOutsideIn`: The node furthest from the center point is folded with its nearest-neighbor. The center
   point is only calculated once at the beginning.
@@ -60,7 +60,7 @@ The complete process can be described as follows:
 
 - `UnfoldingStrategyBreadthFirst`: The list of folded nodes is processed repeatedly. During each iteration, only
   the nodes with the maximum depth are unfolded.
-- `UnfoldingStrategyBreadthFirstWithLocal2Opt`: Same as UnfoldingStrategyBreadthFirst, but after each unfolding
+- `UnfoldingStrategyBreadthFirstWithLocal2Opt` (default): Same as UnfoldingStrategyBreadthFirst, but after each unfolding
   step, a local 2-opt optimization around the inserted nodes is performed.
 
 ## Install
@@ -83,50 +83,35 @@ The main script is RFA_demo.py and it features multiple commandline arguments. T
 The following command runs a simple demonstration based on 100 randomly generated nodes with a random number generator seed of 17:
 
     $ python RFA_demo.py demo -n 100 -s 17
-    Total costs:    4366
-    Runtime:        0.003s
+    Total costs:    4075
+    Runtime:        0.016s
 
 ### 'benchmark' mode
 
-The following command runs a benchmark using a subset of the [TSPLIB] instances:
+The following command runs a benchmark using a subset of the [TSPLIB] instances (see TSPLIB/ folder):
 
-    $ python RFA_demo.py benchmark -s 17 --unfolding-strategy breadth-first
-    ...
-    Instance      Costs of optimal route    Costs of RFA route  Cost factor    Runtime
-    ----------  ------------------------  --------------------  -------------  ---------
-    a280                            2579                  3378  130.98%        0.019s
-    berlin52                        7542                  8664  114.88%        0.001s
-    bier127                       118282                140229  118.55%        0.005s
-    ch150                           6528                  7430  113.82%        0.006s
-    eil51                            426                   516  121.13%        0.001s
-    pla7397                     23260728              29848806  128.32%        10.527s
-    pr76                          108159                121897  112.70%        0.004s
-    pr107                          44303                 45841  103.47%        0.004s
-    pr439                         107217                128240  119.61%        0.055s
-    pr1002                        259045                321178  123.99%        0.259s
-    rat99                           1211                  1355  111.89%        0.004s
-    rat783                          8806                 10242  116.31%        0.154s
-    usa13509                    19982859              24962176  124.92%        39.405s
-
-You will get much better results by enabling local 2-opt during the unfolding phase:
-
-    $ python RFA_demo.py benchmark -s 17 --unfolding-strategy breadth-first-2opt
+    $ python RFA_demo.py benchmark --tsplib all -s 17
     ...
     Instance      Costs of optimal route    Costs of RFA route  Cost factor    Runtime
     ----------  ------------------------  --------------------  -------------  ---------
     a280                            2579                  2917  113.11%        0.057s
     berlin52                        7542                  8403  111.42%        0.007s
-    bier127                       118282                127078  107.44%        0.023s
-    ch150                           6528                  7034  107.75%        0.027s
-    eil51                            426                   448  105.16%        0.007s
-    pla7397                     23260728              26821014  115.31%        12.024s
-    pr76                          108159                116356  107.58%        0.014s
+    bier127                       118282                127078  107.44%        0.024s
+    brd14051                      469385                521991  111.21%        45.724s
+    ch150                           6528                  7034  107.75%        0.029s
+    d18512                        645238                718894  111.42%        78.015s
+    eil51                            426                   448  105.16%        0.010s
+    pla33810                    66048945              77860165  117.88%        234.044s
+    pla7397                     23260728              26821014  115.31%        11.737s
+    pla85900                   142382641             165332217  116.12%        1583.811s
+    pr1002                        259045                288473  111.36%        0.431s
     pr107                          44303                 44982  101.53%        0.018s
     pr439                         107217                118868  110.87%        0.114s
-    pr1002                        259045                288473  111.36%        0.388s
-    rat99                           1211                  1263  104.29%        0.016s
-    rat783                          8806                  9520  108.11%        0.256s
-    usa13509                    19982859              22639652  113.30%        43.718s
+    pr76                          108159                116356  107.58%        0.012s
+    rat783                          8806                  9520  108.11%        0.268s
+    rat99                           1211                  1263  104.29%        0.017s
+    sw24978                       855597                959275  112.12%        147.175s
+    usa13509                    19982859              22639652  113.30%        44.453s
 
 ## License
 

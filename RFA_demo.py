@@ -31,7 +31,7 @@ def create_option_parser():
 
     parser.add_argument("--unfolding-strategy",
                         type=str,
-                        default="breadth-first",
+                        default="breadth-first-2opt",
                         choices=["breadth-first", "breadth-first-2opt"])
 
     DEFAULT_NUMBER_OF_NODES = 100
