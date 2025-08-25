@@ -13,7 +13,7 @@ import sys
 import time
 
 from common import generate_random_nodes, tsplib_get_optimal_solution, load_nodes_from_tsplib_file, Route
-from RFA import FoldingStrategyRandomWithNearestNeighbor, FoldingStrategyOutsideIn, UnfoldingStrategyBreadthFirst
+from RFA import FoldingStrategyRandomWithNearestNeighbor, FoldingStrategyOutsideIn, UnfoldingStrategyBreadthFirst, UnfoldingStrategyBreadthFirstWithLocal2Opt
 
 
 def create_option_parser():
@@ -29,7 +29,10 @@ def create_option_parser():
 
     parser.add_argument("--folding-strategy", type=str, default="random-nn", choices=["random-nn", "outside-in"])
 
-    parser.add_argument("--unfolding-strategy", type=str, default="breadth-first", choices=["breadth-first"])
+    parser.add_argument("--unfolding-strategy",
+                        type=str,
+                        default="breadth-first",
+                        choices=["breadth-first", "breadth-first-2opt"])
 
     DEFAULT_NUMBER_OF_NODES = 100
     parser.add_argument("-n",
@@ -72,6 +75,8 @@ def get_folding_strategy_by_name(name):
 def get_unfolding_strategy_by_name(name):
     if name == "breadth-first":
         return UnfoldingStrategyBreadthFirst()
+    elif name == "breadth-first-2opt":
+        return UnfoldingStrategyBreadthFirstWithLocal2Opt()
     else:
         raise ValueError("Unknown unfolding strategy: %s" % name)
 

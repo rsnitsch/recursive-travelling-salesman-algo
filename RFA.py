@@ -86,7 +86,7 @@ class FoldingStrategyOutsideIn(FoldingStrategy):
                 break
 
             # Find nearest neighbor
-            nearest_neighbor, _ = furthest_node.get_nearest_neighbor(nodes)
+            nearest_neighbor, _ = furthest_node.get_nearest_neighbor(nodes, ceil_2d)
             nodes.remove(nearest_neighbor)
 
             # Create folded node
@@ -161,3 +161,95 @@ class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
 
             if len_before == len(nodes):
                 return nodes
+
+
+class UnfoldingStrategyBreadthFirstWithLocal2Opt(UnfoldingStrategy):
+    """
+    Like UnfoldingStrategyBreadthFirst, but after each unfolding step,
+    a local 2-opt optimization around the inserted nodes is performed.
+    """
+
+    def unfold(self, nodes_to_unfold, ceil_2d, renderer):
+        nodes = list(nodes_to_unfold)
+
+        while True:
+            len_before = len(nodes)
+
+            # 1. Bestimme maximale Tiefe
+            max_depth = 0
+            for node in nodes:
+                if isinstance(node, RFANode):
+                    max_depth = max(max_depth, node.depth)
+
+            i = 0
+            len_nodes = len(nodes)
+            while i < len_nodes:
+                if not isinstance(nodes[i], RFANode):
+                    i += 1
+                    continue
+                if nodes[i].depth < max_depth:
+                    i += 1
+                    continue
+
+                before = nodes[i - 1] if i > 0 else nodes[len(nodes) - 1]
+                after = nodes[i + 1] if i < len(nodes) - 1 else nodes[0]
+
+                node1: Node = nodes[i].children[0]
+                node2: Node = nodes[i].children[1]
+                route1 = Route([before, node1, node2, after])
+                route2 = Route([before, node2, node1, after])
+
+                nodes.remove(nodes[i])
+
+                if route1.get_total_costs(ceil_2d) < route2.get_total_costs(ceil_2d):
+                    nodes.insert(i, node2)
+                    nodes.insert(i, node1)
+                    inserted = [node1, node2]
+                else:
+                    nodes.insert(i, node1)
+                    nodes.insert(i, node2)
+                    inserted = [node2, node1]
+
+                assert len(nodes) == len_nodes + 1, "Unfolding did not increase number of nodes by 1."
+                len_nodes += 1
+                i += 2
+
+                # New: Local 2-opt around the inserted nodes
+                nodes = self.local_2opt_segment(nodes, inserted, ceil_2d, radius=5)
+
+                if renderer:
+                    renderer.visualize(nodes)
+
+            if len_before == len(nodes):
+                return nodes
+
+    def local_2opt_segment(self, tour, inserted_nodes, ceil_2d, radius=5):
+        """
+        Perform a local 2-opt in the neighborhood of the inserted nodes.
+        """
+        changed = True
+        while changed:
+            changed = False
+            for node in inserted_nodes:
+                idx = tour.index(node)
+                i_start = max(0, idx - radius)
+                i_end = min(len(tour), idx + radius)
+
+                for i in range(i_start, i_end - 2):
+                    for j in range(i + 2, i_end):
+                        if j - i == 1:
+                            continue
+
+                        a: Node = tour[i]
+                        b: Node = tour[(i + 1) % len(tour)]
+                        c: Node = tour[j]
+                        d: Node = tour[(j + 1) % len(tour)]
+
+                        old_cost = a.get_travel_costs(b, ceil_2d) + c.get_travel_costs(d, ceil_2d)
+                        new_cost = a.get_travel_costs(c, ceil_2d) + b.get_travel_costs(d, ceil_2d)
+
+                        if new_cost < old_cost:
+                            # 2-opt move
+                            tour[i + 1:j + 1] = reversed(tour[i + 1:j + 1])
+                            changed = True
+        return tour
