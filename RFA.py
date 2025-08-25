@@ -114,6 +114,9 @@ class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
     only the nodes with the maximum depth are unfolded.
     """
 
+    def __init__(self):
+        self.enable_local_2opt = False
+
     def unfold(self, nodes_to_unfold, ceil_2d, renderer):
         nodes = list(nodes_to_unfold)
 
@@ -133,61 +136,6 @@ class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
                     continue
                 if nodes[i].depth < max_depth:
                     # Only unfold the nodes that are at the maximum depth.
-                    i += 1
-                    continue
-
-                before = nodes[i - 1] if i > 0 else nodes[len(nodes) - 1]
-                after = nodes[i + 1] if i < len(nodes) - 1 else nodes[0]
-
-                node1, node2 = nodes[i].children
-                route1 = Route([before, node1, node2, after])
-                route2 = Route([before, node2, node1, after])
-
-                nodes.remove(nodes[i])
-
-                if route1.get_total_costs(ceil_2d) < route2.get_total_costs(ceil_2d):
-                    nodes.insert(i, node2)
-                    nodes.insert(i, node1)
-                else:
-                    nodes.insert(i, node1)
-                    nodes.insert(i, node2)
-
-                assert len(nodes) == len_nodes + 1, "Unfolding did not increase number of nodes by 1."
-                len_nodes += 1
-                i += 2
-
-                if renderer:
-                    renderer.visualize(nodes)
-
-            if len_before == len(nodes):
-                return nodes
-
-
-class UnfoldingStrategyBreadthFirstWithLocal2Opt(UnfoldingStrategy):
-    """
-    Like UnfoldingStrategyBreadthFirst, but after each unfolding step,
-    a local 2-opt optimization around the inserted nodes is performed.
-    """
-
-    def unfold(self, nodes_to_unfold, ceil_2d, renderer):
-        nodes = list(nodes_to_unfold)
-
-        while True:
-            len_before = len(nodes)
-
-            # 1. Bestimme maximale Tiefe
-            max_depth = 0
-            for node in nodes:
-                if isinstance(node, RFANode):
-                    max_depth = max(max_depth, node.depth)
-
-            i = 0
-            len_nodes = len(nodes)
-            while i < len_nodes:
-                if not isinstance(nodes[i], RFANode):
-                    i += 1
-                    continue
-                if nodes[i].depth < max_depth:
                     i += 1
                     continue
 
@@ -215,7 +163,8 @@ class UnfoldingStrategyBreadthFirstWithLocal2Opt(UnfoldingStrategy):
                 i += 2
 
                 # New: Local 2-opt around the inserted nodes
-                nodes = self.local_2opt_segment(nodes, inserted, ceil_2d, radius=5)
+                if self.enable_local_2opt:
+                    nodes = self.local_2opt_segment(nodes, inserted, ceil_2d, radius=5)
 
                 if renderer:
                     renderer.visualize(nodes)
@@ -253,3 +202,14 @@ class UnfoldingStrategyBreadthFirstWithLocal2Opt(UnfoldingStrategy):
                             tour[i + 1:j + 1] = reversed(tour[i + 1:j + 1])
                             changed = True
         return tour
+
+
+class UnfoldingStrategyBreadthFirstWithLocal2Opt(UnfoldingStrategyBreadthFirst):
+    """
+    Like UnfoldingStrategyBreadthFirst, but after each unfolding step,
+    a local 2-opt optimization around the inserted nodes is performed.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.enable_local_2opt = True
