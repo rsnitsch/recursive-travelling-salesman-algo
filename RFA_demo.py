@@ -174,14 +174,14 @@ def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, renderer, see
         print("Warning: tabulate module could not be imported. Benchmark results will not be pretty-printed.")
         tabulate_available = False
 
-    # Zur Reproduzierbarkeit.
-    random.seed(seed)
-
     # Zeilen für Ergebnis-Tabelle sammeln.
     rows = list()
 
     # Anwenden des RFA auf die angegebenen TSPLIB-Instanzen.
     for tspi in tsplib.split(","):
+        # Zur Reproduzierbarkeit.
+        random.seed(seed)
+
         nodes, ceil_2d = load_nodes_from_tsplib_file(os.path.join(tsplib_folder, "%s.tsp" % tspi))
 
         folding_strategy_instance = get_folding_strategy_by_name(folding_strategy)
