@@ -14,7 +14,7 @@ class Node(object):
     def __init__(self, *args, **kwargs):
         pass
 
-    def get_travel_costs(self, other_node):
+    def get_travel_costs(self, other_node, ceil_2d):
         """
         Returns the costs for travelling from this node to the given node.
         
@@ -44,7 +44,7 @@ class CoordinateNode(Node):
     TSP Node for the metric TSP with a X- and a Y-coordinate.
     
     The distance between 2 CoordinateNodes is calculated using
-    Pythagoras' theorem (and converting the result to integer for
+    Pythagoras' theorem (and converting the result to rounded integer for
     TSPLIB compatibility).
     """
 
@@ -53,7 +53,7 @@ class CoordinateNode(Node):
         self.y = y
 
     def get_travel_costs(self, other_node):
-        return int(sqrt((other_node.x - self.x)**2 + (other_node.y - self.y)**2))
+        return int(round(sqrt((other_node.x - self.x)**2 + (other_node.y - self.y)**2)))
         #return sqrt((other_node.x - self.x)**2 + (other_node.y - self.y)**2)
 
     def __str__(self):
