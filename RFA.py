@@ -4,7 +4,7 @@
 Recursive-fold-algorithm (RFA) for metric travelling-salesman-problems.
 """
 import random
-from typing import List
+from typing import List, Optional
 
 from common import CoordinateNode, Node, Route
 from ui import Renderer
@@ -29,7 +29,7 @@ class RFANode(CoordinateNode):
 
 class FoldingStrategy(object):
 
-    def fold(self, nodes, ceil_2d, renderer):
+    def fold(self, nodes: List[Node], ceil_2d: bool, renderer: Optional[Renderer]):
         """Fold nodes using the strategy defined in the subclass."""
         raise NotImplementedError("fold() must be implemented in subclasses")
 
@@ -39,7 +39,7 @@ class FoldingStrategyRandomWithNearestNeighbor(FoldingStrategy):
     Nodes are picked in random order. Each node is folded with its nearest neighbor.
     """
 
-    def fold(self, nodes: List[Node], ceil_2d: bool, renderer: Renderer):
+    def fold(self, nodes: List[Node], ceil_2d: bool, renderer: Optional[Renderer]):
         nodes = list(nodes)
         if renderer:
             renderer.visualize(nodes)
@@ -64,7 +64,7 @@ class FoldingStrategyOutsideIn(FoldingStrategy):
     Outside-in folding with fixed center point calculated at the beginning.
     """
 
-    def fold(self, nodes: List[Node], ceil_2d: bool, renderer):
+    def fold(self, nodes: List[Node], ceil_2d: bool, renderer: Optional[Renderer]):
         nodes = list(nodes)
         if renderer:
             renderer.visualize(nodes)

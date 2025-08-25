@@ -66,7 +66,7 @@ class CoordinateNode(Node):
         return "CN(%s, %s)" % (self.x, self.y)
 
 
-def ccw(p, q, r):
+def ccw(p: CoordinateNode, q: CoordinateNode, r: CoordinateNode):
     """
     Check whether three points p, q, r are arranged in a counter-clockwise order.
 
@@ -83,7 +83,7 @@ def ccw(p, q, r):
     return (r.y - p.y) * (q.x - p.x) > (q.y - p.y) * (r.x - p.x)
 
 
-def segments_intersect(a, b, c, d):
+def segments_intersect(a: CoordinateNode, b: CoordinateNode, c: CoordinateNode, d: CoordinateNode):
     """
     Determine whether two line segments (a-b) and (c-d) intersect.
 
