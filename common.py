@@ -7,6 +7,9 @@ import random
 
 from math import ceil, sqrt
 
+from shapely.geometry import LineString
+from rtree import index
+
 
 class Node(object):
     """Abstract TSP Node."""
@@ -63,17 +66,89 @@ class CoordinateNode(Node):
         return "CN(%s, %s)" % (self.x, self.y)
 
 
+def ccw(p, q, r):
+    """
+    Check whether three points p, q, r are arranged in a counter-clockwise order.
+
+    This function computes the orientation of the triplet (p, q, r).
+    If the result is True, the sequence of points makes a "left turn"
+    (counter-clockwise); otherwise, it is clockwise or collinear.
+
+    Args:
+        p, q, r: Points with attributes `x` and `y`.
+
+    Returns:
+        bool: True if points are in counter-clockwise order, False otherwise.
+    """
+    return (r.y - p.y) * (q.x - p.x) > (q.y - p.y) * (r.x - p.x)
+
+
+def segments_intersect(a, b, c, d):
+    """
+    Determine whether two line segments (a-b) and (c-d) intersect.
+
+    Uses orientation tests (via ccw) to check intersection without
+    computing actual intersection points.
+    This is a standard computational geometry method that works in O(1).
+
+    Args:
+        a, b, c, d: Points with attributes `x` and `y`.
+                    Represent the endpoints of two line segments: ab and cd.
+
+    Returns:
+        bool: True if the segments intersect (proper crossing), False otherwise.
+    """
+    return (ccw(a, c, d) != ccw(b, c, d)) and (ccw(a, b, c) != ccw(a, b, d))
+
+
 class Route(list):
 
     def get_total_costs(self, ceil_2d):
         """Returns the total travel costs for this route."""
-        sum = 0
-
+        total = 0
         for i in range(len(self) - 1):
-            sum += self[i].get_travel_costs(self[i + 1], ceil_2d)
-        sum += self[len(self) - 1].get_travel_costs(self[0], ceil_2d)
+            total += self[i].get_travel_costs(self[i + 1], ceil_2d)
+        total += self[len(self) - 1].get_travel_costs(self[0], ceil_2d)
+        return total
 
-        return sum
+    def intersection_cleanup(self):
+        """
+        Iteratively remove geometric intersections (via 2-opt moves) using an R-Tree
+        for near-O(n log n) candidate filtering.
+        """
+        n = len(self)
+
+        # initial edge + shapely line representation
+        edges = [(self[i], self[(i + 1) % n]) for i in range(n)]
+        lines = [LineString([(a.x, a.y), (b.x, b.y)]) for a, b in edges]
+
+        idx = index.Index((k, l.bounds, None) for k, l in enumerate(lines))
+
+        improved = True
+        while improved:
+            improved = False
+            for i, l1 in enumerate(lines):
+                for j in idx.intersection(l1.bounds):
+                    if j <= i:
+                        continue
+                    l2 = lines[j]
+                    if l1.crosses(l2):
+                        a, b = self[i], self[(i + 1) % n]
+                        c, d = self[j], self[(j + 1) % n]
+                        if not (b is c or a is d):  # skip adjacent edges
+                            # Perform 2-opt move
+                            self[i + 1:j + 1] = reversed(self[i + 1:j + 1])
+
+                            # rebuild edges & index after the swap
+                            n = len(self)
+                            edges = [(self[k], self[(k + 1) % n]) for k in range(n)]
+                            lines = [LineString([(p.x, p.y), (q.x, q.y)]) for p, q in edges]
+                            idx = index.Index((k, l.bounds, None) for k, l in enumerate(lines))
+                            improved = True
+                            break
+                if improved:
+                    break
+        return self
 
 
 def generate_random_nodes(count, seed=0, max_size=500):

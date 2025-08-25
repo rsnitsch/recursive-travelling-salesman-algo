@@ -54,6 +54,8 @@ def create_option_parser():
 
     parser.add_argument("--renderer", type=str, default="disabled", choices=["disabled", "turtle"])
 
+    parser.add_argument("--intersection-cleanup", action=argparse.BooleanOptionalAction, default=False)
+
     parser.add_argument(
         "--tsplib",
         type=str,
@@ -102,14 +104,16 @@ def main(argv):
         parser.error("Anzahl der nodes muss größer-gleich 3 sein.")
 
     if args.mode == "demo":
-        main_random(args.folding_strategy, args.unfolding_strategy, args.renderer, args.number_of_nodes, args.seed)
+        main_random(args.folding_strategy, args.unfolding_strategy, args.intersection_cleanup, args.renderer,
+                    args.number_of_nodes, args.seed)
     elif args.mode == "benchmark":
-        main_tsplib(args.tsplib, args.folding_strategy, args.unfolding_strategy, args.renderer, args.seed)
+        main_tsplib(args.tsplib, args.folding_strategy, args.unfolding_strategy, args.intersection_cleanup,
+                    args.renderer, args.seed)
 
     return 0
 
 
-def main_random(folding_strategy, unfolding_strategy, renderer, number_of_nodes, seed=0):
+def main_random(folding_strategy, unfolding_strategy, intersection_cleanup, renderer, number_of_nodes, seed=0):
     # KONFIGURATION:
     """
     Gibt an, wie groß die X- bzw. Y-Koordinaten maximal sein dürfen.
@@ -136,6 +140,10 @@ def main_random(folding_strategy, unfolding_strategy, renderer, number_of_nodes,
     folded = folding_strategy_instance.fold(nodes, ceil_2d, renderer_instance)
     assert len(folded) <= 3, "Folding did not reduce number of nodes to 3."
     route = Route(unfolding_strategy_instance.unfold(folded, ceil_2d, renderer_instance))
+    if intersection_cleanup:
+        route = route.intersection_cleanup()
+        if renderer_instance:
+            renderer_instance.visualize(route)
     end_time = time.time()
 
     total_costs = route.get_total_costs(ceil_2d)
@@ -149,7 +157,7 @@ def main_random(folding_strategy, unfolding_strategy, renderer, number_of_nodes,
         renderer_instance.wait_until_closed()
 
 
-def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, renderer, seed=0):
+def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, intersection_cleanup, renderer, seed=0):
     # KONFIGURATION:
     """
     Ausgabeformat für die Ergebnisse.
@@ -192,6 +200,10 @@ def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, renderer, see
         folded = folding_strategy_instance.fold(nodes, ceil_2d, renderer_instance)
         assert len(folded) <= 3, "Folding did not reduce number of nodes to 3."
         route = Route(unfolding_strategy_instance.unfold(folded, ceil_2d, renderer_instance))
+        if intersection_cleanup:
+            route = route.intersection_cleanup()
+            if renderer_instance:
+                renderer_instance.visualize(route)
         end_time = time.time()
 
         total_costs = route.get_total_costs(ceil_2d)
