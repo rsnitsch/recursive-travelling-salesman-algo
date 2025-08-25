@@ -177,6 +177,9 @@ def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, intersection_
     if tsplib == "all":
         tsplib = ",".join([f[:-4] for f in os.listdir(tsplib_folder) if f.endswith(".tsp")])
 
+    print("Running benchmark for TSPLIB instances: %s" % tsplib)
+    print()
+
     # Zeilen für Ergebnis-Tabelle sammeln.
     rows = list()
 
