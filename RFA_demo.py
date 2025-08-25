@@ -181,45 +181,49 @@ def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, intersection_
     rows = list()
 
     # Anwenden des RFA auf die angegebenen TSPLIB-Instanzen.
-    for tspi in tsplib.split(","):
-        # Zur Reproduzierbarkeit.
-        random.seed(seed)
+    try:
+        for tspi in tsplib.split(","):
+            # Zur Reproduzierbarkeit.
+            random.seed(seed)
 
-        nodes, ceil_2d = load_nodes_from_tsplib_file(os.path.join(tsplib_folder, "%s.tsp" % tspi))
+            nodes, ceil_2d = load_nodes_from_tsplib_file(os.path.join(tsplib_folder, "%s.tsp" % tspi))
 
-        folding_strategy_instance = get_folding_strategy_by_name(folding_strategy)
-        unfolding_strategy_instance = get_unfolding_strategy_by_name(unfolding_strategy)
-        renderer_instance = get_renderer_by_name(renderer)
+            folding_strategy_instance = get_folding_strategy_by_name(folding_strategy)
+            unfolding_strategy_instance = get_unfolding_strategy_by_name(unfolding_strategy)
+            renderer_instance = get_renderer_by_name(renderer)
 
-        start_time = time.time()
-        folded = folding_strategy_instance.fold(nodes, ceil_2d, renderer_instance)
-        assert len(folded) <= 3, "Folding did not reduce number of nodes to 3."
-        route = Route(unfolding_strategy_instance.unfold(folded, ceil_2d, renderer_instance))
-        if intersection_cleanup:
-            route = route.intersection_cleanup()
+            start_time = time.time()
+            folded = folding_strategy_instance.fold(nodes, ceil_2d, renderer_instance)
+            assert len(folded) <= 3, "Folding did not reduce number of nodes to 3."
+            route = Route(unfolding_strategy_instance.unfold(folded, ceil_2d, renderer_instance))
+            if intersection_cleanup:
+                route = route.intersection_cleanup()
+                if renderer_instance:
+                    renderer_instance.visualize(route)
+            end_time = time.time()
+
+            total_costs = route.get_total_costs(ceil_2d)
+            runtime = end_time - start_time
+
+            optimal_costs = tsplib_get_optimal_solution(tspi)
+            factor = round(float(total_costs) / optimal_costs * 100, 2)
+
+            rows.append([tspi, optimal_costs, total_costs, "%.2f%%" % factor, "%.3fs" % runtime])
+
+            print(
+                format % {
+                    'instance': tspi,
+                    'total_costs': total_costs,
+                    'runtime': runtime,
+                    'optimal_costs': optimal_costs,
+                    'factor': factor
+                })
+
             if renderer_instance:
-                renderer_instance.visualize(route)
-        end_time = time.time()
-
-        total_costs = route.get_total_costs(ceil_2d)
-        runtime = end_time - start_time
-
-        optimal_costs = tsplib_get_optimal_solution(tspi)
-        factor = round(float(total_costs) / optimal_costs * 100, 2)
-
-        rows.append([tspi, optimal_costs, total_costs, "%.2f%%" % factor, "%.3fs" % runtime])
-
-        print(
-            format % {
-                'instance': tspi,
-                'total_costs': total_costs,
-                'runtime': runtime,
-                'optimal_costs': optimal_costs,
-                'factor': factor
-            })
-
-        if renderer_instance:
-            renderer_instance.wait_until_closed()
+                renderer_instance.wait_until_closed()
+    except KeyboardInterrupt:
+        print("KeyboardInterrupt received, stopping benchmark.")
+        print()
 
     # Ergebnis-Tabelle ausgeben.
     headers = ["Instance", "Costs of optimal route", "Costs of RFA route", "Cost factor", "Runtime"]
