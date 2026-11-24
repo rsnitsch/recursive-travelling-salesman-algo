@@ -92,7 +92,7 @@ The following command runs a simple demonstration based on 100 randomly generate
 
 ### 'benchmark' mode
 
-The following command runs a benchmark using a subset of the [TSPLIB] instances (see TSPLIB/ folder):
+The following command runs a benchmark using a subset of the [TSPLIB95] instances (see TSPLIB/ folder):
 
     $ python RFA_demo.py benchmark --tsplib all -s 17
     ...
@@ -121,4 +121,7 @@ The following command runs a benchmark using a subset of the [TSPLIB] instances 
 
 You may download and execute the RFA_demo scripts.
 
-[TSPLIB]:http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/
+The benchmark instances in ``TSPLIB/`` are taken from [TSPLIB95] (Gerhard Reinelt, Universität Heidelberg) and are
+provided strictly for academic and benchmarking purposes.
+
+[TSPLIB95]:http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/
