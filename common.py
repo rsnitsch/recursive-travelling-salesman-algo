@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
 Common functionality for travelling-salesman-problem algorithms.
+
+Copyright (c) 2010-2026 Robert Nitsch
 """
 
 import random

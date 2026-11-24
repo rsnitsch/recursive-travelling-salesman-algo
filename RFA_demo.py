@@ -4,6 +4,8 @@ Script for executing the recursive-fold-algorithm (RFA) for metric travelling-sa
 and displaying visualizations/benchmarks.
 
 @todo: Implement "animation mode" that allows to observe how the algorithm works step by step.
+
+Copyright (c) 2010-2026 Robert Nitsch
 """
 
 import argparse

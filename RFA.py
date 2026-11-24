@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
 Recursive-fold-algorithm (RFA) for metric travelling-salesman-problems.
+
+Copyright (c) 2010-2026 Robert Nitsch
 """
 
 import heapq

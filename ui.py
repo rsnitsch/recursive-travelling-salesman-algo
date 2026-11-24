@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+"""
+Copyright (c) 2010-2026 Robert Nitsch
+"""
+
 import copy
 import turtle
 
