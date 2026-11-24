@@ -3,10 +3,142 @@
 Recursive-fold-algorithm (RFA) for metric travelling-salesman-problems.
 """
 
+import heapq
 import random
+from math import ceil, floor, sqrt
 
 from common import CoordinateNode, Route
 from ui import Renderer
+
+
+class SpatialGrid:
+    """
+    Dynamic 2D spatial hash grid for exact nearest-neighbor queries in O(1) expected time.
+    Automatically rebuilds with coarser cell sizes as nodes are folded away.
+    """
+
+    def __init__(self, nodes: list[CoordinateNode]):
+        self.count = 0
+        self.rebuild_threshold = 0
+        self.cell_size = 1.0
+        self.inv_cell_size = 1.0
+        self.cells: dict[tuple[int, int], list[CoordinateNode]] = {}
+        self.node_cell: dict[CoordinateNode, tuple[int, int]] = {}
+        if nodes:
+            self._build(nodes)
+
+    def _build(self, nodes: list[CoordinateNode]):
+        self.cells.clear()
+        self.node_cell.clear()
+        self.count = len(nodes)
+        self.rebuild_threshold = self.count // 2
+
+        min_x = min(n.x for n in nodes)
+        max_x = max(n.x for n in nodes)
+        min_y = min(n.y for n in nodes)
+        max_y = max(n.y for n in nodes)
+
+        width = max(max_x - min_x, 1e-9)
+        height = max(max_y - min_y, 1e-9)
+        # Target ~1-2 nodes per grid cell
+        self.cell_size = max(sqrt((width * height) / max(self.count, 1)), 1e-9)
+        self.inv_cell_size = 1.0 / self.cell_size
+
+        for node in nodes:
+            self._insert_raw(node)
+
+    def _insert_raw(self, node: CoordinateNode):
+        key = (floor(node.x * self.inv_cell_size), floor(node.y * self.inv_cell_size))
+        self.node_cell[node] = key
+        bucket = self.cells.get(key)
+        if bucket is None:
+            self.cells[key] = [node]
+        else:
+            bucket.append(node)
+
+    def add(self, node: CoordinateNode):
+        self._insert_raw(node)
+        self.count += 1
+
+    def remove(self, node: CoordinateNode):
+        key = self.node_cell.pop(node)
+        bucket = self.cells[key]
+        if len(bucket) == 1:
+            del self.cells[key]
+        else:
+            bucket.remove(node)
+        self.count -= 1
+
+        # Rebuild grid when node count halves so cell density stays optimal
+        if self.count <= self.rebuild_threshold and self.count >= 64:
+            self._build(list(self.node_cell.keys()))
+
+    def get_nearest_neighbor(self, query: CoordinateNode, ceil_2d: bool) -> tuple[CoordinateNode, int]:
+        # Direct linear scan when few nodes remain (faster than grid ring traversal)
+        if self.count < 64:
+            return query.get_nearest_neighbor(list(self.node_cell.keys()), ceil_2d)
+
+        qx, qy = query.x, query.y
+        cx = floor(qx * self.inv_cell_size)
+        cy = floor(qy * self.inv_cell_size)
+
+        best_node: CoordinateNode | None = None
+        best_dist_sq = float("inf")
+        max_ring = 1
+        ring = 0
+
+        while ring <= max_ring:
+            if ring == 0:
+                bucket = self.cells.get((cx, cy))
+                if bucket:
+                    for node in bucket:
+                        dx = node.x - qx
+                        dy = node.y - qy
+                        d_sq = dx * dx + dy * dy
+                        if d_sq < best_dist_sq:
+                            best_dist_sq = d_sq
+                            best_node = node
+            else:
+                # Top and bottom rows of the ring
+                for ix in range(cx - ring, cx + ring + 1):
+                    for iy in (cy - ring, cy + ring):
+                        bucket = self.cells.get((ix, iy))
+                        if bucket:
+                            for node in bucket:
+                                dx = node.x - qx
+                                dy = node.y - qy
+                                d_sq = dx * dx + dy * dy
+                                if d_sq < best_dist_sq:
+                                    best_dist_sq = d_sq
+                                    best_node = node
+
+                # Left and right columns (excluding corners already checked above)
+                for iy in range(cy - ring + 1, cy + ring):
+                    for ix in (cx - ring, cx + ring):
+                        bucket = self.cells.get((ix, iy))
+                        if bucket:
+                            for node in bucket:
+                                dx = node.x - qx
+                                dy = node.y - qy
+                                d_sq = dx * dx + dy * dy
+                                if d_sq < best_dist_sq:
+                                    best_dist_sq = d_sq
+                                    best_node = node
+
+            if best_node is not None:
+                # Minimum possible distance to any cell outside `max_ring` is at least
+                # (max_ring * cell_size), guaranteeing exact nearest-neighbor optimality
+                required_rings = ceil(sqrt(best_dist_sq) * self.inv_cell_size)
+                if required_rings < max_ring:
+                    max_ring = required_rings
+            else:
+                # Expand search radius until at least one candidate is found
+                max_ring = ring + 1
+
+            ring += 1
+
+        assert best_node is not None
+        return best_node, query.get_travel_costs(best_node, ceil_2d)
 
 
 class RFANode(CoordinateNode):
@@ -40,108 +172,143 @@ class FoldingStrategy:
 
 class FoldingStrategyBreadthFirst(FoldingStrategy):
     def fold(self, nodes: list[CoordinateNode], ceil_2d: bool, renderer: Renderer | None):
-        nodes = list(nodes)
+        active = list(nodes)
         if renderer:
-            renderer.visualize(nodes)
+            renderer.visualize(active)
 
-        # Group nodes by depth in O(n) once; depth 0 for CoordinateNode
-        by_depth: dict[int, list[CoordinateNode]] = {0: list(nodes)}
-        active_set = set(nodes)
+        grid = SpatialGrid(active)
+        by_depth: dict[int, list[CoordinateNode]] = {0: list(active)}
         min_depth = 0
 
-        while len(active_set) > 3:
-            # Advance min_depth if current level is exhausted
+        while grid.count > 3:
             while not by_depth.get(min_depth):
                 min_depth += 1
 
             level_nodes = by_depth[min_depth]
             idx = random.randrange(len(level_nodes))
             node1 = level_nodes[idx]
-            # O(1) swap-remove from level_nodes
             level_nodes[idx] = level_nodes[-1]
             level_nodes.pop()
 
-            if node1 not in active_set:
+            if node1 not in grid.node_cell:
                 continue
-            active_set.remove(node1)
+            grid.remove(node1)
 
-            # Nearest neighbor across all active nodes
-            node2, _ = node1.get_nearest_neighbor(list(active_set), ceil_2d)
-            active_set.remove(node2)
+            node2, _ = grid.get_nearest_neighbor(node1, ceil_2d)
+            grid.remove(node2)
 
             folded = RFANode((node1, node2))
-            active_set.add(folded)
+            grid.add(folded)
             by_depth.setdefault(folded.depth, []).append(folded)
 
             if renderer:
-                renderer.visualize(list(active_set))
+                renderer.visualize(list(grid.node_cell.keys()))
 
-        return list(active_set)
+        return list(grid.node_cell.keys())
 
 
 class FoldingStrategyRandomWithNearestNeighbor(FoldingStrategy):
     """
-    Nodes are picked in random order. Each node is folded with its nearest neighbor.
+    Nodes are picked in random order. Each node is folded with its nearest neighbor
+    using a dynamic 2D spatial hash grid for fast lookup.
     """
 
     def fold(self, nodes: list[CoordinateNode], ceil_2d: bool, renderer: Renderer | None):
-        nodes = list(nodes)
+        active = list(nodes)
         if renderer:
-            renderer.visualize(nodes)
+            renderer.visualize(active)
 
-        while not len(nodes) <= 3:
-            node1 = random.choice(nodes)
-            nodes.remove(node1)
+        grid = SpatialGrid(active)
+        pos = {node: i for i, node in enumerate(active)}
 
-            node2, _ = node1.get_nearest_neighbor(nodes, ceil_2d)
-            nodes.remove(node2)
+        def remove_active(node: CoordinateNode):
+            idx = pos.pop(node)
+            last = active.pop()
+            if idx < len(active):
+                active[idx] = last
+                pos[last] = idx
 
-            nodes.append(RFANode((node1, node2)))
+        while len(active) > 3:
+            node1 = random.choice(active)
+            remove_active(node1)
+            grid.remove(node1)
+
+            node2, _ = grid.get_nearest_neighbor(node1, ceil_2d)
+            remove_active(node2)
+            grid.remove(node2)
+
+            folded = RFANode((node1, node2))
+            pos[folded] = len(active)
+            active.append(folded)
+            grid.add(folded)
 
             if renderer:
-                renderer.visualize(nodes)
+                renderer.visualize(active)
 
-        return nodes
+        return active
 
 
 class FoldingStrategyOutsideIn(FoldingStrategy):
     """
-    Outside-in folding with fixed center point calculated at the beginning.
+    Outside-in folding with fixed center point calculated at the beginning,
+    accelerated with SpatialGrid and a max-heap for furthest-node selection.
     """
 
     def fold(self, nodes: list[CoordinateNode], ceil_2d: bool, renderer: Renderer | None):
-        nodes = list(nodes)
+        active = list(nodes)
         if renderer:
-            renderer.visualize(nodes)
+            renderer.visualize(active)
 
-        if len(nodes) <= 3:
-            return nodes
+        if len(active) <= 3:
+            return active
 
         # Calculate fixed center point from initial node set
-        center_x = sum(node.x for node in nodes) / len(nodes)
-        center_y = sum(node.y for node in nodes) / len(nodes)
+        center_x = sum(node.x for node in active) / len(active)
+        center_y = sum(node.y for node in active) / len(active)
 
-        while len(nodes) > 3:
-            # Find the node furthest from the fixed center
-            furthest_node = max(nodes, key=lambda node: (node.x - center_x) ** 2 + (node.y - center_y) ** 2)
+        grid = SpatialGrid(active)
 
-            nodes.remove(furthest_node)
+        # Max-heap storing (-dist_sq, tie_breaker_id, node) for O(log n) furthest-node lookup
+        counter = 0
+        heap: list[tuple[float, int, CoordinateNode]] = []
+        for node in active:
+            dist_sq = (node.x - center_x) ** 2 + (node.y - center_y) ** 2
+            heapq.heappush(heap, (-dist_sq, counter, node))
+            counter += 1
 
-            if not nodes:
+        while grid.count > 3:
+            # Pop furthest still-active node (lazy deletion for already-folded nodes)
+            furthest_node: CoordinateNode | None = None
+            while heap:
+                _, _, candidate = heapq.heappop(heap)
+                if candidate in grid.node_cell:
+                    furthest_node = candidate
+                    break
+
+            if furthest_node is None:
                 break
 
-            # Find nearest neighbor
-            nearest_neighbor, _ = furthest_node.get_nearest_neighbor(nodes, ceil_2d)
-            nodes.remove(nearest_neighbor)
+            grid.remove(furthest_node)
+
+            if grid.count == 0:
+                break
+
+            # Find nearest neighbor via SpatialGrid
+            nearest_neighbor, _ = grid.get_nearest_neighbor(furthest_node, ceil_2d)
+            grid.remove(nearest_neighbor)
 
             # Create folded node
             folded_node = RFANode((furthest_node, nearest_neighbor))
-            nodes.append(folded_node)
+            grid.add(folded_node)
+
+            dist_sq = (folded_node.x - center_x) ** 2 + (folded_node.y - center_y) ** 2
+            heapq.heappush(heap, (-dist_sq, counter, folded_node))
+            counter += 1
 
             if renderer:
-                renderer.visualize(nodes)
+                renderer.visualize(list(grid.node_cell.keys()))
 
-        return nodes
+        return list(grid.node_cell.keys())
 
 
 class UnfoldingStrategy:
