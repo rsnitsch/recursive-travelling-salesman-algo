@@ -39,7 +39,7 @@ def create_option_parser():
     parser.add_argument(
         "--folding-strategy",
         type=str,
-        default="random-nn",
+        default="breadth-first",
         choices=["breadth-first", "random-nn", "outside-in"],
     )
 

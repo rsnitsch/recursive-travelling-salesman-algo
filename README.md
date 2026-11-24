@@ -51,10 +51,13 @@ The complete process can be described as follows:
 
 ### Folding strategies
 
-- `FoldingStrategyRandomWithNearestNeighbor` (default): A very simple yet highly efficient method which
-  randomly picks a node and folds it with the nearest-neighbor.
-- `FoldingStrategyOutsideIn`: The node furthest from the center point is folded with its nearest-neighbor. The center
-  point is only calculated once at the beginning.
+- `FoldingStrategyBreadthFirst` (default): Randomly picks one of the least-folded nodes
+  (minimum folding depth) and folds it with its nearest neighbor across all active nodes,
+  keeping the folding tree balanced.
+- `FoldingStrategyRandomWithNearestNeighbor`: A very simple yet highly efficient method
+  which randomly picks a node and folds it with the nearest-neighbor.
+- `FoldingStrategyOutsideIn`: The node furthest from the center point is folded with its
+  nearest-neighbor. The center point is only calculated once at the beginning.
 
 ### Unfolding strategies
 
@@ -95,24 +98,24 @@ The following command runs a benchmark using a subset of the [TSPLIB] instances 
     ...
     Instance      Costs of optimal route    Costs of RFA route  Cost factor    Runtime
     ----------  ------------------------  --------------------  -------------  ---------
-    a280                            2579                  2902  112.52%        0.042s
-    berlin52                        7542                  8446  111.99%        0.007s
-    bier127                       118282                126472  106.92%        0.017s
-    brd14051                      469385                521702  111.15%        5.077s
-    ch150                           6528                  7053  108.04%        0.024s
-    d18512                        645238                717417  111.19%        10.702s
-    eil51                            426                   447  104.93%        0.021s
-    pla33810                    66048945              77794321  117.78%        31.499s
-    pla7397                     23260728              26617186  114.43%        2.750s
-    pla85900                   142382641             164881355  115.80%        177.240s
-    pr1002                        259045                284082  109.67%        0.369s
-    pr107                          44303                 44941  101.44%        0.024s
-    pr439                         107217                114535  106.83%        0.107s
-    pr76                          108159                112239  103.77%        0.014s
-    rat783                          8806                  9680  109.93%        0.192s
-    rat99                           1211                  1272  105.04%        0.019s
-    sw24978                       855597                957405  111.90%        23.172s
-    usa13509                    19982859              22547778  112.84%        8.658s
+    a280                            2579                  2878  111.59%        0.041s
+    berlin52                        7542                  8345  110.65%        0.006s
+    bier127                       118282                128555  108.69%        0.018s
+    brd14051                      469385                516756  110.09%        5.246s
+    ch150                           6528                  7108  108.88%        0.023s
+    d18512                        645238                709360  109.94%        8.706s
+    eil51                            426                   444  104.23%        0.012s
+    pla33810                    66048945              77256794  116.97%        22.699s
+    pla7397                     23260728              26273758  112.95%        1.669s
+    pla85900                   142382641             163962149  115.16%        148.636s
+    pr1002                        259045                279480  107.89%        0.192s
+    pr107                          44303                 44381  100.18%        0.016s
+    pr439                         107217                117733  109.81%        0.062s
+    pr76                          108159                114068  105.46%        0.009s
+    rat783                          8806                  9565  108.62%        0.109s
+    rat99                           1211                  1313  108.42%        0.011s
+    sw24978                       855597                950790  111.13%        12.795s
+    usa13509                    19982859              22027397  110.23%        4.698s
 
 ## License
 
