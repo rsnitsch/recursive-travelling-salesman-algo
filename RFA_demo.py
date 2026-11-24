@@ -128,6 +128,10 @@ def main(argv):
     if args.number_of_nodes <= 2:
         parser.error("Anzahl der nodes muss größer-gleich 3 sein.")
 
+    logger.info("Folding strategy:   %s", args.folding_strategy)
+    logger.info("Unfolding strategy: %s", args.unfolding_strategy)
+    logger.info("Seed:               %d", args.seed)
+
     if args.mode == "demo":
         main_random(
             args.folding_strategy,
