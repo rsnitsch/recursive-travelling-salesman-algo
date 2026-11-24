@@ -67,12 +67,13 @@ The complete process can be described as follows:
 
 The scripts require
 
-- Python 3, for example 3.13 is working.
+- Python 3.15
 - PyPI packages `rtree`, `shapely`, and `tabulate`
 
-The easiest way is to use `pipenv`. A `Pipfile` is included in the project. You can simply download the code and run `pipenv install` in the top-level
-project folder. Then switch to the project's Python environment by executing `pipenv shell`. You can now execute the main script `RFA_demo.py` as described
-in the below *Usage* section.
+The project uses ``pyproject.toml`` and ``uv`` for dependency management.
+
+The recommended way is to run ``uv sync`` once in the project directory and from then on
+just use ``uv run python <script.py>``.
 
 ## Usage
 
