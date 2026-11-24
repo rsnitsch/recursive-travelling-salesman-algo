@@ -142,6 +142,8 @@ class SpatialGrid:
 
 
 class RFANode(CoordinateNode):
+    __slots__ = ("children", "depth", "weight")
+
     def __init__(self, children: tuple[CoordinateNode, CoordinateNode], weighted: bool = False):
         child1, child2 = children
         self.children = children
