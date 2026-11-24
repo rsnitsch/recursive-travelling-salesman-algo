@@ -10,25 +10,73 @@ from ui import Renderer
 
 
 class RFANode(CoordinateNode):
-    def __init__(self, x: float, y: float, children: tuple[RFANode | CoordinateNode, RFANode | CoordinateNode]):
-        CoordinateNode.__init__(self, x, y)
+    def __init__(self, children: tuple[CoordinateNode, CoordinateNode], weighted: bool = False):
+        child1, child2 = children
         self.children = children
 
-        child1, child2 = children
-        if isinstance(child1, RFANode) and isinstance(child2, RFANode):
-            self.depth = max(child1.depth, child2.depth) + 1
-        elif isinstance(child1, RFANode):
-            self.depth = child1.depth + 1
-        elif isinstance(child2, RFANode):
-            self.depth = child2.depth + 1
+        if weighted:
+            w1 = child1.weight if isinstance(child1, RFANode) else 1
+            w2 = child2.weight if isinstance(child2, RFANode) else 1
+            self.weight = w1 + w2
+            x = (w1 * child1.x + w2 * child2.x) / self.weight
+            y = (w1 * child1.y + w2 * child2.y) / self.weight
         else:
-            self.depth = 1
+            self.weight = 1
+            x = (child1.x + child2.x) / 2
+            y = (child1.y + child2.y) / 2
+
+        CoordinateNode.__init__(self, x, y)
+
+        d1 = child1.depth if isinstance(child1, RFANode) else 0
+        d2 = child2.depth if isinstance(child2, RFANode) else 0
+        self.depth = max(d1, d2) + 1
 
 
 class FoldingStrategy:
     def fold(self, nodes: list[CoordinateNode], ceil_2d: bool, renderer: Renderer | None):
         """Fold nodes using the strategy defined in the subclass."""
         raise NotImplementedError("fold() must be implemented in subclasses")
+
+
+class FoldingStrategyBreadthFirst(FoldingStrategy):
+    def fold(self, nodes: list[CoordinateNode], ceil_2d: bool, renderer: Renderer | None):
+        nodes = list(nodes)
+        if renderer:
+            renderer.visualize(nodes)
+
+        # Group nodes by depth in O(n) once; depth 0 for CoordinateNode
+        by_depth: dict[int, list[CoordinateNode]] = {0: list(nodes)}
+        active_set = set(nodes)
+        min_depth = 0
+
+        while len(active_set) > 3:
+            # Advance min_depth if current level is exhausted
+            while not by_depth.get(min_depth):
+                min_depth += 1
+
+            level_nodes = by_depth[min_depth]
+            idx = random.randrange(len(level_nodes))
+            node1 = level_nodes[idx]
+            # O(1) swap-remove from level_nodes
+            level_nodes[idx] = level_nodes[-1]
+            level_nodes.pop()
+
+            if node1 not in active_set:
+                continue
+            active_set.remove(node1)
+
+            # Nearest neighbor across all active nodes
+            node2, _ = node1.get_nearest_neighbor(list(active_set), ceil_2d)
+            active_set.remove(node2)
+
+            folded = RFANode((node1, node2))
+            active_set.add(folded)
+            by_depth.setdefault(folded.depth, []).append(folded)
+
+            if renderer:
+                renderer.visualize(list(active_set))
+
+        return list(active_set)
 
 
 class FoldingStrategyRandomWithNearestNeighbor(FoldingStrategy):
@@ -48,7 +96,7 @@ class FoldingStrategyRandomWithNearestNeighbor(FoldingStrategy):
             node2, _ = node1.get_nearest_neighbor(nodes, ceil_2d)
             nodes.remove(node2)
 
-            nodes.append(RFANode((node1.x + node2.x) / 2, (node1.y + node2.y) / 2, (node1, node2)))
+            nodes.append(RFANode((node1, node2)))
 
             if renderer:
                 renderer.visualize(nodes)
@@ -87,11 +135,7 @@ class FoldingStrategyOutsideIn(FoldingStrategy):
             nodes.remove(nearest_neighbor)
 
             # Create folded node
-            folded_node = RFANode(
-                (furthest_node.x + nearest_neighbor.x) / 2,
-                (furthest_node.y + nearest_neighbor.y) / 2,
-                (furthest_node, nearest_neighbor),
-            )
+            folded_node = RFANode((furthest_node, nearest_neighbor))
             nodes.append(folded_node)
 
             if renderer:

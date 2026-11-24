@@ -18,6 +18,7 @@ from tabulate import tabulate
 
 from common import Route, generate_random_nodes, load_nodes_from_tsplib_file, tsplib_get_optimal_solution
 from RFA import (
+    FoldingStrategyBreadthFirst,
     FoldingStrategyOutsideIn,
     FoldingStrategyRandomWithNearestNeighbor,
     UnfoldingStrategyBreadthFirst,
@@ -35,7 +36,12 @@ def create_option_parser():
     # Add options to the OptionParser.
     parser.add_argument("mode", type=str, action="store", help="Either 'demo' or 'benchmark'.")
 
-    parser.add_argument("--folding-strategy", type=str, default="random-nn", choices=["random-nn", "outside-in"])
+    parser.add_argument(
+        "--folding-strategy",
+        type=str,
+        default="random-nn",
+        choices=["breadth-first", "random-nn", "outside-in"],
+    )
 
     parser.add_argument(
         "--unfolding-strategy", type=str, default="breadth-first-2opt", choices=["breadth-first", "breadth-first-2opt"]
@@ -80,7 +86,9 @@ def create_option_parser():
 
 
 def get_folding_strategy_by_name(name):
-    if name == "random-nn":
+    if name == "breadth-first":
+        return FoldingStrategyBreadthFirst()
+    elif name == "random-nn":
         return FoldingStrategyRandomWithNearestNeighbor()
     elif name == "outside-in":
         return FoldingStrategyOutsideIn()
