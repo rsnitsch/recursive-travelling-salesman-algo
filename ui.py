@@ -4,13 +4,11 @@ import copy
 
 
 class Renderer(object):
-
     def visualize(self, route):
         raise NotImplementedError("visualize() must be implemented in subclasses")
 
 
 class RendererTurtle(Renderer):
-
     def __init__(self, scale=1.5):
         self.scale = scale
         self.route_history = []
@@ -67,7 +65,7 @@ class RendererTurtle(Renderer):
             raise IndexError("Index out of range for route history.")
 
         route = self.route_history[idx]
-        title = f"Step {self.current_idx+1} - Nodes: {len(route)}"
+        title = f"Step {self.current_idx + 1} - Nodes: {len(route)}"
         if self.current_idx == len(self.route_history) - 1:
             title += " (Final)"
         self.screen.title(f"Route: {title}")

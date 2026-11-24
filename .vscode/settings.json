@@ -2,6 +2,6 @@
     "[python]": {
         "editor.formatOnSave": true,
         "editor.formatOnSaveMode": "file",
-        "editor.defaultFormatter": "eeyore.yapf"
+        "editor.defaultFormatter": "charliermarsh.ruff"
     }
 }

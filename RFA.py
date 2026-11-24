@@ -3,6 +3,7 @@
 """
 Recursive-fold-algorithm (RFA) for metric travelling-salesman-problems.
 """
+
 import random
 from typing import List, Optional
 
@@ -11,7 +12,6 @@ from ui import Renderer
 
 
 class RFANode(CoordinateNode):
-
     def __init__(self, x, y, children):
         CoordinateNode.__init__(self, x, y)
         self.children = children
@@ -28,7 +28,6 @@ class RFANode(CoordinateNode):
 
 
 class FoldingStrategy(object):
-
     def fold(self, nodes: List[Node], ceil_2d: bool, renderer: Optional[Renderer]):
         """Fold nodes using the strategy defined in the subclass."""
         raise NotImplementedError("fold() must be implemented in subclasses")
@@ -78,7 +77,7 @@ class FoldingStrategyOutsideIn(FoldingStrategy):
 
         while len(nodes) > 3:
             # Find the node furthest from the fixed center
-            furthest_node = max(nodes, key=lambda node: (node.x - center_x)**2 + (node.y - center_y)**2)
+            furthest_node = max(nodes, key=lambda node: (node.x - center_x) ** 2 + (node.y - center_y) ** 2)
 
             nodes.remove(furthest_node)
 
@@ -90,8 +89,11 @@ class FoldingStrategyOutsideIn(FoldingStrategy):
             nodes.remove(nearest_neighbor)
 
             # Create folded node
-            folded_node = RFANode((furthest_node.x + nearest_neighbor.x) / 2,
-                                  (furthest_node.y + nearest_neighbor.y) / 2, (furthest_node, nearest_neighbor))
+            folded_node = RFANode(
+                (furthest_node.x + nearest_neighbor.x) / 2,
+                (furthest_node.y + nearest_neighbor.y) / 2,
+                (furthest_node, nearest_neighbor),
+            )
             nodes.append(folded_node)
 
             if renderer:
@@ -101,7 +103,6 @@ class FoldingStrategyOutsideIn(FoldingStrategy):
 
 
 class UnfoldingStrategy(object):
-
     def unfold(self, nodes_to_unfold, ceil_2d, renderer):
         """Unfold nodes using the strategy defined in the subclass."""
         raise NotImplementedError("unfold() must be implemented in subclasses")
@@ -199,7 +200,7 @@ class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
 
                         if new_cost < old_cost:
                             # 2-opt move
-                            tour[i + 1:j + 1] = reversed(tour[i + 1:j + 1])
+                            tour[i + 1 : j + 1] = reversed(tour[i + 1 : j + 1])
                             changed = True
         return tour
 

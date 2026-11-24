@@ -6,6 +6,7 @@ and displaying visualizations/benchmarks.
 
 @todo: Implement "animation mode" that allows to observe how the algorithm works step by step.
 """
+
 import argparse
 import os
 import random
@@ -15,13 +16,17 @@ import time
 from tabulate import tabulate
 
 from common import generate_random_nodes, tsplib_get_optimal_solution, load_nodes_from_tsplib_file, Route
-from RFA import FoldingStrategyRandomWithNearestNeighbor, FoldingStrategyOutsideIn, UnfoldingStrategyBreadthFirst, UnfoldingStrategyBreadthFirstWithLocal2Opt
+from RFA import (
+    FoldingStrategyRandomWithNearestNeighbor,
+    FoldingStrategyOutsideIn,
+    UnfoldingStrategyBreadthFirst,
+    UnfoldingStrategyBreadthFirstWithLocal2Opt,
+)
 
 
 def create_option_parser():
     kwargs = {
-        "description":
-        "Calculate and display routes for metric travelling-salesman-problems using the recursive-fold-algorithm."
+        "description": "Calculate and display routes for metric travelling-salesman-problems using the recursive-fold-algorithm."
     }
 
     parser = argparse.ArgumentParser(**kwargs)
@@ -31,28 +36,31 @@ def create_option_parser():
 
     parser.add_argument("--folding-strategy", type=str, default="random-nn", choices=["random-nn", "outside-in"])
 
-    parser.add_argument("--unfolding-strategy",
-                        type=str,
-                        default="breadth-first-2opt",
-                        choices=["breadth-first", "breadth-first-2opt"])
+    parser.add_argument(
+        "--unfolding-strategy", type=str, default="breadth-first-2opt", choices=["breadth-first", "breadth-first-2opt"]
+    )
 
     DEFAULT_NUMBER_OF_NODES = 100
-    parser.add_argument("-n",
-                        "--nodes",
-                        type=int,
-                        action="store",
-                        dest="number_of_nodes",
-                        default=DEFAULT_NUMBER_OF_NODES,
-                        help=("Number of nodes for demo mode (default = %d)" % DEFAULT_NUMBER_OF_NODES))
+    parser.add_argument(
+        "-n",
+        "--nodes",
+        type=int,
+        action="store",
+        dest="number_of_nodes",
+        default=DEFAULT_NUMBER_OF_NODES,
+        help=("Number of nodes for demo mode (default = %d)" % DEFAULT_NUMBER_OF_NODES),
+    )
 
     DEFAULT_SEED = 0
-    parser.add_argument("-s",
-                        "--seed",
-                        type=int,
-                        action="store",
-                        dest="seed",
-                        default=DEFAULT_SEED,
-                        help="Random number generator seed (default = %d)" % DEFAULT_SEED)
+    parser.add_argument(
+        "-s",
+        "--seed",
+        type=int,
+        action="store",
+        dest="seed",
+        default=DEFAULT_SEED,
+        help="Random number generator seed (default = %d)" % DEFAULT_SEED,
+    )
 
     parser.add_argument("--renderer", type=str, default="disabled", choices=["disabled", "turtle"])
 
@@ -62,7 +70,8 @@ def create_option_parser():
         "--tsplib",
         type=str,
         default="a280,berlin52,bier127,ch150,eil51,pla7397,pr76,pr107,pr439,pr1002,rat99,rat783,usa13509",
-        help="TSPLIB instances to be executed (comma-separated) or 'all' for all instances in the TSPLIB folder.")
+        help="TSPLIB instances to be executed (comma-separated) or 'all' for all instances in the TSPLIB folder.",
+    )
 
     return parser
 
@@ -88,6 +97,7 @@ def get_unfolding_strategy_by_name(name):
 def get_renderer_by_name(name):
     if name == "turtle":
         from ui import RendererTurtle
+
         return RendererTurtle()
     elif name == "disabled":
         return None
@@ -106,11 +116,23 @@ def main(argv):
         parser.error("Anzahl der nodes muss größer-gleich 3 sein.")
 
     if args.mode == "demo":
-        main_random(args.folding_strategy, args.unfolding_strategy, args.intersection_cleanup, args.renderer,
-                    args.number_of_nodes, args.seed)
+        main_random(
+            args.folding_strategy,
+            args.unfolding_strategy,
+            args.intersection_cleanup,
+            args.renderer,
+            args.number_of_nodes,
+            args.seed,
+        )
     elif args.mode == "benchmark":
-        main_tsplib(args.tsplib, args.folding_strategy, args.unfolding_strategy, args.intersection_cleanup,
-                    args.renderer, args.seed)
+        main_tsplib(
+            args.tsplib,
+            args.folding_strategy,
+            args.unfolding_strategy,
+            args.intersection_cleanup,
+            args.renderer,
+            args.seed,
+        )
 
     return 0
 
@@ -170,7 +192,7 @@ def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, intersection_
     # format = "<tr><td>%(instance)s</td><td>%(optimal_costs)s</td><td>%(total_costs)s</td><td>%(factor)s%%</td><td>%(runtime)ss</td></tr>"
 
     # Ordner mit den TSPLIB-Instanzen (in entpackter Form)
-    tsplib_folder = './TSPLIB'
+    tsplib_folder = "./TSPLIB"
 
     # ENDE DER KONFIGURATION.
 
@@ -214,13 +236,15 @@ def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, intersection_
             rows.append([tspi, optimal_costs, total_costs, "%.2f%%" % factor, "%.3fs" % runtime])
 
             print(
-                format % {
-                    'instance': tspi,
-                    'total_costs': total_costs,
-                    'runtime': runtime,
-                    'optimal_costs': optimal_costs,
-                    'factor': factor
-                })
+                format
+                % {
+                    "instance": tspi,
+                    "total_costs": total_costs,
+                    "runtime": runtime,
+                    "optimal_costs": optimal_costs,
+                    "factor": factor,
+                }
+            )
 
             if renderer_instance:
                 renderer_instance.wait_until_closed()
