@@ -200,7 +200,7 @@ def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, intersection_
     print()
 
     # Zeilen für Ergebnis-Tabelle sammeln.
-    rows = list()
+    rows = []
 
     # Anwenden des RFA auf die angegebenen TSPLIB-Instanzen.
     try:

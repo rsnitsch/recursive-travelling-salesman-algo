@@ -10,19 +10,25 @@ from rtree import index
 from shapely.geometry import LineString
 
 
-class Node:
-    """Abstract TSP Node."""
+class CoordinateNode:
+    """
+    TSP Node for the metric TSP with a X- and a Y-coordinate.
 
-    def __init__(self, *args, **kwargs):
-        pass
+    The distance between 2 CoordinateNodes is calculated using
+    Pythagoras' theorem (and converting the result to rounded integer for
+    TSPLIB compatibility).
+    """
 
-    def get_travel_costs(self, other_node, ceil_2d):
-        """
-        Returns the costs for travelling from this node to the given node.
+    def __init__(self, x: float, y: float):
+        self.x = x
+        self.y = y
 
-        Raises NotImplemented unless overwritten.
-        """
-        raise NotImplementedError("get_travel_costs() must be implemented in subclasses")
+    def get_travel_costs(self, other_node: CoordinateNode, ceil_2d: bool):
+        euc_distance = sqrt((other_node.x - self.x) ** 2 + (other_node.y - self.y) ** 2)
+        if ceil_2d:
+            return ceil(euc_distance)
+        else:
+            return round(euc_distance)
 
     def get_nearest_neighbor(self, candidates, ceil_2d):
         """
@@ -39,27 +45,6 @@ class Node:
                 nearest_distance = candidate_distance
                 nearest_neighbor = candidates[i]
         return (nearest_neighbor, nearest_distance)
-
-
-class CoordinateNode(Node):
-    """
-    TSP Node for the metric TSP with a X- and a Y-coordinate.
-
-    The distance between 2 CoordinateNodes is calculated using
-    Pythagoras' theorem (and converting the result to rounded integer for
-    TSPLIB compatibility).
-    """
-
-    def __init__(self, x, y, *args, **kwargs):
-        self.x = x
-        self.y = y
-
-    def get_travel_costs(self, other_node, ceil_2d):
-        euc_distance = sqrt((other_node.x - self.x) ** 2 + (other_node.y - self.y) ** 2)
-        if ceil_2d:
-            return ceil(euc_distance)
-        else:
-            return round(euc_distance)
 
     def __str__(self):
         return "CN(%s, %s)" % (self.x, self.y)
@@ -149,7 +134,7 @@ class Route(list):
         return self
 
 
-def generate_random_nodes(count, seed=0, max_size=500):
+def generate_random_nodes(count: int, seed=0, max_size=500) -> list[CoordinateNode]:
     """
     Generates count nodes with coordinates between 0 and max_size.
 
@@ -159,20 +144,20 @@ def generate_random_nodes(count, seed=0, max_size=500):
     """
     random.seed(seed)
 
-    nodes = []
+    nodes: list[CoordinateNode] = []
     for i in range(count):
         nodes.append(CoordinateNode(random.randint(0, max_size), random.randint(0, max_size)))
 
     return nodes
 
 
-def load_nodes_from_tsplib_file(filename):
+def load_nodes_from_tsplib_file(filename) -> tuple[list[CoordinateNode], bool]:
     """
     Loads all nodes specified in the given tsplib-file.
 
     Only euclidean instances are supported (EUC_2D or CEIL_2D).
     """
-    nodes = []
+    nodes: list[CoordinateNode] = []
     ceil_2d = None
 
     with open(filename, "r", encoding="utf-8") as fh:
@@ -319,5 +304,4 @@ optimal_solutions = {
 
 
 def tsplib_get_optimal_solution(tsp_instance):
-    global optimal_solutions
     return optimal_solutions[tsp_instance]

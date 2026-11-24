@@ -5,12 +5,12 @@ Recursive-fold-algorithm (RFA) for metric travelling-salesman-problems.
 
 import random
 
-from common import CoordinateNode, Node, Route
+from common import CoordinateNode, Route
 from ui import Renderer
 
 
 class RFANode(CoordinateNode):
-    def __init__(self, x, y, children):
+    def __init__(self, x: float, y: float, children: tuple[RFANode | CoordinateNode, RFANode | CoordinateNode]):
         CoordinateNode.__init__(self, x, y)
         self.children = children
 
@@ -26,7 +26,7 @@ class RFANode(CoordinateNode):
 
 
 class FoldingStrategy:
-    def fold(self, nodes: list[Node], ceil_2d: bool, renderer: Renderer | None):
+    def fold(self, nodes: list[CoordinateNode], ceil_2d: bool, renderer: Renderer | None):
         """Fold nodes using the strategy defined in the subclass."""
         raise NotImplementedError("fold() must be implemented in subclasses")
 
@@ -36,7 +36,7 @@ class FoldingStrategyRandomWithNearestNeighbor(FoldingStrategy):
     Nodes are picked in random order. Each node is folded with its nearest neighbor.
     """
 
-    def fold(self, nodes: list[Node], ceil_2d: bool, renderer: Renderer | None):
+    def fold(self, nodes: list[CoordinateNode], ceil_2d: bool, renderer: Renderer | None):
         nodes = list(nodes)
         if renderer:
             renderer.visualize(nodes)
@@ -61,7 +61,7 @@ class FoldingStrategyOutsideIn(FoldingStrategy):
     Outside-in folding with fixed center point calculated at the beginning.
     """
 
-    def fold(self, nodes: list[Node], ceil_2d: bool, renderer: Renderer | None):
+    def fold(self, nodes: list[CoordinateNode], ceil_2d: bool, renderer: Renderer | None):
         nodes = list(nodes)
         if renderer:
             renderer.visualize(nodes)
@@ -101,7 +101,7 @@ class FoldingStrategyOutsideIn(FoldingStrategy):
 
 
 class UnfoldingStrategy:
-    def unfold(self, nodes_to_unfold, ceil_2d, renderer):
+    def unfold(self, nodes_to_unfold: list[RFANode | CoordinateNode], ceil_2d, renderer):
         """Unfold nodes using the strategy defined in the subclass."""
         raise NotImplementedError("unfold() must be implemented in subclasses")
 
@@ -116,7 +116,7 @@ class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
     def __init__(self):
         self.enable_local_2opt = False
 
-    def unfold(self, nodes_to_unfold, ceil_2d, renderer):
+    def unfold(self, nodes_to_unfold: list[RFANode | CoordinateNode], ceil_2d, renderer):
         nodes = list(nodes_to_unfold)
 
         while True:
@@ -130,10 +130,12 @@ class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
             i = 0
             len_nodes = len(nodes)
             while i < len_nodes:
-                if not isinstance(nodes[i], RFANode):
+                current_node = nodes[i]
+                if not isinstance(current_node, RFANode):
                     i += 1
                     continue
-                if nodes[i].depth < max_depth:
+
+                if current_node.depth < max_depth:
                     # Only unfold the nodes that are at the maximum depth.
                     i += 1
                     continue
@@ -141,12 +143,12 @@ class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
                 before = nodes[i - 1] if i > 0 else nodes[len(nodes) - 1]
                 after = nodes[i + 1] if i < len(nodes) - 1 else nodes[0]
 
-                node1: Node = nodes[i].children[0]
-                node2: Node = nodes[i].children[1]
+                node1: CoordinateNode = current_node.children[0]
+                node2: CoordinateNode = current_node.children[1]
                 route1 = Route([before, node1, node2, after])
                 route2 = Route([before, node2, node1, after])
 
-                nodes.remove(nodes[i])
+                nodes.remove(current_node)
 
                 if route1.get_total_costs(ceil_2d) < route2.get_total_costs(ceil_2d):
                     nodes.insert(i, node2)
@@ -188,10 +190,10 @@ class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
                         if j - i == 1:
                             continue
 
-                        a: Node = tour[i]
-                        b: Node = tour[(i + 1) % len(tour)]
-                        c: Node = tour[j]
-                        d: Node = tour[(j + 1) % len(tour)]
+                        a: CoordinateNode = tour[i]
+                        b: CoordinateNode = tour[(i + 1) % len(tour)]
+                        c: CoordinateNode = tour[j]
+                        d: CoordinateNode = tour[(j + 1) % len(tour)]
 
                         old_cost = a.get_travel_costs(b, ceil_2d) + c.get_travel_costs(d, ceil_2d)
                         new_cost = a.get_travel_costs(c, ceil_2d) + b.get_travel_costs(d, ceil_2d)
