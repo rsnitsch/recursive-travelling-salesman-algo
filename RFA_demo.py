@@ -195,19 +195,8 @@ def main_random(folding_strategy, unfolding_strategy, intersection_cleanup, rend
 
 
 def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, intersection_cleanup, renderer, seed=0):
-    # KONFIGURATION:
-    """
-    Ausgabeformat für die Ergebnisse.
-
-    Empfohlen: "Instance:\t%(instance)s\nTotal costs:\t%(total_costs)s\nRuntime:\t%(runtime)ss\n"
-    """
-    format = "\nInstance:\t%(instance)s\nTotal costs:\t%(total_costs)s\nRuntime:\t%(runtime).3fs\n"
-    # format = "<tr><td>%(instance)s</td><td>%(optimal_costs)s</td><td>%(total_costs)s</td><td>%(factor)s%%</td><td>%(runtime)ss</td></tr>"
-
     # Ordner mit den TSPLIB-Instanzen (in entpackter Form)
     tsplib_folder = "./TSPLIB"
-
-    # ENDE DER KONFIGURATION.
 
     regexp_maxnodes_spec = re.compile("<([0-9]+)")
 
@@ -243,7 +232,6 @@ def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, intersection_
         return
 
     logger.info("Running benchmark for TSPLIB instances: %s" % tsplib)
-    logger.info("")
 
     # Zeilen für Ergebnis-Tabelle sammeln.
     rows = []
@@ -251,6 +239,7 @@ def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, intersection_
     # Anwenden des RFA auf die angegebenen TSPLIB-Instanzen.
     try:
         for tspi in tsplib.split(","):
+            logger.info("Processing TSPLIB instance %s...", tspi)
             # Zur Reproduzierbarkeit.
             random.seed(seed)
 
@@ -278,16 +267,7 @@ def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, intersection_
 
             rows.append([tspi, optimal_costs, total_costs, "%.2f%%" % factor, "%.3fs" % runtime])
 
-            logger.info(
-                format
-                % {
-                    "instance": tspi,
-                    "total_costs": total_costs,
-                    "runtime": runtime,
-                    "optimal_costs": optimal_costs,
-                    "factor": factor,
-                }
-            )
+            logger.info("  Result: Total costs: % 10s | Runtime: %.3fs", total_costs, runtime)
 
             if renderer_instance:
                 renderer_instance.wait_until_closed()
