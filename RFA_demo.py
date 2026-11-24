@@ -177,9 +177,12 @@ def main_random(folding_strategy, unfolding_strategy, intersection_cleanup, rend
     unfolding_strategy_instance = get_unfolding_strategy_by_name(unfolding_strategy)
     renderer_instance = get_renderer_by_name(renderer)
 
+    logger.debug("Folding...")
     start_time = time.time()
     folded = folding_strategy_instance.fold(nodes, ceil_2d, renderer_instance)
     assert len(folded) <= 3, "Folding did not reduce number of nodes to 3."
+
+    logger.debug("Unfolding...")
     route = Route(unfolding_strategy_instance.unfold(folded, ceil_2d, renderer_instance))
     if intersection_cleanup:
         route = route.intersection_cleanup()
@@ -253,9 +256,12 @@ def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, intersection_
             unfolding_strategy_instance = get_unfolding_strategy_by_name(unfolding_strategy)
             renderer_instance = get_renderer_by_name(renderer)
 
+            logger.debug("Folding...")
             start_time = time.time()
             folded = folding_strategy_instance.fold(nodes, ceil_2d, renderer_instance)
             assert len(folded) <= 3, "Folding did not reduce number of nodes to 3."
+
+            logger.debug("Unfolding...")
             route = Route(unfolding_strategy_instance.unfold(folded, ceil_2d, renderer_instance))
             if intersection_cleanup:
                 route = route.intersection_cleanup()
