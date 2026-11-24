@@ -7,8 +7,10 @@ and displaying visualizations/benchmarks.
 """
 
 import argparse
+import logging
 import os
 import random
+import re
 import sys
 import time
 
@@ -21,6 +23,8 @@ from RFA import (
     UnfoldingStrategyBreadthFirst,
     UnfoldingStrategyBreadthFirstWithLocal2Opt,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def create_option_parser():
@@ -67,8 +71,10 @@ def create_option_parser():
         "--tsplib",
         type=str,
         default="a280,berlin52,bier127,ch150,eil51,pla7397,pr76,pr107,pr439,pr1002,rat99,rat783,usa13509",
-        help="TSPLIB instances to be executed (comma-separated) or 'all' for all instances in the TSPLIB folder.",
+        help="TSPLIB instances to be executed (comma-separated or 'all') or <N for all instances with at most N nodes.",
     )
+
+    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging output")
 
     return parser
 
@@ -105,6 +111,8 @@ def get_renderer_by_name(name):
 def main(argv):
     parser = create_option_parser()
     args = parser.parse_args(args=argv[1:])
+
+    logging.basicConfig(format="%(levelname)s | %(message)s", level=logging.DEBUG if args.verbose else logging.INFO)
 
     if not args.mode in ("demo", "benchmark"):
         parser.error("Ungültiger Modus gewählt. Nur 'demo' oder 'benchmark' erlaubt.")
@@ -193,8 +201,38 @@ def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, intersection_
 
     # ENDE DER KONFIGURATION.
 
+    regexp_maxnodes_spec = re.compile("<([0-9]+)")
+
+    available_tsplib_instances = [f[:-4] for f in os.listdir(tsplib_folder) if f.endswith(".tsp")]
+    logger.debug("available_tsplib_instances: %s", available_tsplib_instances)
+
     if tsplib == "all":
-        tsplib = ",".join([f[:-4] for f in os.listdir(tsplib_folder) if f.endswith(".tsp")])
+        tsplib = ",".join(available_tsplib_instances)
+    else:
+        maxnodes_spec_match = regexp_maxnodes_spec.match(tsplib)
+        logger.debug("maxnodes_spec_match: %s", maxnodes_spec_match)
+        if maxnodes_spec_match:
+            max_requested_nodes = int(maxnodes_spec_match.group(1))
+            logger.debug("max_requested_nodes: %d", max_requested_nodes)
+
+            regexp_nodes = re.compile("[a-z]+([0-9]+)")
+            selected_tsplib_instances = []
+            for available_tsplib_instance in available_tsplib_instances:
+                m = regexp_nodes.match(available_tsplib_instance)
+                if m:
+                    nodes = int(m.group(1))
+                    if nodes <= max_requested_nodes:
+                        selected_tsplib_instances.append(available_tsplib_instance)
+
+            if not selected_tsplib_instances:
+                logger.error("Selector did not match any TSPLIB instances")
+                return
+
+            tsplib = ",".join(selected_tsplib_instances)
+
+    if not tsplib:
+        logger.error("No TSPLIB instance selected")
+        return
 
     print("Running benchmark for TSPLIB instances: %s" % tsplib)
     print()
