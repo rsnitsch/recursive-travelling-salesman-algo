@@ -186,9 +186,9 @@ def main_random(folding_strategy, unfolding_strategy, intersection_cleanup, rend
     total_costs = route.get_total_costs(ceil_2d)
     runtime = end_time - start_time
 
-    print("Total costs:\t%s" % total_costs)
-    print("Runtime:\t%.3fs" % runtime)
-    print()
+    logger.info("Total costs:\t%s", total_costs)
+    logger.info("Runtime:\t%.3fs", runtime)
+    logger.info("")
 
     if renderer_instance:
         renderer_instance.wait_until_closed()
@@ -201,7 +201,7 @@ def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, intersection_
 
     Empfohlen: "Instance:\t%(instance)s\nTotal costs:\t%(total_costs)s\nRuntime:\t%(runtime)ss\n"
     """
-    format = "Instance:\t%(instance)s\nTotal costs:\t%(total_costs)s\nRuntime:\t%(runtime).3fs\n"
+    format = "\nInstance:\t%(instance)s\nTotal costs:\t%(total_costs)s\nRuntime:\t%(runtime).3fs\n"
     # format = "<tr><td>%(instance)s</td><td>%(optimal_costs)s</td><td>%(total_costs)s</td><td>%(factor)s%%</td><td>%(runtime)ss</td></tr>"
 
     # Ordner mit den TSPLIB-Instanzen (in entpackter Form)
@@ -242,8 +242,8 @@ def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, intersection_
         logger.error("No TSPLIB instance selected")
         return
 
-    print("Running benchmark for TSPLIB instances: %s" % tsplib)
-    print()
+    logger.info("Running benchmark for TSPLIB instances: %s" % tsplib)
+    logger.info("")
 
     # Zeilen für Ergebnis-Tabelle sammeln.
     rows = []
@@ -278,7 +278,7 @@ def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, intersection_
 
             rows.append([tspi, optimal_costs, total_costs, "%.2f%%" % factor, "%.3fs" % runtime])
 
-            print(
+            logger.info(
                 format
                 % {
                     "instance": tspi,
@@ -292,12 +292,12 @@ def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, intersection_
             if renderer_instance:
                 renderer_instance.wait_until_closed()
     except KeyboardInterrupt:
-        print("KeyboardInterrupt received, stopping benchmark.")
-        print()
+        logger.info("KeyboardInterrupt received, stopping benchmark.")
+        logger.info("")
 
     # Ergebnis-Tabelle ausgeben.
     headers = ["Instance", "Costs of optimal route", "Costs of RFA route", "Cost factor", "Runtime"]
-    print(tabulate(rows, headers=headers))
+    logger.info("\n" + tabulate(rows, headers=headers))
 
 
 if __name__ == "__main__":
