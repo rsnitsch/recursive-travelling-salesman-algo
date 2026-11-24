@@ -7,6 +7,7 @@ and displaying visualizations/benchmarks.
 """
 
 import argparse
+import gc
 import logging
 import os
 import random
@@ -268,6 +269,7 @@ def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, intersection_
                 if renderer_instance:
                     renderer_instance.visualize(route)
             end_time = time.time()
+            gc.collect()
 
             total_costs = route.get_total_costs(ceil_2d)
             runtime = end_time - start_time
