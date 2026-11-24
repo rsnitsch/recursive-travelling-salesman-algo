@@ -322,8 +322,8 @@ class UnfoldingStrategy:
 class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
     """Unfolding strategy that processes nodes in breadth-first manner.
 
-    The list of folded nodes is processed repeatedly. During each iteration,
-    only the nodes with the maximum depth are unfolded.
+    Uses a doubly-linked representation (nxt/prv dicts) so node replacement
+    and local 2-opt window updates run in O(1) instead of O(n) list shifts.
     """
 
     def __init__(self):
@@ -331,91 +331,165 @@ class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
 
     def unfold(self, nodes_to_unfold: list[RFANode | CoordinateNode], ceil_2d, renderer):
         nodes = list(nodes_to_unfold)
+        n = len(nodes)
+        if n == 0:
+            return nodes
 
-        while True:
-            len_before = len(nodes)
+        # Circular doubly-linked tour representation: O(1) insert/remove
+        nxt: dict[CoordinateNode, CoordinateNode] = {}
+        prv: dict[CoordinateNode, CoordinateNode] = {}
+        for i in range(n):
+            u = nodes[i]
+            v = nodes[(i + 1) % n]
+            nxt[u] = v
+            prv[v] = u
 
-            max_depth = 0
-            for node in nodes:
-                if isinstance(node, RFANode):
-                    max_depth = max(max_depth, node.depth)
+        head = nodes[0]
+        tour_len = n
 
-            i = 0
-            len_nodes = len(nodes)
-            while i < len_nodes:
-                current_node = nodes[i]
-                if not isinstance(current_node, RFANode):
-                    i += 1
+        # Group initial RFANodes by depth
+        by_depth: dict[int, list[RFANode]] = {}
+        max_depth = 0
+        for node in nodes:
+            if isinstance(node, RFANode):
+                by_depth.setdefault(node.depth, []).append(node)
+                if node.depth > max_depth:
+                    max_depth = node.depth
+
+        # Localize cost helper to avoid Route object allocations in inner loop
+        cost_fn = (
+            (lambda a, b: ceil(sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2)))
+            if ceil_2d
+            else (lambda a, b: round(sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2)))
+        )
+
+        def materialize_tour() -> list[CoordinateNode]:
+            res = [head]
+            curr = nxt[head]
+            while curr is not head:
+                res.append(curr)
+                curr = nxt[curr]
+            return res
+
+        for depth in range(max_depth, 0, -1):
+            level_nodes = by_depth.get(depth)
+            if not level_nodes:
+                continue
+
+            for current_node in level_nodes:
+                # Skip if already unfolded (defensive check)
+                if current_node not in nxt:
                     continue
 
-                if current_node.depth < max_depth:
-                    # Only unfold the nodes that are at the maximum depth.
-                    i += 1
-                    continue
-
-                before = nodes[i - 1] if i > 0 else nodes[len(nodes) - 1]
-                after = nodes[i + 1] if i < len(nodes) - 1 else nodes[0]
+                before = prv[current_node]
+                after = nxt[current_node]
 
                 node1: CoordinateNode = current_node.children[0]
                 node2: CoordinateNode = current_node.children[1]
-                route1 = Route([before, node1, node2, after])
-                route2 = Route([before, node2, node1, after])
 
-                nodes.remove(current_node)
+                # Compare insertion orders: (before -> node1 -> node2 -> after)
+                # vs. (before -> node2 -> node1 -> after).
+                # Note: cost(node1, node2) == cost(node2, node1), so we only compare outer edges!
+                cost_order_1 = cost_fn(before, node1) + cost_fn(node2, after)
+                cost_order_2 = cost_fn(before, node2) + cost_fn(node1, after)
 
-                if route1.get_total_costs(ceil_2d) < route2.get_total_costs(ceil_2d):
-                    nodes.insert(i, node2)
-                    nodes.insert(i, node1)
-                    inserted = [node1, node2]
+                if cost_order_1 < cost_order_2:
+                    first, second = node1, node2
                 else:
-                    nodes.insert(i, node1)
-                    nodes.insert(i, node2)
-                    inserted = [node2, node1]
+                    first, second = node2, node1
 
-                assert len(nodes) == len_nodes + 1, "Unfolding did not increase number of nodes by 1."
-                len_nodes += 1
-                i += 2
+                # Replace current_node with first -> second in O(1)
+                del nxt[current_node]
+                del prv[current_node]
 
-                # New: Local 2-opt around the inserted nodes
-                if self.enable_local_2opt:
-                    nodes = self.local_2opt_segment(nodes, inserted, ceil_2d, radius=5)
+                nxt[before] = first
+                prv[first] = before
+                nxt[first] = second
+                prv[second] = first
+                nxt[second] = after
+                prv[after] = second
+
+                if head is current_node:
+                    head = first
+
+                tour_len += 1
+
+                # Enqueue child RFANodes for their respective depth passes
+                if isinstance(first, RFANode):
+                    by_depth.setdefault(first.depth, []).append(first)
+                if isinstance(second, RFANode):
+                    by_depth.setdefault(second.depth, []).append(second)
+
+                # Local 2-opt around the inserted nodes in O(radius^2)
+                if self.enable_local_2opt and tour_len >= 4:
+                    head = self.local_2opt_segment(nxt, prv, head, first, second, tour_len, cost_fn, radius=5)
 
                 if renderer:
-                    renderer.visualize(nodes)
+                    renderer.visualize(materialize_tour())
 
-            if len_before == len(nodes):
-                return nodes
+        return materialize_tour()
 
-    def local_2opt_segment(self, tour, inserted_nodes, ceil_2d, radius=5):
+    def local_2opt_segment(self, nxt, prv, head, first, second, tour_len, cost_fn, radius=5):
         """
-        Perform a local 2-opt in the neighborhood of the inserted nodes.
+        Perform a local 2-opt in a small neighborhood window around (first, second)
+        directly on the doubly-linked tour without O(n) list scans or index() lookups.
         """
+        # Walk `radius` steps backward from `first`
+        left_steps = min(radius, (tour_len - 2) // 2)
+        right_steps = min(radius, tour_len - 2 - left_steps)
+
+        win_start = first
+        for _ in range(left_steps):
+            win_start = prv[win_start]
+
+        # Extract small local window of nodes into a short list (at most 2*radius + 2 nodes)
+        window_len = left_steps + 2 + right_steps
+        window = [win_start]
+        curr = win_start
+        for _ in range(window_len - 1):
+            curr = nxt[curr]
+            window.append(curr)
+
+        left_anchor = prv[window[0]]
+        right_anchor = nxt[window[-1]]
+
+        # Run 2-opt only on edges strictly inside the extracted window
+        m = len(window)
+        if m < 4:
+            return head
+
         changed = True
         while changed:
             changed = False
-            for node in inserted_nodes:
-                idx = tour.index(node)
-                i_start = max(0, idx - radius)
-                i_end = min(len(tour), idx + radius)
+            for i in range(m - 3):
+                a = window[i]
+                b = window[i + 1]
+                ab_cost = cost_fn(a, b)
+                for j in range(i + 2, m - 1):
+                    c = window[j]
+                    d = window[j + 1]
 
-                for i in range(i_start, i_end - 2):
-                    for j in range(i + 2, i_end):
-                        if j - i == 1:
-                            continue
+                    old_cost = ab_cost + cost_fn(c, d)
+                    new_cost = cost_fn(a, c) + cost_fn(b, d)
 
-                        a: CoordinateNode = tour[i]
-                        b: CoordinateNode = tour[(i + 1) % len(tour)]
-                        c: CoordinateNode = tour[j]
-                        d: CoordinateNode = tour[(j + 1) % len(tour)]
+                    if new_cost < old_cost:
+                        window[i + 1 : j + 1] = reversed(window[i + 1 : j + 1])
+                        b = window[i + 1]
+                        ab_cost = cost_fn(a, b)
+                        changed = True
 
-                        old_cost = a.get_travel_costs(b, ceil_2d) + c.get_travel_costs(d, ceil_2d)
-                        new_cost = a.get_travel_costs(c, ceil_2d) + b.get_travel_costs(d, ceil_2d)
+        # Stitch modified window back into doubly-linked tour in O(window_len)
+        nxt[left_anchor] = window[0]
+        prv[window[0]] = left_anchor
+        for k in range(m - 1):
+            u = window[k]
+            v = window[k + 1]
+            nxt[u] = v
+            prv[v] = u
+        nxt[window[-1]] = right_anchor
+        prv[right_anchor] = window[-1]
 
-                        if new_cost < old_cost:
-                            # 2-opt move
-                            tour[i + 1 : j + 1] = reversed(tour[i + 1 : j + 1])
-                            changed = True
-        return tour
+        return head
 
 
 class UnfoldingStrategyBreadthFirstWithLocal2Opt(UnfoldingStrategyBreadthFirst):
