@@ -121,5 +121,4 @@ The following command runs a benchmark using a subset of the [TSPLIB] instances 
 
 You may download and execute the RFA_demo scripts.
 
-[tabulate]:https://pypi.python.org/pypi/tabulate
 [TSPLIB]:http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/
