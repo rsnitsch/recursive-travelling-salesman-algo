@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Recursive-fold-algorithm (RFA) for metric travelling-salesman-problems.
 """
 
 import random
-from typing import List, Optional
 
 from common import CoordinateNode, Node, Route
 from ui import Renderer
@@ -27,8 +25,8 @@ class RFANode(CoordinateNode):
             self.depth = 1
 
 
-class FoldingStrategy(object):
-    def fold(self, nodes: List[Node], ceil_2d: bool, renderer: Optional[Renderer]):
+class FoldingStrategy:
+    def fold(self, nodes: list[Node], ceil_2d: bool, renderer: Renderer | None):
         """Fold nodes using the strategy defined in the subclass."""
         raise NotImplementedError("fold() must be implemented in subclasses")
 
@@ -38,7 +36,7 @@ class FoldingStrategyRandomWithNearestNeighbor(FoldingStrategy):
     Nodes are picked in random order. Each node is folded with its nearest neighbor.
     """
 
-    def fold(self, nodes: List[Node], ceil_2d: bool, renderer: Optional[Renderer]):
+    def fold(self, nodes: list[Node], ceil_2d: bool, renderer: Renderer | None):
         nodes = list(nodes)
         if renderer:
             renderer.visualize(nodes)
@@ -47,7 +45,7 @@ class FoldingStrategyRandomWithNearestNeighbor(FoldingStrategy):
             node1 = random.choice(nodes)
             nodes.remove(node1)
 
-            node2, dist = node1.get_nearest_neighbor(nodes, ceil_2d)
+            node2, _ = node1.get_nearest_neighbor(nodes, ceil_2d)
             nodes.remove(node2)
 
             nodes.append(RFANode((node1.x + node2.x) / 2, (node1.y + node2.y) / 2, (node1, node2)))
@@ -63,7 +61,7 @@ class FoldingStrategyOutsideIn(FoldingStrategy):
     Outside-in folding with fixed center point calculated at the beginning.
     """
 
-    def fold(self, nodes: List[Node], ceil_2d: bool, renderer: Optional[Renderer]):
+    def fold(self, nodes: list[Node], ceil_2d: bool, renderer: Renderer | None):
         nodes = list(nodes)
         if renderer:
             renderer.visualize(nodes)
@@ -102,7 +100,7 @@ class FoldingStrategyOutsideIn(FoldingStrategy):
         return nodes
 
 
-class UnfoldingStrategy(object):
+class UnfoldingStrategy:
     def unfold(self, nodes_to_unfold, ceil_2d, renderer):
         """Unfold nodes using the strategy defined in the subclass."""
         raise NotImplementedError("unfold() must be implemented in subclasses")

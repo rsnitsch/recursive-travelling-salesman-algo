@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Common functionality for travelling-salesman-problem algorithms.
 """
 
 import random
-
 from math import ceil, sqrt
 
-from shapely.geometry import LineString
 from rtree import index
+from shapely.geometry import LineString
 
 
-class Node(object):
+class Node:
     """Abstract TSP Node."""
 
     def __init__(self, *args, **kwargs):
@@ -59,9 +57,9 @@ class CoordinateNode(Node):
     def get_travel_costs(self, other_node, ceil_2d):
         euc_distance = sqrt((other_node.x - self.x) ** 2 + (other_node.y - self.y) ** 2)
         if ceil_2d:
-            return int(ceil(euc_distance))
+            return ceil(euc_distance)
         else:
-            return int(round(euc_distance))
+            return round(euc_distance)
 
     def __str__(self):
         return "CN(%s, %s)" % (self.x, self.y)
@@ -193,7 +191,7 @@ def load_nodes_from_tsplib_file(filename):
                 continue
 
             if line[0].isdigit():
-                index, x, y = [float(i) for i in filter(lambda x: len(x) > 0, line.strip().split(" "))]
+                _, x, y = [float(i) for i in filter(lambda x: len(x) > 0, line.strip().split(" "))]
                 nodes.append(CoordinateNode(x, y))
             elif line == "EOF":
                 break

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Script for executing the recursive-fold-algorithm (RFA) for metric travelling-salesman-problems
 and displaying visualizations/benchmarks.
@@ -15,21 +14,19 @@ import time
 
 from tabulate import tabulate
 
-from common import generate_random_nodes, tsplib_get_optimal_solution, load_nodes_from_tsplib_file, Route
+from common import Route, generate_random_nodes, load_nodes_from_tsplib_file, tsplib_get_optimal_solution
 from RFA import (
-    FoldingStrategyRandomWithNearestNeighbor,
     FoldingStrategyOutsideIn,
+    FoldingStrategyRandomWithNearestNeighbor,
     UnfoldingStrategyBreadthFirst,
     UnfoldingStrategyBreadthFirstWithLocal2Opt,
 )
 
 
 def create_option_parser():
-    kwargs = {
-        "description": "Calculate and display routes for metric travelling-salesman-problems using the recursive-fold-algorithm."
-    }
-
-    parser = argparse.ArgumentParser(**kwargs)
+    parser = argparse.ArgumentParser(
+        description="Calculate and display routes for metric travelling-salesman-problems using the recursive-fold-algorithm."
+    )
 
     # Add options to the OptionParser.
     parser.add_argument("mode", type=str, action="store", help="Either 'demo' or 'benchmark'.")

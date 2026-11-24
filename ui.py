@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-import turtle
 import copy
+import turtle
 
 
-class Renderer(object):
+class Renderer:
     def visualize(self, route):
         raise NotImplementedError("visualize() must be implemented in subclasses")
 
