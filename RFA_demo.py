@@ -267,7 +267,7 @@ def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, intersection_
 
             rows.append([tspi, optimal_costs, total_costs, "%.2f%%" % factor, "%.3fs" % runtime])
 
-            logger.info("  Result: Total costs: % 10s | Runtime: %.3fs", total_costs, runtime)
+            logger.info("  Result: Total cost = %-10s | Runtime = %.3fs", total_costs, runtime)
 
             if renderer_instance:
                 renderer_instance.wait_until_closed()
