@@ -31,20 +31,22 @@ class CoordinateNode:
             return round(euc_distance)
 
     def get_nearest_neighbor(self, candidates, ceil_2d):
-        """
-        Calculates the travel costs for each of the given candidate nodes
-        and returns the candidate with the minimum costs along with the
-        according minimum costs. This means it returns a 2-tuple:
-        (nearest_neighbor, nearest_distance)
-        """
-        nearest_neighbor = candidates[0]
-        nearest_distance = self.get_travel_costs(candidates[0], ceil_2d)
-        for i in range(1, len(candidates)):
-            candidate_distance = self.get_travel_costs(candidates[i], ceil_2d)
-            if candidate_distance < nearest_distance:
-                nearest_distance = candidate_distance
-                nearest_neighbor = candidates[i]
-        return (nearest_neighbor, nearest_distance)
+        sx = self.x
+        sy = self.y
+        best_node = candidates[0]
+        dx = best_node.x - sx
+        dy = best_node.y - sy
+        best_dist_sq = dx * dx + dy * dy
+
+        for node in candidates[1:]:
+            dx = node.x - sx
+            dy = node.y - sy
+            dist_sq = dx * dx + dy * dy
+            if dist_sq < best_dist_sq:
+                best_dist_sq = dist_sq
+                best_node = node
+
+        return best_node, self.get_travel_costs(best_node, ceil_2d)
 
     def __str__(self):
         return "CN(%s, %s)" % (self.x, self.y)
