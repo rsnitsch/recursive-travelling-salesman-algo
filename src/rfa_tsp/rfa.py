@@ -177,7 +177,7 @@ class FoldingStrategyBreadthFirst(FoldingStrategy):
     def fold(self, nodes: list[CoordinateNode], ceil_2d: bool, renderer: Renderer | None):
         active = list(nodes)
         if renderer:
-            renderer.visualize(active)
+            renderer.record_init(active)
 
         grid = SpatialGrid(active)
         by_depth: dict[int, list[CoordinateNode]] = {0: list(active)}
@@ -205,7 +205,7 @@ class FoldingStrategyBreadthFirst(FoldingStrategy):
             by_depth.setdefault(folded.depth, []).append(folded)
 
             if renderer:
-                renderer.visualize(list(grid.node_cell.keys()))
+                renderer.record_fold(list(grid.node_cell.keys()), node1, node2, folded)
 
         return list(grid.node_cell.keys())
 
@@ -219,7 +219,7 @@ class FoldingStrategyRandomWithNearestNeighbor(FoldingStrategy):
     def fold(self, nodes: list[CoordinateNode], ceil_2d: bool, renderer: Renderer | None):
         active = list(nodes)
         if renderer:
-            renderer.visualize(active)
+            renderer.record_init(active)
 
         grid = SpatialGrid(active)
         pos = {node: i for i, node in enumerate(active)}
@@ -246,7 +246,7 @@ class FoldingStrategyRandomWithNearestNeighbor(FoldingStrategy):
             grid.add(folded)
 
             if renderer:
-                renderer.visualize(active)
+                renderer.record_fold(active, node1, node2, folded)
 
         return active
 
@@ -260,7 +260,7 @@ class FoldingStrategyOutsideIn(FoldingStrategy):
     def fold(self, nodes: list[CoordinateNode], ceil_2d: bool, renderer: Renderer | None):
         active = list(nodes)
         if renderer:
-            renderer.visualize(active)
+            renderer.record_init(active)
 
         if len(active) <= 3:
             return active
@@ -309,7 +309,7 @@ class FoldingStrategyOutsideIn(FoldingStrategy):
             counter += 1
 
             if renderer:
-                renderer.visualize(list(grid.node_cell.keys()))
+                renderer.record_fold(list(grid.node_cell.keys()), furthest_node, nearest_neighbor, folded_node)
 
         return list(grid.node_cell.keys())
 
@@ -371,6 +371,9 @@ class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
                 curr = nxt[curr]
             return res
 
+        if renderer:
+            renderer.record_anchor(materialize_tour())
+
         for depth in range(max_depth, 0, -1):
             level_nodes = by_depth.get(depth)
             if not level_nodes:
@@ -425,7 +428,7 @@ class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
                     head = self.local_2opt_segment(nxt, prv, head, first, second, tour_len, cost_fn, radius=5)
 
                 if renderer:
-                    renderer.visualize(materialize_tour())
+                    renderer.record_unfold(materialize_tour(), current_node, first, second)
 
         return materialize_tour()
 

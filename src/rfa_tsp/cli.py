@@ -209,7 +209,7 @@ def main_random(folding_strategy, unfolding_strategy, post_uncross, renderer, nu
     if post_uncross:
         route = route.intersection_cleanup()
         if renderer_instance:
-            renderer_instance.visualize(route)
+            renderer_instance.record_post_process(route, cost=route.get_total_costs(ceil_2d))
     end_time = time.time()
 
     total_costs = route.get_total_costs(ceil_2d)
@@ -288,7 +288,7 @@ def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, post_uncross,
             if post_uncross:
                 route = route.intersection_cleanup()
                 if renderer_instance:
-                    renderer_instance.visualize(route)
+                    renderer_instance.record_post_process(route, cost=route.get_total_costs(ceil_2d))
             end_time = time.time()
             gc.collect()
 
