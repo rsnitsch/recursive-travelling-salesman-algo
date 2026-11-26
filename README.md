@@ -22,7 +22,7 @@ very elegant.
 
 ## Visualization
 
-This is how RFA finds a route for the TSPLIB problem ``pr76``:
+This is how the RFA finds a route for the TSPLIB problem ``pr76``:
 
 <img src="docs/rfa-tsp_tsplib_pr76.gif" alt="Step-by-step animation of RFA processing the pr76 instance" width="500">
 
