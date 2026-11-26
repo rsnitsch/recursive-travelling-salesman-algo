@@ -9,8 +9,8 @@ import heapq
 import random
 from math import ceil, floor, sqrt
 
-from common import CoordinateNode, Route
-from ui import Renderer
+from .common import CoordinateNode, Route
+from .ui import Renderer
 
 
 class SpatialGrid:

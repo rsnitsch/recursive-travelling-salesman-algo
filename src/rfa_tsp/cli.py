@@ -19,8 +19,8 @@ import time
 
 from tabulate import tabulate
 
-from common import Route, generate_random_nodes, load_nodes_from_tsplib_file, tsplib_get_optimal_solution
-from RFA import (
+from .common import Route, generate_random_nodes, load_nodes_from_tsplib_file, tsplib_get_optimal_solution
+from .rfa import (
     FoldingStrategyBreadthFirst,
     FoldingStrategyOutsideIn,
     FoldingStrategyRandomWithNearestNeighbor,
@@ -110,7 +110,7 @@ def get_unfolding_strategy_by_name(name):
 
 def get_renderer_by_name(name):
     if name == "turtle":
-        from ui import RendererTurtle
+        from .ui import RendererTurtle
 
         return RendererTurtle()
     elif name == "disabled":
@@ -119,9 +119,9 @@ def get_renderer_by_name(name):
         raise ValueError("Unknown renderer: %s" % name)
 
 
-def main(argv):
+def main():
     parser = create_option_parser()
-    args = parser.parse_args(args=argv[1:])
+    args = parser.parse_args()
 
     logging.basicConfig(format="%(levelname)s | %(message)s", level=logging.DEBUG if args.verbose else logging.INFO)
 
@@ -295,4 +295,4 @@ def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, intersection_
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv))
+    sys.exit(main())

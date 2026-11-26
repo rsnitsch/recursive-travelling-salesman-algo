@@ -1,6 +1,6 @@
-# RFA_demo <!-- omit from toc -->
+# rfa-tsp <!-- omit from toc -->
 
-The recursive-fold-algorithm (RFA) is a recursive algorithm for the metric travelling-salesman-problem (TSP). The objective of the TSP is to find a
+The **recursive-fold-algorithm** (RFA) is a recursive algorithm for the metric **travelling-salesman-problem** (TSP). The objective of the TSP is to find a
 round trip through a number of cities/locations (more generally referred to as **nodes**). The round trip should be as short as possible. The TSP
 is a very hard problem with difficult computational properties (TSP belongs to the NP-hard problem class).
 
@@ -12,7 +12,6 @@ very elegant.
 - [Idea](#idea)
   - [Folding strategies](#folding-strategies)
   - [Unfolding strategies](#unfolding-strategies)
-- [Install](#install)
 - [Usage](#usage)
   - ['demo' mode](#demo-mode)
   - ['benchmark' mode](#benchmark-mode)
@@ -66,27 +65,16 @@ The complete process can be described as follows:
 - `UnfoldingStrategyBreadthFirstWithLocal2Opt` (default): Same as UnfoldingStrategyBreadthFirst, but after each unfolding
   step, a local 2-opt optimization around the inserted nodes is performed.
 
-## Install
-
-The scripts require
-
-- Python 3.15
-- PyPI packages `rtree`, `shapely`, and `tabulate`
-
-The project uses ``pyproject.toml`` and ``uv`` for dependency management.
-
-The recommended way is to run ``uv sync`` once in the project directory and from then on
-just use ``uv run python <script.py>``.
-
 ## Usage
 
-The main script is RFA_demo.py and it features multiple commandline arguments. There is only one obligatory argument, namely the mode, which may be `demo` or `benchmark`.
+Use ``uv run rfa-tsp``  to execute the cli command. There is only one obligatory commandline parameter,
+namely the mode, which may be `demo` or `benchmark`.
 
 ### 'demo' mode
 
 The following command runs a simple demonstration based on 100 randomly generated nodes with a random number generator seed of 17:
 
-    $ python RFA_demo.py demo -n 100 -s 17
+    $ uv run rfa-tsp demo -n 100 -s 17
     Total costs:    4075
     Runtime:        0.016s
 
@@ -94,7 +82,7 @@ The following command runs a simple demonstration based on 100 randomly generate
 
 The following command runs a benchmark using a subset of the [TSPLIB95] instances (see TSPLIB/ folder):
 
-    $ python RFA_demo.py benchmark --tsplib all -s 17
+    $ uv run rfa-tsp benchmark --tsplib all -s 17
     ...
     Instance      Costs of optimal route    Costs of RFA route  Cost factor    Runtime
     ----------  ------------------------  --------------------  -------------  ---------
