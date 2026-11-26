@@ -206,9 +206,10 @@ The following command runs a benchmark using a subset of the [TSPLIB95] instance
 
 ## License
 
-You may download and execute the RFA_demo scripts.
+The Recursive-Fold-Algorithm (RFA) was originally conceived and developed by Robert Nitsch in 2010.
 
-The benchmark instances in ``TSPLIB/`` are taken from [TSPLIB95] (Gerhard Reinelt, Universität Heidelberg) and are
-provided strictly for academic and benchmarking purposes.
+This project is licensed under the **MIT License** – see the [LICENSE](LICENSE) file for details.
 
-[TSPLIB95]:https://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/
+The benchmark instances in `TSPLIB/` are taken from [TSPLIB95] (Gerhard Reinelt, Universität Heidelberg) and are provided strictly for academic and benchmarking purposes.
+
+[TSPLIB95]: https://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/

@@ -2,6 +2,8 @@
 name = "rfa-tsp"
 version = "0.1.0"
 description = "Recursive fold algorithm for the travelling-salesman-problem"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 authors = [
     { name = "Robert Nitsch" }
