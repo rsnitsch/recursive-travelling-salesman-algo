@@ -310,6 +310,7 @@ def run_benchmark(
             "Std",
             "Mean runtime",
         ]
+        avg_runtime_per_trial = total_runtime / trials
         summary = (
             f"Summary ({len(rows)}/{len(instances)} instances, {trials} trials each):\n"
             f"  Mean of best overheads:     +{best_arith_mean:.2f}%\n"
@@ -318,7 +319,7 @@ def run_benchmark(
             f"  Mean overhead (geometric):  +{geom_mean:.2f}%\n"
             f"  Median mean overhead:       +{median_overhead:.2f}%\n"
             f"  Max mean overhead:          +{max_overhead:.2f}%\n"
-            f"  Total runtime:              {total_runtime:.3f}s"
+            f"  Total runtime:              {total_runtime:.3f}s ({avg_runtime_per_trial:.5f}s / trial)"
         )
 
     table = tabulate(rows, headers=headers, floatfmt=".1f")
