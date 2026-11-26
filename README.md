@@ -22,33 +22,54 @@ very elegant.
 ## Idea
 
 RFA exploits the fact that the TSP can be trivially solved if there are only 3 nodes, because only a single round trip route exists
-for 3 nodes. The solution is self-evident:
+for 3 nodes. The solution, a triangle, is self-evident:
 
-![alt](docs/rfa_00_tsp_trivial_problem_size.png)
+![alt](docs/rfa-tsp_concept_02_anchor_clean.png)
 
 This **trivial case** is the **recursion anchor** for the algorithm.
 
 But how to deal with larger problem sizes? The answer is to **fold
-nodes**. Folding means that two nodes that are in close proximity to each other are fused into an artifical new node. This new node gets placed in the middle
-between the two original nodes. By remembering the original nodes it is also possible to reverse such a folding operation later on (referred to as **unfolding**). Of course, folded nodes can be folded again themselves (recursively).
+nodes**. Folding means that two nodes that are in close proximity to each other are fused into an artificial new node. This new node gets placed in the middle
+between the two original nodes and replaces them. By remembering the original nodes it is also possible to reverse such a folding operation later on (referred to as **unfolding**). Of course, folded nodes can be folded again themselves (recursively).
+These folding steps can be repeated until the problem size is reduced to a number of 3 nodes.
 
-Once only 3 nodes remain, a preliminary solution (route) can be constructed. Again, this is self-evident:
+Let's consider the following TSP instance with 4 nodes:
 
-![alt](docs/rfa_00_tsp_trivial_problem_size.png)
+![alt](docs/rfa-tsp_concept_00_init.png)
+
+We can pick a node and its nearest neighbor and fold them. The new node will be placed in the center and remember
+the original nodes (the "children"):
+
+![alt](docs/rfa-tsp_concept_01_fold.png)
+
+At this point, the number of nodes is reduced to 3. This is the trivial case and a preliminary route
+can be constructed. The best route for 3 nodes is a simple triangle:
+
+![alt](docs/rfa-tsp_concept_02_anchor.png)
+
+Now we have to reverse the folding.
 
 The key to RFA is that the nodes are now unfolded step by step. Each unfolding
-removes a node and replaces it with two new nodes. These new nodes can be inserted
-into the preliminary route in two alternative orders only. In the following picture the artificial node in the bottom-right corner (blue) is unfolded:
+removes a node and replaces it with two new nodes (the original child nodes from which the folded node was constructed). These new nodes can be inserted into the preliminary route in two alternative orders only.
 
-![alt](docs/rfa_01_tsp_unfold_possibilities.png)
+| Bad choice (longer, intersecting) | Good choice (shorter) |
+| :---: | :---: |
+| ![Bad choice](docs/rfa-tsp_concept_03_unfold_bad_choice.png) | ![Good choice](docs/rfa-tsp_concept_03_unfold_good_choice.png) |
 
-It is obvious that the new nodes (red) can only be inserted in two different orders. It is also easy to determine which of these orders gives the shorter route (the green one).
+It is trivial to calculate which option keeps the route shorter. Result:
+
+![alt](docs/rfa-tsp_concept_03_unfold.png)
 
 The complete process can be described as follows:
 
 - **Folding:** Pick a node and fold it with a neighboring node. Repeat folding nodes until the number of nodes has been reduced to 3.
 - **Recursion anchor:** Create a preliminary round trip route through the 3 remaining nodes.
 - **Unfolding:** Unfold the nodes until the original nodes have been restored. At each unfolding step, insert the new nodes in the preliminary route. Choose the insertion order that gives the shorter route length.
+
+<!--
+Images generated with:
+uv run rfa-tsp random:default -n 4 -s 0 --export docs/rfa-tsp_concept.png
+-->
 
 ### Folding strategies
 
