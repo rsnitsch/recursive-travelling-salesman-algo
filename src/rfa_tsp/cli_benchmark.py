@@ -281,11 +281,9 @@ def run_benchmark(
         logger.warning("No benchmark results to display.")
         return 1
 
-    ratios = [1.0 + overhead / 100.0 for overhead in mean_overheads]
     min_overhead = min(mean_overheads)
     max_overhead = max(mean_overheads)
     arith_mean = statistics.mean(mean_overheads)
-    geom_mean = (statistics.geometric_mean(ratios) - 1.0) * 100.0
     median_overhead = statistics.median(mean_overheads)
 
     if trials == 1:
@@ -294,7 +292,6 @@ def run_benchmark(
             f"Summary ({len(rows)}/{len(instances)} instances):\n"
             f"  Min overhead:               +{min_overhead:.2f}%\n"
             f"  Mean overhead (arithmetic): +{arith_mean:.2f}%\n"
-            f"  Mean overhead (geometric):  +{geom_mean:.2f}%\n"
             f"  Median overhead:            +{median_overhead:.2f}%\n"
             f"  Max overhead:               +{max_overhead:.2f}%\n"
             f"  Total runtime:              {total_runtime:.3f}s"
@@ -317,7 +314,6 @@ def run_benchmark(
             f"  Mean of best overheads:     +{best_arith_mean:.2f}%\n"
             f"  Min mean overhead:          +{min_overhead:.2f}%\n"
             f"  Mean overhead (arithmetic): +{arith_mean:.2f}%\n"
-            f"  Mean overhead (geometric):  +{geom_mean:.2f}%\n"
             f"  Median mean overhead:       +{median_overhead:.2f}%\n"
             f"  Max mean overhead:          +{max_overhead:.2f}%\n"
             f"  Total runtime:              {total_runtime:.3f}s ({avg_runtime_per_trial:.5f}s / trial)"
