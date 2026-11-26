@@ -24,7 +24,7 @@ very elegant.
 RFA exploits the fact that the TSP can be trivially solved if there are only 3 nodes, because only a single round trip route exists
 for 3 nodes. The solution, a triangle, is self-evident:
 
-![alt](docs/rfa-tsp_concept_02_anchor_clean.png)
+<img src="docs/rfa-tsp_concept_02_anchor_clean.png" alt="Self-evident triangle solution for 3 nodes" width="500">
 
 This **trivial case** is the **recursion anchor** for the algorithm.
 
@@ -35,17 +35,17 @@ These folding steps can be repeated until the problem size is reduced to a numbe
 
 Let's consider the following TSP instance with 4 nodes:
 
-![alt](docs/rfa-tsp_concept_00_init.png)
+<img src="docs/rfa-tsp_concept_00_init.png" alt="Initial TSP nodes" width="500">
 
 We can pick a node and its nearest neighbor and fold them. The new node will be placed in the center and remember
 the original nodes (the "children"):
 
-![alt](docs/rfa-tsp_concept_01_fold.png)
+<img src="docs/rfa-tsp_concept_01_fold.png" alt="A node is folded with its nearest neighbor, creating a new node in the center" width="500">
 
 At this point, the number of nodes is reduced to 3. This is the trivial case and a preliminary route
 can be constructed. The best route for 3 nodes is a simple triangle:
 
-![alt](docs/rfa-tsp_concept_02_anchor.png)
+<img src="docs/rfa-tsp_concept_02_anchor.png" alt="With only 3 nodes left, the trivial case (recursion anchor) is reached" width="500">
 
 Now we have to reverse the folding.
 
@@ -58,7 +58,7 @@ removes a node and replaces it with two new nodes (the original child nodes from
 
 It is trivial to calculate which option keeps the route shorter. Result:
 
-![alt](docs/rfa-tsp_concept_03_unfold.png)
+<img src="docs/rfa-tsp_concept_03_unfold.png" alt="Result after unfolding" width="500">
 
 The complete process can be described as follows:
 
