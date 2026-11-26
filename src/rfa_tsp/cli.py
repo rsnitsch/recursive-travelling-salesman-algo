@@ -91,7 +91,7 @@ def create_option_parser():
         default=DEFAULT_NUMBER_OF_NODES,
         help=("Number of nodes (default = %d)" % DEFAULT_NUMBER_OF_NODES),
     )
-    demo_parser.add_argument("--renderer", type=str, default="turtle", choices=["disabled", "turtle"])
+    demo_parser.add_argument("--renderer", type=str, default="disabled", choices=["disabled", "turtle"])
 
     # 'benchmark' subcommand.
     benchmark_parser = subparsers.add_parser(
