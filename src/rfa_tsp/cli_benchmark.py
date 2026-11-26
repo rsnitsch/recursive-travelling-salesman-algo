@@ -183,7 +183,7 @@ def run_benchmark(
             rows.append([tspi, optimal_costs, total_costs, f"+{overhead_pct:.2f}%", f"{runtime:.3f}s"])
 
             logger.info(
-                "  Result: Total length = %-10s | Overhead vs. optimum = +%.2f%% | Runtime = %.3fs",
+                "  Result: Total length = %-10s | Overhead vs. optimum = +%5.2f%% | Runtime = %.3fs",
                 total_costs,
                 overhead_pct,
                 runtime,
