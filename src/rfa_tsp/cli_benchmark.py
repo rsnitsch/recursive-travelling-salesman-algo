@@ -54,6 +54,14 @@ def positive_int(value: str) -> int:
     return parsed
 
 
+def non_negative_float(value: str) -> float:
+    """Argparse type validator for non-negative floats."""
+    parsed = float(value)
+    if parsed < 0.0:
+        raise argparse.ArgumentTypeError("must be >= 0")
+    return parsed
+
+
 def create_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Run RFA benchmarks across multiple TSPLIB95 instances and report summary statistics."
@@ -98,6 +106,12 @@ def create_argument_parser() -> argparse.ArgumentParser:
         type=positive_int,
         default=1,
         help="Number of trials per instance with incrementing seeds (default = 1).",
+    )
+    parser.add_argument(
+        "--cooldown",
+        type=non_negative_float,
+        default=0.0,
+        help="Pause in seconds between consecutive instances to reduce thermal throttling (default: 0.0).",
     )
     parser.add_argument(
         "--post-uncross",
@@ -163,6 +177,7 @@ def run_benchmark(
     post_uncross: bool,
     seed: int,
     trials: int,
+    cooldown: float,
     weighted_centroids: bool,
 ) -> int:
     if not instances:
@@ -183,7 +198,7 @@ def run_benchmark(
     total_runtime = 0.0
 
     try:
-        for tspi in instances:
+        for instance_index, tspi in enumerate(instances):
             tsp_path = tsplib_dir / f"{tspi}.tsp"
             if not tsp_path.is_file():
                 logger.error("TSPLIB file not found: %s", tsp_path)
@@ -274,6 +289,11 @@ def run_benchmark(
                     std_oh,
                     mean_rt,
                 )
+
+            if cooldown > 0.0 and instance_index < len(instances) - 1:
+                logger.debug("Cooling down for %.2fs before next instance...", cooldown)
+                time.sleep(cooldown)
+
     except KeyboardInterrupt:
         logger.info("KeyboardInterrupt received, stopping benchmark.")
 
@@ -354,6 +374,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         post_uncross=args.post_uncross,
         seed=args.seed,
         trials=args.trials,
+        cooldown=args.cooldown,
         weighted_centroids=args.weighted_centroids,
     )
 
