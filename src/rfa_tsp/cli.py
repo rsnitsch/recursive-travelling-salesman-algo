@@ -102,7 +102,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
         "--export",
         type=Path,
         default=None,
-        help="Export animation to a file (.gif, .mp4, .mov, .webm).",
+        help="Export animation (.gif, .mp4, .mov, .webm) or individual step frames (.png, .svg).",
     )
     parser.add_argument(
         "--export-fps",

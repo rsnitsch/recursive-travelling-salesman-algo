@@ -443,12 +443,9 @@ class RendererMatplotlib(Renderer):
         from matplotlib.colors import Normalize
 
         suffix = output_path.suffix.lower()
-        if suffix == ".gif":
-            writer = PillowWriter(fps=fps)
-        elif suffix in (".mp4", ".mov", ".webm"):
-            writer = FFMpegWriter(fps=fps)
-        else:
-            raise ValueError(f"Unsupported export format '{suffix}'. Use .gif, .mp4, .mov, or .webm.")
+        is_image_sequence = suffix in (".png", ".svg")
+        if not is_image_sequence and suffix not in (".gif", ".mp4", ".mov", ".webm"):
+            raise ValueError(f"Unsupported export format '{suffix}'. Use .png, .svg, .gif, .mp4, .mov, or .webm.")
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -466,7 +463,21 @@ class RendererMatplotlib(Renderer):
         cbar = fig.colorbar(sm, cax=cbar_ax)
         cbar.set_label("Folding Depth")
 
-        # Repeat the final frame so viewers can inspect the finished route before looping
+        if is_image_sequence:
+            width = max(2, len(str(len(self.history) - 1)))
+            logger.info("Exporting %d frames as %s images...", len(self.history), suffix)
+            try:
+                for idx, step in enumerate(self.history):
+                    self._draw_step(ax, idx, bounds, norm, cmap)
+                    frame_path = output_path.with_name(f"{output_path.stem}_{idx:0{width}d}_{step.phase.value}{suffix}")
+                    fig.savefig(frame_path, dpi=dpi)
+                    logger.debug("Saved frame: %s", frame_path)
+                logger.info("Exported %d frames to %s", len(self.history), output_path.parent)
+            finally:
+                plt.close(fig)
+            return
+
+        writer = PillowWriter(fps=fps) if suffix == ".gif" else FFMpegWriter(fps=fps)
         hold_frames = max(0, int(round(hold_final_seconds * fps)))
         frame_indices = list(range(len(self.history))) + [len(self.history) - 1] * hold_frames
 
