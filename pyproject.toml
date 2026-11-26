@@ -20,6 +20,7 @@ dev = []
 
 [project.scripts]
 rfa-tsp = "rfa_tsp.cli:main"
+rfa-tsp-benchmark = "rfa_tsp.cli_benchmark:main"
 
 [build-system]
 requires = ["hatchling"]
