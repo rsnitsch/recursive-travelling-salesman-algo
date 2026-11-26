@@ -90,11 +90,11 @@ uv run rfa-tsp random:default -n 4 -s 0 --export docs/rfa-tsp_concept.png
 
 ## Usage
 
-This project uses ``uv`` as packet and project manager. See: <https://docs.astral.sh/uv/>
+This project uses ``uv`` as package and project manager. See: <https://docs.astral.sh/uv/>
 
 ### Processing a single TSPLIB instance
 
-You can select a single TSPLIB instance from the ``tsplib/`` folder:
+You can select a single TSPLIB instance from the ``TSPLIB/`` folder:
 
     ❯ uv run rfa-tsp tsplib:a280
     INFO | Instance:           tsplib:a280 (280 nodes)
@@ -133,13 +133,13 @@ default seed is ``default``, so ``random`` is equal to specifying ``random:defau
 
 ### Visualizing the steps of the algorithm
 
-The folding und unfolding phases can be rendered step-by-step:
+The folding and unfolding phases can be rendered step-by-step:
 
     ❯ uv run rfa-tsp tsplib:a280 --renderer matplotlib
 
 The rendering can also be exported as an animation:
 
-    ❯ uv run rfa-tsp tsplib:a280 --renderer matplotlib --export rfa-tsp_tsplib95_a280.gif --export-fps 5
+    ❯ uv run rfa-tsp tsplib:a280 --export rfa-tsp_tsplib95_a280.gif --export-fps 5
 
 ### Benchmarking
 
