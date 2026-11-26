@@ -22,6 +22,9 @@ very elegant.
 - [Algorithmic properties](#algorithmic-properties)
   - [Seed sensitivity](#seed-sensitivity)
     - [Key observations](#key-observations)
+  - [Time complexity](#time-complexity)
+    - [Empirical scaling](#empirical-scaling)
+    - [Algorithmic analysis](#algorithmic-analysis)
 - [Usage](#usage)
   - [Processing a single TSPLIB instance](#processing-a-single-tsplib-instance)
   - [Processing a random TSP instance](#processing-a-random-tsp-instance)
@@ -166,6 +169,36 @@ uv run rfa-tsp-plot-trials trial-usa13509.json --export docs/rfa-tsp-seed-sensit
 ```
 
 </details>
+
+### Time complexity
+
+#### Empirical scaling
+
+Looking at the [benchmark results](#benchmarking) across TSPLIB instances spanning nearly two orders of magnitude in size reveals a nearly constant runtime per node:
+
+| Instance | Nodes ($n$) | Runtime | Time per node |
+| :--------- | ---: | ---: | ---: |
+| `pr1002` | 1,002 | 0.080s | 79.8 µs |
+| `pla7397` | 7,397 | 0.357s | 48.3 µs |
+| `usa13509` | 13,509 | 0.774s | 57.3 µs |
+| `d18512` | 18,512 | 1.018s | 55.0 µs |
+| `sw24978` | 24,978 | 1.373s | 55.0 µs |
+| `pla33810` | 33,810 | 1.613s | 47.7 µs |
+| `pla85900` | 85,900 | 4.469s | 52.0 µs |
+
+Increasing the problem size by a factor of ~11.6 (from `pla7397` to `pla85900`) increases runtime by a factor of ~12.5 — closely matching **linear $O(n)$ scaling** in practice.
+
+#### Algorithmic analysis
+
+Both phases perform exactly $n - 3$ steps:
+
+- **Folding — expected $O(n)$, worst-case $O(n^2)$:**
+  In each step, a node is folded with its nearest neighbor using a dynamic 2D spatial hash grid (`SpatialGrid`). Whenever the number of active nodes halves, the grid is rebuilt with coarser cells so that cell density stays roughly constant; across the entire run, all rebuilds sum to $O(n + n/2 + n/4 + \dots) = O(n)$. For reasonably distributed 2D point sets, each nearest-neighbor query inspects only a constant number of neighboring cells ($O(1)$ expected), yielding **$O(n)$ expected total time** for `breadth-first` and `random-nn` (and $O(n \log n)$ for `outside-in` due to its max-heap).
+  
+  In the **worst case**, however, pathological point distributions (e.g., almost all nodes tightly clustered in a tiny area while a few distant outliers stretch the bounding box) cause many nodes to collapse into a single grid cell or force the ring search to scan many empty cells. Each nearest-neighbor query then degrades to $O(n)$, resulting in **$O(n^2)$ worst-case time**. This is a deliberate trade-off of using a lightweight spatial hash grid to support fast dynamic insertions and deletions at every folding step, rather than an inherent limitation of the RFA concept itself; density-adaptive structures such as an R-tree or quadtree handle skewed distributions more robustly in practice, but raise the expected time complexity from $O(n)$ to $O(n \log n)$.
+
+- **Unfolding — strictly $O(n)$:**
+  The tour is maintained as a circular doubly-linked structure (`nxt`/`prv` dictionaries), so replacing a folded node with its two children takes $O(1)$ time. With `breadth-first-2opt`, the local 2-opt refinement operates only on a fixed-size neighborhood window (`radius=5`, at most 12 nodes), which also runs in $O(1)$ per step. Thus, unfolding is **strictly $O(n)$** even in the worst case.
 
 ## Usage
 
