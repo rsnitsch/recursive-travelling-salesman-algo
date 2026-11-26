@@ -60,7 +60,12 @@ def create_option_parser():
         help="Random number generator seed (default = %d)" % DEFAULT_SEED,
     )
 
-    common_parser.add_argument("--intersection-cleanup", action=argparse.BooleanOptionalAction, default=False)
+    common_parser.add_argument(
+        "--post-uncross",
+        action="store_true",
+        default=False,
+        help="Remove intersecting edges from the final route via 2-opt moves (default: off)",
+    )
 
     common_parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging output")
 
@@ -153,7 +158,7 @@ def main():
         main_random(
             args.folding_strategy,
             args.unfolding_strategy,
-            args.intersection_cleanup,
+            args.post_uncross,
             args.renderer,
             args.number_of_nodes,
             args.seed,
@@ -163,7 +168,7 @@ def main():
             args.tsplib,
             args.folding_strategy,
             args.unfolding_strategy,
-            args.intersection_cleanup,
+            args.post_uncross,
             args.renderer,
             args.seed,
         )
@@ -171,7 +176,7 @@ def main():
     return 0
 
 
-def main_random(folding_strategy, unfolding_strategy, intersection_cleanup, renderer, number_of_nodes, seed=0):
+def main_random(folding_strategy, unfolding_strategy, post_uncross, renderer, number_of_nodes, seed=0):
     # KONFIGURATION:
     """
     Gibt an, wie groß die X- bzw. Y-Koordinaten maximal sein dürfen.
@@ -201,7 +206,7 @@ def main_random(folding_strategy, unfolding_strategy, intersection_cleanup, rend
 
     logger.debug("Unfolding...")
     route = Route(unfolding_strategy_instance.unfold(folded, ceil_2d, renderer_instance))
-    if intersection_cleanup:
+    if post_uncross:
         route = route.intersection_cleanup()
         if renderer_instance:
             renderer_instance.visualize(route)
@@ -218,7 +223,7 @@ def main_random(folding_strategy, unfolding_strategy, intersection_cleanup, rend
         renderer_instance.wait_until_closed()
 
 
-def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, intersection_cleanup, renderer, seed=0):
+def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, post_uncross, renderer, seed=0):
     # Ordner mit den TSPLIB-Instanzen (in entpackter Form)
     tsplib_folder = "./TSPLIB"
 
@@ -280,7 +285,7 @@ def main_tsplib(tsplib: str, folding_strategy, unfolding_strategy, intersection_
 
             logger.debug("Unfolding...")
             route = Route(unfolding_strategy_instance.unfold(folded, ceil_2d, renderer_instance))
-            if intersection_cleanup:
+            if post_uncross:
                 route = route.intersection_cleanup()
                 if renderer_instance:
                     renderer_instance.visualize(route)
