@@ -199,11 +199,13 @@ class RendererMatplotlib(Renderer):
         min_x, max_x = min(xs), max(xs)
         min_y, max_y = min(ys), max(ys)
 
-        span_x = (max_x - min_x) or 1.0
-        span_y = (max_y - min_y) or 1.0
-        pad_x = span_x * 0.06
-        pad_y = span_y * 0.06
-        return (min_x - pad_x, max_x + pad_x, min_y - pad_y, max_y + pad_y)
+        # Use a square bounding box centered on the nodes so the plot frame stays square
+        cx = (min_x + max_x) / 2.0
+        cy = (min_y + max_y) / 2.0
+        half_span = (max(max_x - min_x, max_y - min_y) or 1.0) / 2.0
+        half_span *= 1.06  # 6% padding on all sides
+
+        return (cx - half_span, cx + half_span, cy - half_span, cy + half_span)
 
     def _node_size(self, depth: int) -> float:
         # Scale marker area linearly with folding depth so deeper nodes stand out
