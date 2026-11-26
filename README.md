@@ -9,7 +9,8 @@ very elegant.
 
 ## Contents <!-- omit from toc -->
 
-- [Idea](#idea)
+- [Visualization](#visualization)
+- [Recursion concept](#recursion-concept)
   - [Folding strategies](#folding-strategies)
   - [Unfolding strategies](#unfolding-strategies)
 - [Usage](#usage)
@@ -19,7 +20,29 @@ very elegant.
   - [Benchmarking](#benchmarking)
 - [License](#license)
 
-## Idea
+## Visualization
+
+This is how RFA finds a route for the TSPLIB problem ``pr76``:
+
+<img src="docs/rfa-tsp_tsplib_pr76.gif" alt="Step-by-step animation of RFA processing the pr76 instance" width="500">
+
+<details>
+<summary>Show command that was used to generate the above animation</summary>
+
+    ❯ uv run rfa-tsp tsplib:pr76 --seed 16 --export docs/rfa-tsp_tsplib_pr76.gif --export-fps 2-6
+    INFO | Instance:           tsplib:pr76 (76 nodes)
+    INFO | Folding strategy:   breadth-first
+    INFO | Unfolding strategy: breadth-first-2opt
+    INFO | Post-uncross:       False
+    INFO | Seed:               16
+    INFO | Total length:       109335
+    INFO | Optimal route:      108159 (overhead of RFA route: +1.09%)
+    INFO | Runtime:            0.021s
+    INFO | Exporting 148 unique frames to docs\rfa-tsp_tsplib_pr76.gif (fps=2-6, dpi=120)...
+    INFO | Export finished: docs\rfa-tsp_tsplib_pr76.gif
+</details>
+
+## Recursion concept
 
 RFA exploits the fact that the TSP can be trivially solved if there are only 3 nodes, because only a single round trip route exists
 for 3 nodes. The solution, a triangle, is self-evident:
@@ -139,7 +162,7 @@ The folding and unfolding phases can be rendered step-by-step:
 
 The rendering can also be exported as an animation:
 
-    ❯ uv run rfa-tsp tsplib:a280 --export rfa-tsp_tsplib95_a280.gif --export-fps 5
+    ❯ uv run rfa-tsp tsplib:a280 --export rfa-tsp_tsplib_a280.gif --export-fps 2-6
 
 ### Benchmarking
 
