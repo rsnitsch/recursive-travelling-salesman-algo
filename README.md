@@ -198,17 +198,17 @@ uv run rfa-tsp-plot-trials trial-usa13509.json --export docs/rfa-tsp-seed-sensit
 Looking at the [benchmark results](#benchmarking) across TSPLIB instances spanning nearly two orders of magnitude in
 size reveals a nearly constant runtime per node:
 
-| Instance   | Nodes ($n$) | Runtime | Time per node |
-| :--------- | ----------: | ------: | ------------: |
-| `pr1002`   |       1,002 |  0.080s |       79.8 µs |
-| `pla7397`  |       7,397 |  0.357s |       48.3 µs |
-| `usa13509` |      13,509 |  0.774s |       57.3 µs |
-| `d18512`   |      18,512 |  1.018s |       55.0 µs |
-| `sw24978`  |      24,978 |  1.373s |       55.0 µs |
-| `pla33810` |      33,810 |  1.613s |       47.7 µs |
-| `pla85900` |      85,900 |  4.469s |       52.0 µs |
+| Instance   | Nodes ($n$) | Mean runtime | Time per node |
+| :--------- | ----------: | -----------: | ------------: |
+| `pr1002`   |       1,002 |       0.060s |       59.9 µs |
+| `pla7397`  |       7,397 |       0.367s |       49.6 µs |
+| `usa13509` |      13,509 |       0.793s |       58.7 µs |
+| `d18512`   |      18,512 |       1.046s |       56.5 µs |
+| `sw24978`  |      24,978 |       1.463s |       58.6 µs |
+| `pla33810` |      33,810 |       1.769s |       52.3 µs |
+| `pla85900` |      85,900 |       4.928s |       57.4 µs |
 
-Increasing the problem size by a factor of ~11.6 (from `pla7397` to `pla85900`) increases runtime by a factor of ~12.5 —
+Increasing the problem size by a factor of ~11.6 (from `pla7397` to `pla85900`) increases runtime by a factor of ~13.4 —
 closely matching **linear $O(n)$ scaling** in practice.
 
 #### Algorithmic analysis
@@ -302,42 +302,44 @@ The rendering can also be exported as an animation:
 
 The following command runs a benchmark using a subset of the [TSPLIB95] instances (see `TSPLIB/` folder):
 
-```
-❯ uv run rfa-tsp-benchmark
-INFO | Folding strategy:   breadth-first
-INFO | Unfolding strategy: breadth-first-2opt
-INFO | Post-uncross:       False
-INFO | Seed:               0
+```console
+❯ uv run rfa-tsp-benchmark --trials 5
+INFO | Folding strategy:    breadth-first
+INFO | Unfolding strategy:  breadth-first-2opt
+INFO | Post-uncross:        False
+INFO | Seed:                0
+INFO | Trials per instance: 5
 INFO | Running benchmark for 18 TSPLIB instance(s): ...
 ...
-Instance      Length of optimal route    Length of RFA route  RFA vs. optimum    Runtime
-----------  -------------------------  ---------------------  -----------------  ---------
-a280                             2579                   2882  +11.75%            0.014s
-berlin52                         7542                   8337  +10.54%            0.003s
-bier127                        118282                 128084  +8.29%             0.008s
-brd14051                       469385                 517022  +10.15%            0.773s
-ch150                            6528                   6900  +5.70%             0.012s
-d18512                         645238                 708935  +9.87%             1.018s
-eil51                             426                    443  +3.99%             0.006s
-pla33810                     66048945               77483437  +17.31%            1.613s
-pla7397                      23260728               26482473  +13.85%            0.357s
-pla85900                    142382641              164304152  +15.40%            4.469s
-pr1002                         259045                 279017  +7.71%             0.080s
-pr107                           44303                  44658  +0.80%             0.006s
-pr439                          107217                 115989  +8.18%             0.023s
-pr76                           108159                 114746  +6.09%             0.004s
-rat783                           8806                   9664  +9.74%             0.039s
-rat99                            1211                   1295  +6.94%             0.006s
-sw24978                        855597                 944301  +10.37%            1.373s
-usa13509                     19982859               22192827  +11.06%            0.774s
+Instance      Optimal     Mean RFA  Mean vs. opt.    Std     Mean runtime
+----------  ---------  -----------  ---------------  ------  --------------
+a280             2579       2904.8  +12.63%          ±2.01%  0.014s
+berlin52         7542       8068.8  +6.98%           ±3.47%  0.003s
+bier127        118282     125611.0  +6.20%           ±1.79%  0.007s
+brd14051       469385     515611.6  +9.85%           ±0.30%  0.781s
+ch150            6528       7041.8  +7.87%           ±2.48%  0.008s
+d18512         645238     709123.8  +9.90%           ±0.10%  1.046s
+eil51             426        448.6  +5.31%           ±1.49%  0.003s
+pla33810     66048945   77296506.2  +17.03%          ±0.40%  1.769s
+pla7397      23260728   26335915.4  +13.22%          ±0.79%  0.367s
+pla85900    142382641  164080525.0  +15.24%          ±0.24%  4.928s
+pr1002         259045     279848.8  +8.03%           ±0.73%  0.060s
+pr107           44303      44549.6  +0.56%           ±0.25%  0.006s
+pr439          107217     116500.0  +8.66%           ±0.39%  0.023s
+pr76           108159     112878.2  +4.36%           ±1.56%  0.004s
+rat783           8806       9655.0  +9.64%           ±1.70%  0.040s
+rat99            1211       1282.4  +5.90%           ±0.78%  0.005s
+sw24978        855597     944687.6  +10.41%          ±0.15%  1.463s
+usa13509     19982859   22126215.0  +10.73%          ±0.31%  0.793s
 
-Summary (18/18 instances):
-  Min overhead:               +0.80%
-  Mean overhead (arithmetic): +9.32%
-  Mean overhead (geometric):  +9.25%
-  Median overhead:            +9.81%
-  Max overhead:               +17.31%
-  Total runtime:              10.578s
+Summary (18/18 instances, 5 trials each):
+  Mean of best overheads:     +7.78%
+  Min mean overhead:          +0.56%
+  Mean overhead (arithmetic): +9.03%
+  Mean overhead (geometric):  +8.96%
+  Median mean overhead:       +9.15%
+  Max mean overhead:          +17.03%
+  Total runtime:              56.597s (11.31947s / trial)
 ```
 
 ## License
