@@ -7,8 +7,12 @@ Copyright (c) 2010-2026 Robert Nitsch
 """
 
 import argparse
+import datetime
+import json
 import logging
+import math
 import random
+import statistics
 import sys
 import time
 from collections.abc import Sequence
@@ -119,6 +123,14 @@ def create_argument_parser() -> argparse.ArgumentParser:
         help="Number of consecutive seeds to try (starting from --seed), keeping the best route (default = 1).",
     )
     parser.add_argument(
+        "--save-trials",
+        nargs="?",
+        const="auto",
+        default=None,
+        metavar="PATH",
+        help="Save per-trial results to JSON (default filename: trial-YYYY-MM-DD-HH-mm-ss.json).",
+    )
+    parser.add_argument(
         "--post-uncross",
         action="store_true",
         default=False,
@@ -193,6 +205,37 @@ def load_instance(instance_spec: str, number_of_nodes: int, tsplib_dir: Path):
         return nodes, ceil_2d, tspi
 
     raise ValueError(f"Invalid instance '{instance_spec}'. Expected 'random[:<seed>]' or 'tsplib:<name>'.")
+
+
+class OnlineStats:
+    """Numerically stable online mean and sample standard deviation (Welford's algorithm)."""
+
+    def __init__(self) -> None:
+        self.count = 0
+        self.mean = 0.0
+        self._m2 = 0.0
+
+    def update(self, value: float) -> None:
+        self.count += 1
+        delta = value - self.mean
+        self.mean += delta / self.count
+        delta2 = value - self.mean
+        self._m2 += delta * delta2
+
+    @property
+    def stdev(self) -> float:
+        if self.count < 2:
+            return 0.0
+        return math.sqrt(self._m2 / (self.count - 1))
+
+
+def write_trials_json(path: Path, meta: dict[str, object], trials: list[dict[str, object]]) -> None:
+    """Atomically write trial metadata and results to a JSON file."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(f"{path.suffix}.tmp")
+    payload = {"meta": meta, "trials": trials}
+    tmp_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    tmp_path.replace(path)
 
 
 def run_single_trial(
@@ -276,11 +319,37 @@ def main(argv: Sequence[str] | None = None) -> int:
 
         logger.info("Trials:             %d (seeds %d..%d)", args.trials, args.seed, args.seed + args.trials - 1)
 
+        run_started_at = datetime.datetime.now()
+        save_path: Path | None = None
+        if args.save_trials is not None:
+            if args.save_trials == "auto":
+                save_path = Path(f"trial-{run_started_at.strftime('%Y-%m-%d-%H-%M-%S')}.json")
+            else:
+                save_path = Path(args.save_trials)
+            logger.info("Saving trials to:   %s", save_path)
+
+        meta: dict[str, object] = {
+            "version": __version__,
+            "timestamp": run_started_at.isoformat(timespec="seconds"),
+            "argv": sys.argv[1:],
+            "instance": args.instance,
+            "nodes": len(nodes),
+            "optimal_length": optimal_costs,
+            "folding_strategy": args.folding_strategy,
+            "unfolding_strategy": args.unfolding_strategy,
+            "post_uncross": args.post_uncross,
+            "seed_start": args.seed,
+            "trials_requested": args.trials,
+        }
+
         best_cost: int | None = None
         best_seed = args.seed
         best_runtime = 0.0
         total_runtime = 0.0
         completed = 0
+        stats = OnlineStats()
+        trial_records: list[dict[str, object]] = []
+        last_save = time.perf_counter()
 
         try:
             with tqdm(range(args.trials), desc="Trials", unit="trial") as pbar:
@@ -297,24 +366,37 @@ def main(argv: Sequence[str] | None = None) -> int:
                     )
                     completed += 1
                     total_runtime += runtime
+                    stats.update(float(cost))
+
+                    if save_path is not None:
+                        trial_records.append({"seed": current_seed, "length": cost, "runtime": round(runtime, 6)})
 
                     if best_cost is None or cost < best_cost:
                         best_cost = cost
                         best_seed = current_seed
                         best_runtime = total_runtime
 
-                        opt_str = ""
-                        if optimal_costs is not None:
-                            overhead_pct = (float(best_cost) / optimal_costs - 1.0) * 100.0
-                            opt_str = f" (+{overhead_pct:.2f}%)"
+                    if optimal_costs is not None:
+                        best_oh = (float(best_cost) / optimal_costs - 1.0) * 100.0
+                        mean_oh = (stats.mean / optimal_costs - 1.0) * 100.0
+                        std_oh = (stats.stdev / optimal_costs) * 100.0
+                        best_str = f"{best_cost} (+{best_oh:.2f}%)"
+                        mean_str = f"+{mean_oh:.2f}% ± {std_oh:.2f}%"
+                    else:
+                        best_str = f"{best_cost}"
+                        mean_str = f"{stats.mean:.0f} ± {stats.stdev:.0f}"
 
-                        # Update postfix only when a new best is found; tqdm handles redraw throttling
-                        pbar.set_postfix(
-                            best=f"{best_cost}{opt_str}",
-                            seed=best_seed,
-                            at=f"{best_runtime:.2f}s",
-                            refresh=False,
-                        )
+                    pbar.set_postfix(
+                        best=best_str,
+                        mean=mean_str,
+                        seed=best_seed,
+                        refresh=False,
+                    )
+
+                    # Periodically flush trial results (every 5s) during long runs
+                    if save_path is not None and (time.perf_counter() - last_save) >= 5.0:
+                        write_trials_json(save_path, meta, trial_records)
+                        last_save = time.perf_counter()
         except KeyboardInterrupt:
             logger.info("Interrupted after %d/%d trials.", completed, args.trials)
 
@@ -322,12 +404,23 @@ def main(argv: Sequence[str] | None = None) -> int:
             logger.warning("No trials completed.")
             return 1
 
+        if save_path is not None:
+            write_trials_json(save_path, meta, trial_records)
+            logger.info("Saved %d trial(s) to %s", len(trial_records), save_path)
+
         avg_time = total_runtime / completed
-        logger.info("Best seed:          %d", best_seed)
+        cv_pct = (stats.stdev / stats.mean * 100.0) if stats.mean > 0 else 0.0
+
+        logger.info("Best seed:          %d (found at %.3fs)", best_seed, best_runtime)
         logger.info("Best length:        %s", best_cost)
+        logger.info("Mean length:        %.1f ± %.1f (CV: %.2f%%)", stats.mean, stats.stdev, cv_pct)
         if optimal_costs is not None:
-            overhead_pct = (float(best_cost) / optimal_costs - 1.0) * 100.0
-            logger.info("Optimal route:      %s (overhead of RFA route: +%.2f%%)", optimal_costs, overhead_pct)
+            best_oh = (float(best_cost) / optimal_costs - 1.0) * 100.0
+            mean_oh = (stats.mean / optimal_costs - 1.0) * 100.0
+            std_oh = (stats.stdev / optimal_costs) * 100.0
+            logger.info("Optimal route:      %s", optimal_costs)
+            logger.info("Best overhead:      +%.2f%%", best_oh)
+            logger.info("Mean overhead:      +%.2f%% ± %.2f%% (σ)", mean_oh, std_oh)
         logger.info("Runtime:            %.3fs total (%.5fs/trial avg)", total_runtime, avg_time)
 
         # Replay only the winning seed if visualization or export was requested
