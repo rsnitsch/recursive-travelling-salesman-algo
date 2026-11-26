@@ -19,6 +19,9 @@ very elegant.
 - [Recursion concept](#recursion-concept)
   - [Folding strategies](#folding-strategies)
   - [Unfolding strategies](#unfolding-strategies)
+- [Algorithmic properties](#algorithmic-properties)
+  - [Seed sensitivity](#seed-sensitivity)
+    - [Key observations](#key-observations)
 - [Usage](#usage)
   - [Processing a single TSPLIB instance](#processing-a-single-tsplib-instance)
   - [Processing a random TSP instance](#processing-a-random-tsp-instance)
@@ -116,6 +119,53 @@ uv run rfa-tsp random:default -n 4 -s 0 --export docs/rfa-tsp_concept.png
   the nodes with the maximum depth are unfolded.
 - `UnfoldingStrategyBreadthFirstWithLocal2Opt` (default): Same as UnfoldingStrategyBreadthFirst, but after each unfolding
   step, a local 2-opt optimization around the inserted nodes is performed.
+
+## Algorithmic properties
+
+### Seed sensitivity
+
+The default folding strategies (`breadth-first` and `random-nn`) select nodes to fold randomly. Consequently, the quality of the resulting tour depends on the RNG seed.
+
+To quantify how strongly RFA depends on the seed across different problem sizes, we can evaluate multiple consecutive seeds (`--trials`) and compare a small instance (`tsplib:pr76`, 76 nodes) with large instances (`tsplib:pla7397`, 7,397 nodes; `tsplib:usa13509`, 13,509 nodes):
+
+| Instance | Nodes | Trials | Mean overhead | Std. dev. ($\sigma$) | Best overhead |
+| :--- | ---: | ---: | :---: | :---: | :---: |
+| `tsplib:pr76` | 76 | 5,000 | +4.64% | 2.06% | +0.14% (seed 1015) |
+| `tsplib:pla7397` | 7,397 | 300 | +13.23% | 0.60% | +11.66% (seed 130) |
+| `tsplib:usa13509` | 13,509 | 200 | +10.71% | 0.31% | +9.98% (seed 119) |
+
+![Seed sensitivity for tsplib:pr76 over 5000 trials](docs/rfa-tsp-seed-sensitivity_tsplib-pr76.png)
+
+<details>
+<summary>Show plots for large instances (<code>pla7397</code>, <code>usa13509</code>)</summary>
+
+![Seed sensitivity for tsplib:pla7397 over 300 trials](docs/rfa-tsp-seed-sensitivity_tsplib-pla7397.png)
+
+![Seed sensitivity for tsplib:usa13509 over 200 trials](docs/rfa-tsp-seed-sensitivity_tsplib-usa13509.png)
+
+</details>
+
+#### Key observations
+
+- **Variance shrinks with problem size:** On small instances (`pr76`), individual folding decisions have a large global impact, producing a wide, right-skewed distribution ($\sigma = 2.06\%$). On large instances (`pla7397`, `usa13509`), thousands of local folding steps average out, tightening the distribution into a narrow, roughly symmetric bell curve ($\sigma = 0.31\%$ on `usa13509`).
+- **Multi-trial trade-off:** On small instances, a multi-trial sweep (`--trials 100`) can push the solution close to the optimum (`+0.14%` on `pr76`). On large instances, diminishing returns set in quickly (~0.7–1.6 percentage points gain over the mean), because the distribution is already tightly concentrated.
+- **Single-run reliability at scale:** Conversely, the low variance on large instances means that even a single RFA run yields a highly predictable result without severe bad-luck outliers.
+
+<details>
+<summary>Show commands used to generate the above plots</summary>
+
+```bash
+uv run rfa-tsp tsplib:pr76 --trials 5000 --save-trials trial-pr76.json
+uv run rfa-tsp-plot-trials trial-pr76.json --export docs/rfa-tsp-seed-sensitivity_tsplib-pr76.png
+
+uv run rfa-tsp tsplib:pla7397 --trials 300 --save-trials trial-pla7397.json
+uv run rfa-tsp-plot-trials trial-pla7397.json --export docs/rfa-tsp-seed-sensitivity_tsplib-pla7397.png
+
+uv run rfa-tsp tsplib:usa13509 --trials 200 --save-trials trial-usa13509.json
+uv run rfa-tsp-plot-trials trial-usa13509.json --export docs/rfa-tsp-seed-sensitivity_tsplib-usa13509.png
+```
+
+</details>
 
 ## Usage
 
