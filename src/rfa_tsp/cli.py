@@ -31,6 +31,7 @@ from .rfa import (
     UnfoldingStrategyBreadthFirst,
     UnfoldingStrategyBreadthFirstWithLocal2Opt,
 )
+from .ui import Renderer
 
 logger = logging.getLogger(__name__)
 
@@ -177,7 +178,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def get_renderer_by_name(name: str):
+def get_renderer_by_name(name: str) -> Renderer | None:
     if name == "matplotlib":
         from .ui import RendererMatplotlib
 
@@ -246,13 +247,14 @@ def write_trials_json(path: Path, meta: dict[str, object], trials: list[dict[str
 
 
 def run_single_trial(
+    *,
     nodes,
     ceil_2d: bool,
     folding_strategy: FoldingStrategy,
     unfolding_strategy: UnfoldingStrategy,
     post_uncross: bool,
     seed: int,
-    renderer=None,
+    renderer: Renderer | None,
 ) -> tuple[Route, int, float]:
     """Run one RFA trial for a given seed and return (route, total_costs, runtime)."""
     random.seed(seed)
@@ -311,7 +313,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.trials == 1:
         logger.info("Seed:               %d", args.seed)
         _, total_costs, runtime = run_single_trial(
-            nodes, ceil_2d, folding_strategy, unfolding_strategy, args.post_uncross, args.seed, renderer_instance
+            nodes=nodes,
+            ceil_2d=ceil_2d,
+            folding_strategy=folding_strategy,
+            unfolding_strategy=unfolding_strategy,
+            post_uncross=args.post_uncross,
+            seed=args.seed,
+            renderer=renderer_instance,
         )
         logger.info("Total length:       %s", total_costs)
         if optimal_costs is not None:
@@ -363,12 +371,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                 for i in pbar:
                     current_seed = args.seed + i
                     _, cost, runtime = run_single_trial(
-                        nodes,
-                        ceil_2d,
-                        folding_strategy,
-                        unfolding_strategy,
-                        args.post_uncross,
-                        current_seed,
+                        nodes=nodes,
+                        ceil_2d=ceil_2d,
+                        folding_strategy=folding_strategy,
+                        unfolding_strategy=unfolding_strategy,
+                        post_uncross=args.post_uncross,
+                        seed=current_seed,
                         renderer=None,
                     )
                     completed += 1
@@ -434,7 +442,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         if renderer_instance is not None:
             logger.info("Replaying best seed (%d) for rendering/export...", best_seed)
             run_single_trial(
-                nodes, ceil_2d, folding_strategy, unfolding_strategy, args.post_uncross, best_seed, renderer_instance
+                nodes=nodes,
+                ceil_2d=ceil_2d,
+                folding_strategy=folding_strategy,
+                unfolding_strategy=unfolding_strategy,
+                post_uncross=args.post_uncross,
+                seed=best_seed,
+                renderer=renderer_instance,
             )
 
     if args.export is not None:
