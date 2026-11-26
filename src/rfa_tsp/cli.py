@@ -12,7 +12,6 @@ import json
 import logging
 import math
 import random
-import statistics
 import sys
 import time
 from collections.abc import Sequence
