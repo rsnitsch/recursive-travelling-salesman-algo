@@ -2,17 +2,17 @@
 name = "rfa-tsp"
 version = "0.1.0"
 description = "Recursive fold algorithm for the travelling-salesman-problem"
-requires-python = ">=3.15, <3.16"
+requires-python = ">=3.11"
 authors = [
     { name = "Robert Nitsch" }
 ]
 dependencies = [
     "matplotlib>=3.11.2",
-    "numpy~=2.5",
-    "rtree~=1.4",
-    "scipy~=1.18",
-    "shapely~=2.2",
-    "tabulate~=0.10",
+    "numpy>=2.4",
+    "rtree>=1.4",
+    "scipy>=1.17",
+    "shapely>=2.2",
+    "tabulate>=0.10",
 ]
 
 [dependency-groups]

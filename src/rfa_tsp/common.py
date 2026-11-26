@@ -5,6 +5,8 @@ Common functionality for travelling-salesman-problem algorithms.
 Copyright (c) 2010-2026 Robert Nitsch
 """
 
+from __future__ import annotations
+
 import random
 from math import ceil, sqrt
 
