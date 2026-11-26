@@ -10,6 +10,7 @@ import turtle
 from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import StrEnum
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -428,3 +429,56 @@ class RendererMatplotlib(Renderer):
         # Start at step 0 so the user can watch or step through from the beginning
         go_to(0)
         plt.show()
+
+    def export(self, output_path: Path, fps: int = 8, dpi: int = 120, hold_final_seconds: float = 2.0) -> None:
+        if not self.history:
+            logger.warning("No steps recorded; skipping export.")
+            return
+
+        import matplotlib.pyplot as plt
+        from matplotlib.animation import FFMpegWriter, FuncAnimation, PillowWriter
+        from matplotlib.cm import ScalarMappable
+        from matplotlib.colors import Normalize
+
+        suffix = output_path.suffix.lower()
+        if suffix == ".gif":
+            writer = PillowWriter(fps=fps)
+        elif suffix in (".mp4", ".mov", ".webm"):
+            writer = FFMpegWriter(fps=fps)
+        else:
+            raise ValueError(f"Unsupported export format '{suffix}'. Use .gif, .mp4, .mov, or .webm.")
+
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        bounds = self._compute_bounds()
+        max_depth = max((n.depth for step in self.history for n in step.nodes), default=1)
+        max_depth = max(1, max_depth)
+        norm = Normalize(vmin=0, vmax=max_depth)
+        cmap = plt.get_cmap("viridis")
+
+        fig, ax = plt.subplots(figsize=(8, 6.5))
+        plt.subplots_adjust(right=0.86)
+
+        cbar_ax = fig.add_axes([0.88, 0.12, 0.025, 0.76])
+        sm = ScalarMappable(norm=norm, cmap=cmap)
+        cbar = fig.colorbar(sm, cax=cbar_ax)
+        cbar.set_label("Folding Depth")
+
+        # Repeat the final frame so viewers can inspect the finished route before looping
+        hold_frames = max(0, int(round(hold_final_seconds * fps)))
+        frame_indices = list(range(len(self.history))) + [len(self.history) - 1] * hold_frames
+
+        logger.info("Exporting %d frames to %s (fps=%d, dpi=%d)...", len(frame_indices), output_path, fps, dpi)
+
+        def update(frame_idx: int) -> None:
+            self._draw_step(ax, frame_idx, bounds, norm, cmap)
+
+        anim = FuncAnimation(fig, update, frames=frame_indices, interval=1000 / fps, repeat=False)
+        try:
+            anim.save(str(output_path), writer=writer, dpi=dpi)
+            logger.info("Export finished: %s", output_path)
+        except FileNotFoundError as exc:
+            logger.error("Export failed (is ffmpeg installed and in PATH for %s?): %s", suffix, exc)
+            raise
+        finally:
+            plt.close(fig)

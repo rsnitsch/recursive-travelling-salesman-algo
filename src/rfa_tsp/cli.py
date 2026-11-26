@@ -16,6 +16,7 @@ import random
 import re
 import sys
 import time
+from pathlib import Path
 
 from tabulate import tabulate
 
@@ -92,6 +93,18 @@ def create_option_parser():
         help=("Number of nodes (default = %d)" % DEFAULT_NUMBER_OF_NODES),
     )
     demo_parser.add_argument("--renderer", type=str, default="disabled", choices=["disabled", "turtle", "matplotlib"])
+    demo_parser.add_argument(
+        "--export",
+        type=Path,
+        default=None,
+        help="Export animation to a file (.gif, .mp4, .mov, .webm).",
+    )
+    demo_parser.add_argument(
+        "--export-fps",
+        type=int,
+        default=8,
+        help="Frames per second for exported animation (default = 8).",
+    )
 
     # 'benchmark' subcommand.
     benchmark_parser = subparsers.add_parser(
@@ -166,6 +179,8 @@ def main():
             args.renderer,
             args.number_of_nodes,
             args.seed,
+            export_path=args.export,
+            export_fps=args.export_fps,
         )
     elif args.mode == "benchmark":
         main_tsplib(
@@ -180,28 +195,31 @@ def main():
     return 0
 
 
-def main_random(folding_strategy, unfolding_strategy, post_uncross, renderer, number_of_nodes, seed=0):
-    # KONFIGURATION:
-    """
-    Gibt an, wie groß die X- bzw. Y-Koordinaten maximal sein dürfen.
-    Die Koordinaten werden dann im Intervall [0, max_size] liegen.
-
-    Empfohlen: 500.
-    """
+def main_random(
+    folding_strategy,
+    unfolding_strategy,
+    post_uncross,
+    renderer,
+    number_of_nodes,
+    seed=0,
+    export_path: Path | None = None,
+    export_fps: int = 8,
+):
     max_size = 500
-
-    # ENDE DER KONFIGURATION.
-
     nodes = generate_random_nodes(number_of_nodes, max_size=max_size)
     ceil_2d = False
 
-    # Zur Reproduzierbarkeit.
     random.seed(seed)
 
-    # RFA ausführen.
     folding_strategy_instance = get_folding_strategy_by_name(folding_strategy)
     unfolding_strategy_instance = get_unfolding_strategy_by_name(unfolding_strategy)
-    renderer_instance = get_renderer_by_name(renderer)
+
+    # Use matplotlib renderer automatically if export is requested without an explicit interactive renderer
+    show_window = renderer != "disabled"
+    if export_path is not None and renderer == "disabled":
+        renderer_instance = get_renderer_by_name("matplotlib")
+    else:
+        renderer_instance = get_renderer_by_name(renderer)
 
     logger.debug("Folding...")
     start_time = time.time()
@@ -223,7 +241,13 @@ def main_random(folding_strategy, unfolding_strategy, post_uncross, renderer, nu
     logger.info("Runtime:\t%.3fs", runtime)
     logger.info("")
 
-    if renderer_instance:
+    if export_path is not None:
+        if hasattr(renderer_instance, "export"):
+            renderer_instance.export(export_path, fps=export_fps)
+        else:
+            logger.error("Selected renderer '%s' does not support animation export.", renderer)
+
+    if show_window and renderer_instance:
         renderer_instance.wait_until_closed()
 
 
