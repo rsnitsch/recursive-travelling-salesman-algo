@@ -9,7 +9,7 @@ import heapq
 import random
 from math import ceil, floor, sqrt
 
-from .common import CoordinateNode, Route
+from .common import CoordinateNode
 from .ui import Renderer
 
 
@@ -131,8 +131,7 @@ class SpatialGrid:
                 # Minimum possible distance to any cell outside `max_ring` is at least
                 # (max_ring * cell_size), guaranteeing exact nearest-neighbor optimality
                 required_rings = ceil(sqrt(best_dist_sq) * self.inv_cell_size)
-                if required_rings < max_ring:
-                    max_ring = required_rings
+                max_ring = min(max_ring, required_rings)
             else:
                 # Expand search radius until at least one candidate is found
                 max_ring = ring + 1
@@ -355,8 +354,7 @@ class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
         for node in nodes:
             if isinstance(node, RFANode):
                 by_depth.setdefault(node.depth, []).append(node)
-                if node.depth > max_depth:
-                    max_depth = node.depth
+                max_depth = max(max_depth, node.depth)
 
         # Localize cost helper to avoid Route object allocations in inner loop
         cost_fn = (
