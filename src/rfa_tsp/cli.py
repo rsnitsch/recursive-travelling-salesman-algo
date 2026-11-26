@@ -91,7 +91,7 @@ def create_option_parser():
         default=DEFAULT_NUMBER_OF_NODES,
         help=("Number of nodes (default = %d)" % DEFAULT_NUMBER_OF_NODES),
     )
-    demo_parser.add_argument("--renderer", type=str, default="disabled", choices=["disabled", "turtle"])
+    demo_parser.add_argument("--renderer", type=str, default="disabled", choices=["disabled", "turtle", "matplotlib"])
 
     # 'benchmark' subcommand.
     benchmark_parser = subparsers.add_parser(
@@ -135,6 +135,10 @@ def get_renderer_by_name(name):
         from .ui import RendererTurtle
 
         return RendererTurtle()
+    elif name == "matplotlib":
+        from .ui import RendererMatplotlib
+
+        return RendererMatplotlib()
     elif name == "disabled":
         return None
     else:

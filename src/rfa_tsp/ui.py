@@ -5,10 +5,13 @@ Visualization base classes, step snapshots, and renderers for RFA.
 Copyright (c) 2010-2026 Robert Nitsch
 """
 
+import logging
 import turtle
 from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import StrEnum
+
+logger = logging.getLogger(__name__)
 
 
 class Phase(StrEnum):
@@ -176,3 +179,252 @@ class RendererTurtle(Renderer):
         self.draw_route(self.current_idx)
         self.setup_keybindings()
         self.screen.mainloop()
+
+
+class RendererMatplotlib(Renderer):
+    """Interactive matplotlib renderer with phase-aware visuals, timeline slider, and playback."""
+
+    def __init__(self, interval_ms: int = 150) -> None:
+        super().__init__()
+        self.interval_ms = interval_ms
+        self.current_idx = 0
+        self.is_playing = False
+        self._updating_slider = False
+
+    def _compute_bounds(self) -> tuple[float, float, float, float]:
+        init_nodes = self.history[0].nodes
+        xs = [n.x for n in init_nodes]
+        ys = [n.y for n in init_nodes]
+        min_x, max_x = min(xs), max(xs)
+        min_y, max_y = min(ys), max(ys)
+
+        span_x = (max_x - min_x) or 1.0
+        span_y = (max_y - min_y) or 1.0
+        pad_x = span_x * 0.06
+        pad_y = span_y * 0.06
+        return (min_x - pad_x, max_x + pad_x, min_y - pad_y, max_y + pad_y)
+
+    def _node_size(self, depth: int) -> float:
+        # Scale marker area linearly with folding depth so deeper nodes stand out
+        return 22.0 + depth * 28.0
+
+    def _draw_step(self, ax, idx: int, bounds: tuple[float, float, float, float], norm, cmap) -> None:
+        step = self.history[idx]
+        init_nodes = self.history[0].nodes
+
+        ax.cla()
+        ax.set_xlim(bounds[0], bounds[1])
+        ax.set_ylim(bounds[2], bounds[3])
+        ax.set_aspect("equal", adjustable="box")
+        ax.grid(True, linestyle=":", alpha=0.3)
+
+        # Draw original nodes faintly in the background for spatial orientation
+        if step.phase != Phase.INIT:
+            ax.scatter(
+                [n.x for n in init_nodes],
+                [n.y for n in init_nodes],
+                s=10,
+                color="#cbd5e1",
+                alpha=0.5,
+                zorder=1,
+            )
+
+        # Draw route edges only once a tour exists (anchor, unfold, post-process)
+        if step.phase in (Phase.ANCHOR, Phase.UNFOLD, Phase.POST_PROCESS) and len(step.nodes) >= 2:
+            rx = [n.x for n in step.nodes] + [step.nodes[0].x]
+            ry = [n.y for n in step.nodes] + [step.nodes[0].y]
+            ax.plot(rx, ry, color="#334155", linewidth=1.4, alpha=0.85, zorder=2)
+
+        # Draw active nodes colored and sized by folding depth
+        if step.nodes:
+            ax.scatter(
+                [n.x for n in step.nodes],
+                [n.y for n in step.nodes],
+                c=[n.depth for n in step.nodes],
+                s=[self._node_size(n.depth) for n in step.nodes],
+                cmap=cmap,
+                norm=norm,
+                edgecolors="#0f172a",
+                linewidths=0.6,
+                zorder=3,
+            )
+
+        # Highlight folding operation: source pair merging into new midpoint
+        if step.phase == Phase.FOLD and step.fold_sources and step.fold_result:
+            n1, n2 = step.fold_sources
+            res = step.fold_result
+            ax.plot([n1.x, res.x], [n1.y, res.y], color="#ef4444", linestyle="--", linewidth=1.6, zorder=4)
+            ax.plot([n2.x, res.x], [n2.y, res.y], color="#ef4444", linestyle="--", linewidth=1.6, zorder=4)
+            ax.scatter(
+                [n1.x, n2.x],
+                [n1.y, n2.y],
+                s=[self._node_size(n1.depth) + 40, self._node_size(n2.depth) + 40],
+                facecolors="none",
+                edgecolors="#ef4444",
+                linewidths=2.0,
+                zorder=5,
+            )
+            ax.scatter(
+                [res.x],
+                [res.y],
+                s=self._node_size(res.depth) + 60,
+                color="#f59e0b",
+                edgecolors="#7c2d12",
+                linewidths=1.5,
+                marker="*",
+                zorder=6,
+            )
+
+        # Highlight unfolding operation: parent splitting into two inserted children
+        if step.phase == Phase.UNFOLD and step.unfold_parent and step.unfold_children:
+            parent = step.unfold_parent
+            c1, c2 = step.unfold_children
+            ax.plot([parent.x, c1.x], [parent.y, c1.y], color="#10b981", linestyle=":", linewidth=1.5, zorder=4)
+            ax.plot([parent.x, c2.x], [parent.y, c2.y], color="#10b981", linestyle=":", linewidth=1.5, zorder=4)
+            ax.scatter(
+                [parent.x],
+                [parent.y],
+                s=self._node_size(parent.depth) + 30,
+                color="#94a3b8",
+                marker="x",
+                linewidths=2.0,
+                zorder=5,
+            )
+            ax.scatter(
+                [c1.x, c2.x],
+                [c1.y, c2.y],
+                s=[self._node_size(c1.depth) + 50, self._node_size(c2.depth) + 50],
+                facecolors="none",
+                edgecolors="#10b981",
+                linewidths=2.2,
+                zorder=6,
+            )
+
+        phase_labels = {
+            Phase.INIT: "Init",
+            Phase.FOLD: "Folding",
+            Phase.ANCHOR: "Recursion Anchor",
+            Phase.UNFOLD: "Unfolding",
+            Phase.POST_PROCESS: "Post-Uncross",
+        }
+        title = f"Step {idx + 1}/{len(self.history)}  |  {phase_labels[step.phase]}  |  Nodes: {len(step.nodes)}"
+        if step.cost is not None:
+            title += f"  |  Cost: {step.cost}"
+        ax.set_title(title, fontsize=11, fontweight="bold")
+
+    def wait_until_closed(self) -> None:
+        if not self.history:
+            logger.warning("No steps recorded; skipping visualization.")
+            return
+
+        # Lazy import so benchmark runs with disabled renderer stay fast
+        import matplotlib.pyplot as plt
+        from matplotlib.cm import ScalarMappable
+        from matplotlib.colors import Normalize
+        from matplotlib.widgets import Slider
+
+        bounds = self._compute_bounds()
+        max_depth = max((n.depth for step in self.history for n in step.nodes), default=1)
+        max_depth = max(1, max_depth)
+        norm = Normalize(vmin=0, vmax=max_depth)
+        cmap = plt.get_cmap("viridis")
+
+        fig, ax = plt.subplots(figsize=(9, 7))
+        fig.canvas.manager.set_window_title("RFA-TSP Visualizer")
+        plt.subplots_adjust(bottom=0.16, right=0.86)
+
+        # Colorbar for folding depth
+        cbar_ax = fig.add_axes((0.88, 0.20, 0.025, 0.6))
+        sm = ScalarMappable(norm=norm, cmap=cmap)
+        cbar = fig.colorbar(sm, cax=cbar_ax)
+        cbar.set_label("Folding Depth")
+
+        # Timeline slider
+        slider_ax = fig.add_axes((0.12, 0.05, 0.72, 0.035))
+        slider = Slider(
+            ax=slider_ax,
+            label="Step",
+            valmin=1,
+            valmax=len(self.history),
+            valinit=1,
+            valstep=1,
+        )
+
+        # Controls hint below the slider
+        fig.text(
+            0.5,
+            0.01,
+            "Keys: [Left/Right] Step  |  [Shift+Left/Right] +/-10  |  [Home/End] First/Last  |  [Space] Play/Pause  |  [+/-] Speed",
+            ha="center",
+            fontsize=8.5,
+            color="#475569",
+        )
+
+        def go_to(idx: int) -> None:
+            self.current_idx = max(0, min(len(self.history) - 1, idx))
+            self._draw_step(ax, self.current_idx, bounds, norm, cmap)
+            self._updating_slider = True
+            slider.set_val(self.current_idx + 1)
+            self._updating_slider = False
+            fig.canvas.draw_idle()
+
+        def on_slider_change(val: float) -> None:
+            if not self._updating_slider:
+                go_to(int(val) - 1)
+
+        slider.on_changed(on_slider_change)
+
+        # Playback timer
+        timer = fig.canvas.new_timer(interval=self.interval_ms)
+
+        def on_timer() -> None:
+            if not self.is_playing:
+                return
+            if self.current_idx < len(self.history) - 1:
+                go_to(self.current_idx + 1)
+            else:
+                self.is_playing = False
+                timer.stop()
+
+        timer.add_callback(on_timer)
+
+        def on_key(event) -> None:
+            if event.key == "right":
+                go_to(self.current_idx + 1)
+            elif event.key == "left":
+                go_to(self.current_idx - 1)
+            elif event.key == "shift+right":
+                go_to(self.current_idx + 10)
+            elif event.key == "shift+left":
+                go_to(self.current_idx - 10)
+            elif event.key == "home":
+                go_to(0)
+            elif event.key == "end":
+                go_to(len(self.history) - 1)
+            elif event.key == " ":
+                self.is_playing = not self.is_playing
+                if self.is_playing:
+                    if self.current_idx == len(self.history) - 1:
+                        go_to(0)
+                    timer.start()
+                else:
+                    timer.stop()
+            elif event.key in ("+", "="):
+                self.interval_ms = max(20, int(self.interval_ms * 0.7))
+                timer.interval = self.interval_ms
+                logger.debug("Playback interval: %d ms", self.interval_ms)
+            elif event.key == "-":
+                self.interval_ms = min(2000, int(self.interval_ms * 1.4))
+                timer.interval = self.interval_ms
+                logger.debug("Playback interval: %d ms", self.interval_ms)
+
+        def on_close(_event) -> None:
+            self.is_playing = False
+            timer.stop()
+
+        fig.canvas.mpl_connect("key_press_event", on_key)
+        fig.canvas.mpl_connect("close_event", on_close)
+
+        # Start at step 0 so the user can watch or step through from the beginning
+        go_to(0)
+        plt.show()
