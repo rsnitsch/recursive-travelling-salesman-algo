@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this software or reference the Recursive-Fold-Algorithm (RFA), please cite it as below."
+title: "rfa-tsp: Recursive-Fold-Algorithm for the metric Travelling-Salesman-Problem"
+abstract: "Python implementation of the Recursive-Fold-Algorithm (RFA) for the metric travelling-salesman-problem, originally conceived and developed by Robert Nitsch in 2010."
+authors:
+  - family-names: "Nitsch"
+    given-names: "Robert"
+date-released: 2026-11-26
+license: MIT
+repository-code: "https://github.com/rsnitsch/rfa-tsp"
