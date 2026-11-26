@@ -118,7 +118,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
         "--renderer",
         type=str,
         default="disabled",
-        choices=["disabled", "turtle", "matplotlib"],
+        choices=["disabled", "matplotlib"],
         help="Interactive visualization backend (default: disabled).",
     )
     parser.add_argument(
@@ -144,10 +144,6 @@ def create_argument_parser() -> argparse.ArgumentParser:
 
 
 def get_renderer_by_name(name: str):
-    if name == "turtle":
-        from .ui import RendererTurtle
-
-        return RendererTurtle()
     if name == "matplotlib":
         from .ui import RendererMatplotlib
 
