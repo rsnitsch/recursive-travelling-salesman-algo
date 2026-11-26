@@ -169,11 +169,11 @@ def run_benchmark(
         logger.error("No TSPLIB instances selected.")
         return 1
 
-    logger.info("Folding strategy:   %s", folding_strategy_name)
-    logger.info("Unfolding strategy: %s", unfolding_strategy_name)
-    logger.info("Post-uncross:       %s", post_uncross)
-    logger.info("Seed:               %d", seed)
-    logger.info("Trials per instance:%d", trials)
+    logger.info("Folding strategy:    %s", folding_strategy_name)
+    logger.info("Unfolding strategy:  %s", unfolding_strategy_name)
+    logger.info("Post-uncross:        %s", post_uncross)
+    logger.info("Seed:                %d", seed)
+    logger.info("Trials per instance: %d", trials)
     logger.info("Running benchmark for %d TSPLIB instance(s): %s", len(instances), ", ".join(instances))
 
     rows: list[list[object]] = []
