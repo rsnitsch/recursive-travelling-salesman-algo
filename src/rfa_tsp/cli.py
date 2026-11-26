@@ -453,7 +453,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.export is not None:
         if hasattr(renderer_instance, "export"):
-            renderer_instance.export(args.export, fps=args.export_fps)
+            assert renderer_instance is not None
+            renderer_instance.export(args.export, fps=args.export_fps)  # pyright: ignore[reportAttributeAccessIssue]
         else:
             logger.error("Selected renderer '%s' does not support animation export.", args.renderer)
 
