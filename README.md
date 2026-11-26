@@ -127,7 +127,8 @@ uv run rfa-tsp random:default -n 4 -s 0 --export docs/rfa-tsp_concept.png
 
 ### Seed sensitivity
 
-The default folding strategies (`breadth-first` and `random-nn`) select nodes to fold randomly. Consequently, the quality of the resulting tour depends on the RNG seed.
+The `breadth-first` (default) and `random-nn` folding strategies select nodes to fold randomly. Consequently,
+the quality of the resulting tour depends on the RNG seed.
 
 To quantify how strongly RFA depends on the seed across different problem sizes, we can evaluate multiple consecutive seeds (`--trials`) and compare a small instance (`tsplib:pr76`, 76 nodes) with large instances (`tsplib:pla7397`, 7,397 nodes; `tsplib:usa13509`, 13,509 nodes):
 
