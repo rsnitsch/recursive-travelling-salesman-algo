@@ -293,6 +293,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     logger.info("Folding strategy:   %s", args.folding_strategy)
     logger.info("Unfolding strategy: %s", args.unfolding_strategy)
     logger.info("Post-uncross:       %s", args.post_uncross)
+    logger.info("Weighted centroids: %s", args.weighted_centroids)
 
     if args.trials < 1:
         logger.error("--trials must be at least 1.")
@@ -355,6 +356,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "post_uncross": args.post_uncross,
             "seed_start": args.seed,
             "trials_requested": args.trials,
+            "weighted_centroids": args.weighted_centroids,
         }
 
         best_cost: int | None = None
