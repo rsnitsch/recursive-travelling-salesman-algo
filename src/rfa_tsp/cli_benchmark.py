@@ -196,6 +196,8 @@ def run_benchmark(
         return 1
 
     # Summary statistics across all completed instances
+    min_factor = min(factors)
+    max_factor = max(factors)
     arith_mean = statistics.mean(factors)
     geom_mean = statistics.geometric_mean(factors)
     median_factor = statistics.median(factors)
@@ -205,9 +207,11 @@ def run_benchmark(
     table = tabulate(rows, headers=headers)
     summary = (
         f"Summary ({len(rows)}/{len(instances)} instances):\n"
+        f"  Min cost factor:               {min_factor:.2f}%\n"
         f"  Mean cost factor (arithmetic): {arith_mean:.2f}%\n"
         f"  Mean cost factor (geometric):  {geom_mean:.2f}%\n"
         f"  Median cost factor:            {median_factor:.2f}%\n"
+        f"  Max cost factor:               {max_factor:.2f}%\n"
         f"  Total runtime:                 {total_runtime:.3f}s"
     )
 
