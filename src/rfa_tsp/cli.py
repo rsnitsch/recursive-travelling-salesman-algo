@@ -68,6 +68,7 @@ def create_option_parser():
         help="Remove intersecting edges from the final route via 2-opt moves (default: off)",
     )
 
+    common_parser.add_argument("--renderer", type=str, default="disabled", choices=["disabled", "turtle", "matplotlib"])
     common_parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging output")
 
     # Main parser with subcommands.
@@ -92,7 +93,6 @@ def create_option_parser():
         default=DEFAULT_NUMBER_OF_NODES,
         help=("Number of nodes (default = %d)" % DEFAULT_NUMBER_OF_NODES),
     )
-    demo_parser.add_argument("--renderer", type=str, default="disabled", choices=["disabled", "turtle", "matplotlib"])
     demo_parser.add_argument(
         "--export",
         type=Path,
@@ -118,7 +118,6 @@ def create_option_parser():
         default="a280,berlin52,bier127,ch150,eil51,pla7397,pr76,pr107,pr439,pr1002,rat99,rat783,usa13509",
         help="TSPLIB instances to be executed (comma-separated or 'all') or <N for all instances with at most N nodes.",
     )
-    benchmark_parser.add_argument("--renderer", type=str, default="disabled", choices=["disabled", "turtle"])
 
     return parser
 
