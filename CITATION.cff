@@ -5,6 +5,7 @@ abstract: "Python implementation of the Recursive-Fold-Algorithm (RFA) for the m
 authors:
   - family-names: "Nitsch"
     given-names: "Robert"
+version: 1.0.0
 date-released: 2026-11-26
 license: MIT
 repository-code: "https://github.com/rsnitsch/rfa-tsp"
