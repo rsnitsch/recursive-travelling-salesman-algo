@@ -43,7 +43,7 @@ This is how the RFA finds a route for the TSPLIB problem `pr76`:
 <details>
 <summary>Show command that was used to generate the above animation</summary>
 
-```
+```console
 ❯ uv run rfa-tsp tsplib:pr76 --seed 16 --export docs/rfa-tsp_tsplib_pr76.gif --export-fps 2-6
 INFO | Instance:           tsplib:pr76 (76 nodes)
 INFO | Folding strategy:   breadth-first
@@ -81,12 +81,16 @@ Let's consider the following TSP instance with 4 nodes:
 We can pick a node and its nearest neighbor and fold them. The new node will be placed in the center and remember the
 original nodes (the "children"):
 
-<img src="docs/rfa-tsp_concept_01_fold.png" alt="A node is folded with its nearest neighbor, creating a new node in the center" width="500">
+<img src="docs/rfa-tsp_concept_01_fold.png"
+     alt="A node is folded with its nearest neighbor, creating a new node in the center"
+     width="500">
 
 At this point, the number of nodes is reduced to 3. This is the trivial case and a preliminary route can be constructed.
 The best route for 3 nodes is a simple triangle:
 
-<img src="docs/rfa-tsp_concept_02_anchor.png" alt="With only 3 nodes left, the trivial case (recursion anchor) is reached" width="500">
+<img src="docs/rfa-tsp_concept_02_anchor.png"
+     alt="With only 3 nodes left, the trivial case (recursion anchor) is reached"
+     width="500">
 
 Now we have to reverse the folding.
 
@@ -239,7 +243,7 @@ This project uses `uv` as package and project manager. See: <https://docs.astral
 
 You can select a single TSPLIB instance from the `TSPLIB/` folder:
 
-```
+```console
 ❯ uv run rfa-tsp tsplib:a280
 INFO | Instance:           tsplib:a280 (280 nodes)
 INFO | Folding strategy:   breadth-first
@@ -253,7 +257,7 @@ INFO | Runtime:            0.017s
 
 Results will vary slightly when you change the RNG seed:
 
-```
+```console
 ❯ uv run rfa-tsp tsplib:a280 --seed 1
 ... (same as above) ...
 INFO | Seed:               1
@@ -266,7 +270,7 @@ INFO | Runtime:            0.018s
 
 To process a randomly generated set of nodes:
 
-```
+```console
 ❯ uv run rfa-tsp random:your_seed --nodes 50
 INFO | Instance:           random:your_seed (50 nodes)
 INFO | Folding strategy:   breadth-first
@@ -284,13 +288,13 @@ In this case, `your_seed` is a separate RNG seed for generating the random nodes
 
 The folding and unfolding phases can be rendered step-by-step:
 
-```
+```console
 ❯ uv run rfa-tsp tsplib:a280 --renderer matplotlib
 ```
 
 The rendering can also be exported as an animation:
 
-```
+```console
 ❯ uv run rfa-tsp tsplib:a280 --export rfa-tsp_tsplib_a280.gif --export-fps 2-6
 ```
 
