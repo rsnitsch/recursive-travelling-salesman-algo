@@ -14,6 +14,7 @@ import time
 from collections.abc import Sequence
 from pathlib import Path
 
+from . import __version__
 from .common import Route, generate_random_nodes, load_nodes_from_tsplib_file, optimal_solutions
 from .rfa import (
     FoldingStrategy,
@@ -138,6 +139,11 @@ def create_argument_parser() -> argparse.ArgumentParser:
         "--verbose",
         action="store_true",
         help="Enable verbose (DEBUG) logging output.",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
     )
 
     return parser

@@ -18,6 +18,7 @@ from pathlib import Path
 
 from tabulate import tabulate
 
+from . import __version__
 from .common import Route, load_nodes_from_tsplib_file, tsplib_get_optimal_solution
 from .rfa import (
     FoldingStrategy,
@@ -92,6 +93,11 @@ def create_argument_parser() -> argparse.ArgumentParser:
         "--verbose",
         action="store_true",
         help="Enable verbose (DEBUG) logging output.",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
     )
 
     return parser
