@@ -34,7 +34,9 @@ classifiers = [
 ]
 
 [dependency-groups]
-dev = []
+dev = [
+    "pytest>=9.2.0",
+]
 
 [project.scripts]
 rfa-tsp = "rfa_tsp.cli:main"
