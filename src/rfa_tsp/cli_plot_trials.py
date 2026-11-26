@@ -62,8 +62,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = create_argument_parser()
     args = parser.parse_args(argv)
 
+    if args.verbose:
+        log_format = "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
+    else:
+        log_format = "%(levelname)-8s | %(message)s"
+
     logging.basicConfig(
-        format="%(levelname)s | %(message)s",
+        format=log_format,
+        datefmt="%H:%M:%S",
         level=logging.DEBUG if args.verbose else logging.INFO,
     )
 
