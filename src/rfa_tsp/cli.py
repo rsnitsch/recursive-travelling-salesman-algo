@@ -110,6 +110,13 @@ def create_argument_parser() -> argparse.ArgumentParser:
         help="Random number generator seed for the RFA algorithm (default = 0).",
     )
     parser.add_argument(
+        "-t",
+        "--trials",
+        type=int,
+        default=1,
+        help="Number of consecutive seeds to try (starting from --seed), keeping the best route (default = 1).",
+    )
+    parser.add_argument(
         "--post-uncross",
         action="store_true",
         default=False,
@@ -186,6 +193,33 @@ def load_instance(instance_spec: str, number_of_nodes: int, tsplib_dir: Path):
     raise ValueError(f"Invalid instance '{instance_spec}'. Expected 'random[:<seed>]' or 'tsplib:<name>'.")
 
 
+def run_single_trial(
+    nodes,
+    ceil_2d: bool,
+    folding_strategy: FoldingStrategy,
+    unfolding_strategy: UnfoldingStrategy,
+    post_uncross: bool,
+    seed: int,
+    renderer=None,
+) -> tuple[Route, int, float]:
+    """Run one RFA trial for a given seed and return (route, total_costs, runtime)."""
+    random.seed(seed)
+    start_time = time.perf_counter()
+
+    folded = folding_strategy.fold(nodes, ceil_2d, renderer)
+    assert len(folded) <= 3, "Folding did not reduce number of nodes to 3."
+
+    route = Route(unfolding_strategy.unfold(folded, ceil_2d, renderer))
+    if post_uncross:
+        route = route.intersection_cleanup()
+        if renderer:
+            renderer.record_post_process(route, cost=route.get_total_costs(ceil_2d))
+
+    runtime = time.perf_counter() - start_time
+    total_costs = route.get_total_costs(ceil_2d)
+    return route, total_costs, runtime
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = create_argument_parser()
     args = parser.parse_args(argv)
@@ -205,10 +239,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     logger.info("Folding strategy:   %s", args.folding_strategy)
     logger.info("Unfolding strategy: %s", args.unfolding_strategy)
     logger.info("Post-uncross:       %s", args.post_uncross)
-    logger.info("Seed:               %d", args.seed)
 
-    # Seed global RNG for reproducible RFA folding strategies
-    random.seed(args.seed)
+    if args.trials < 1:
+        logger.error("--trials must be at least 1.")
+        return 1
 
     folding_strategy = FOLDING_STRATEGIES[args.folding_strategy]()
     unfolding_strategy = UNFOLDING_STRATEGIES[args.unfolding_strategy]()
@@ -220,27 +254,90 @@ def main(argv: Sequence[str] | None = None) -> int:
     else:
         renderer_instance = get_renderer_by_name(args.renderer)
 
-    logger.debug("Folding...")
-    start_time = time.perf_counter()
-    folded = folding_strategy.fold(nodes, ceil_2d, renderer_instance)
-    assert len(folded) <= 3, "Folding did not reduce number of nodes to 3."
+    optimal_costs = optimal_solutions.get(tspi) if tspi is not None else None
 
-    logger.debug("Unfolding...")
-    route = Route(unfolding_strategy.unfold(folded, ceil_2d, renderer_instance))
-    if args.post_uncross:
-        logger.debug("Running post-uncross...")
-        route = route.intersection_cleanup()
-        if renderer_instance:
-            renderer_instance.record_post_process(route, cost=route.get_total_costs(ceil_2d))
-    runtime = time.perf_counter() - start_time
+    if args.trials == 1:
+        logger.info("Seed:               %d", args.seed)
+        _, total_costs, runtime = run_single_trial(
+            nodes, ceil_2d, folding_strategy, unfolding_strategy, args.post_uncross, args.seed, renderer_instance
+        )
+        logger.info("Total length:       %s", total_costs)
+        if optimal_costs is not None:
+            overhead_pct = (float(total_costs) / optimal_costs - 1.0) * 100.0
+            logger.info("Optimal route:      %s (overhead of RFA route: +%.2f%%)", optimal_costs, overhead_pct)
+        logger.info("Runtime:            %.3fs", runtime)
+    else:
+        if args.folding_strategy == "outside-in":
+            parser.error(
+                "Folding strategy 'outside-in' is deterministic; multiple trials would yield identical results."
+            )
 
-    total_costs = route.get_total_costs(ceil_2d)
-    logger.info("Total length:       %s", total_costs)
-    if tspi is not None and tspi in optimal_solutions:
-        optimal_costs = optimal_solutions[tspi]
-        overhead_pct = (float(total_costs) / optimal_costs - 1) * 100.0
-        logger.info("Optimal route:      %s (overhead of RFA route: +%.2f%%)", optimal_costs, overhead_pct)
-    logger.info("Runtime:            %.3fs", runtime)
+        logger.info("Trials:             %d (seeds %d..%d)", args.trials, args.seed, args.seed + args.trials - 1)
+
+        best_cost: int | None = None
+        best_seed = args.seed
+        best_runtime = 0.0
+        total_runtime = 0.0
+        completed = 0
+        last_update = 0.0
+        is_tty = sys.stderr.isatty()
+
+        try:
+            for i in range(args.trials):
+                current_seed = args.seed + i
+                _, cost, runtime = run_single_trial(
+                    nodes, ceil_2d, folding_strategy, unfolding_strategy, args.post_uncross, current_seed, renderer=None
+                )
+                completed += 1
+                total_runtime += runtime
+
+                is_new_best = best_cost is None or cost < best_cost
+                if is_new_best:
+                    best_cost = cost
+                    best_seed = current_seed
+                    best_runtime = total_runtime
+
+                # Throttle terminal redraws (~20 Hz) to avoid I/O overhead on small instances
+                now = time.perf_counter()
+                if is_tty and (is_new_best or completed == args.trials or (now - last_update) >= 0.05):
+                    avg_time = total_runtime / completed
+                    opt_str = ""
+                    if optimal_costs is not None and best_cost is not None:
+                        overhead_pct = (float(best_cost) / optimal_costs - 1.0) * 100.0
+                        opt_str = f" (+{overhead_pct:.2f}%)"
+                    sys.stderr.write(
+                        f"\rProgress: {completed}/{args.trials} | "
+                        f"Best: {best_cost}{opt_str} (seed {best_seed}, @runtime {best_runtime:.3f}s) | "
+                        f"Runtime: {avg_time:.5f}s/trial, {total_runtime:.1f}s total"
+                    )
+                    sys.stderr.flush()
+                    last_update = now
+        except KeyboardInterrupt:
+            if is_tty:
+                sys.stderr.write("\n")
+            logger.info("Interrupted after %d/%d trials.", completed, args.trials)
+        else:
+            if is_tty:
+                sys.stderr.write("\n")
+
+        if best_cost is None:
+            logger.warning("No trials completed.")
+            return 1
+
+        avg_time = total_runtime / completed
+        logger.info("Best seed:          %d", best_seed)
+        logger.info("Best length:        %s", best_cost)
+        if optimal_costs is not None:
+            overhead_pct = (float(best_cost) / optimal_costs - 1.0) * 100.0
+            logger.info("Optimal route:      %s (overhead of RFA route: +%.2f%%)", optimal_costs, overhead_pct)
+        logger.info("Runtime:            %.3fs total (%.5fs/trial avg)", total_runtime, avg_time)
+
+        # Replay only the winning seed if visualization or export was requested
+        if renderer_instance is not None:
+            logger.info("Replaying best seed (%d) for rendering/export...", best_seed)
+            run_single_trial(
+                nodes, ceil_2d, folding_strategy, unfolding_strategy, args.post_uncross, best_seed, renderer_instance
+            )
 
     if args.export is not None:
         if hasattr(renderer_instance, "export"):
