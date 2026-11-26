@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 CLI for executing, visualizing, and exporting the recursive-fold-algorithm (RFA)
-on a single metric travelling-salesman-problem (TSP) instance.
+on a single metric travelling salesman problem (TSP) instance.
 
 Copyright (c) 2010-2026 Robert Nitsch
 """

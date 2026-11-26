@@ -6,7 +6,7 @@
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-The **recursive-fold-algorithm** (RFA) is a recursive algorithm for the metric **travelling-salesman-problem** (TSP).
+The **recursive-fold-algorithm** (RFA) is a recursive algorithm for the metric **travelling salesman problem** (TSP).
 The objective of the TSP is to find a round trip through a number of cities/locations (more generally referred to as
 **nodes**). The round trip should be as short as possible. The TSP is a very hard problem with difficult computational
 properties (TSP belongs to the NP-hard problem class).
@@ -337,7 +337,7 @@ Summary (18/18 instances):
 
 ## License
 
-The Recursive-Fold-Algorithm (RFA) was originally conceived and developed by Robert Nitsch in 2010.
+The recursive-fold-algorithm (RFA) was originally conceived and developed by Robert Nitsch in 2010.
 
 This project is licensed under the **MIT License** – see the [LICENSE](LICENSE) file for details.
 
