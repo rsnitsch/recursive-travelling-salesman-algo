@@ -23,6 +23,7 @@ from .common import Route, load_nodes_from_tsplib_file, tsplib_get_optimal_solut
 from .rfa import (
     FoldingStrategy,
     FoldingStrategyBreadthFirst,
+    FoldingStrategyBreadthFirstMutualNearestNeighbor,
     FoldingStrategyOutsideIn,
     FoldingStrategyRandomWithNearestNeighbor,
     UnfoldingStrategy,
@@ -34,6 +35,7 @@ logger = logging.getLogger(__name__)
 
 FOLDING_STRATEGIES: dict[str, type[FoldingStrategy]] = {
     "breadth-first": FoldingStrategyBreadthFirst,
+    "breadth-first-mutual-nn": FoldingStrategyBreadthFirstMutualNearestNeighbor,
     "random-nn": FoldingStrategyRandomWithNearestNeighbor,
     "outside-in": FoldingStrategyOutsideIn,
 }

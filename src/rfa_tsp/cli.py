@@ -24,6 +24,7 @@ from .common import Route, generate_random_nodes, load_nodes_from_tsplib_file, o
 from .rfa import (
     FoldingStrategy,
     FoldingStrategyBreadthFirst,
+    FoldingStrategyBreadthFirstMutualNearestNeighbor,
     FoldingStrategyOutsideIn,
     FoldingStrategyRandomWithNearestNeighbor,
     UnfoldingStrategy,
@@ -35,6 +36,7 @@ logger = logging.getLogger(__name__)
 
 FOLDING_STRATEGIES: dict[str, type[FoldingStrategy]] = {
     "breadth-first": FoldingStrategyBreadthFirst,
+    "breadth-first-mutual-nn": FoldingStrategyBreadthFirstMutualNearestNeighbor,
     "random-nn": FoldingStrategyRandomWithNearestNeighbor,
     "outside-in": FoldingStrategyOutsideIn,
 }

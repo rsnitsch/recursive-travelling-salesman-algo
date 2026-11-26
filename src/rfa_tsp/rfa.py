@@ -210,6 +210,74 @@ class FoldingStrategyBreadthFirst(FoldingStrategy):
         return list(grid.node_cell.keys())
 
 
+class FoldingStrategyBreadthFirstMutualNearestNeighbor(FoldingStrategy):
+    """
+    Folds mutual nearest neighbors (NN(A) == B and NN(B) == A) using the
+    nearest-neighbor chain algorithm in O(n) expected time.
+    Chains are seeded breadth-first (lowest depth first) to keep the fold tree balanced.
+    """
+
+    def fold(self, nodes: list[CoordinateNode], ceil_2d: bool, renderer: Renderer | None):
+        active = list(nodes)
+        if renderer:
+            renderer.record_init(active)
+
+        grid = SpatialGrid(active)
+        by_depth: dict[int, list[CoordinateNode]] = {0: list(active)}
+        min_depth = 0
+
+        stack: list[CoordinateNode] = []
+        stack_set: set[CoordinateNode] = set()
+
+        while grid.count > 3:
+            # Seed a new chain from the lowest available depth when the stack is empty
+            if not stack:
+                while not by_depth.get(min_depth):
+                    min_depth += 1
+
+                level_nodes = by_depth[min_depth]
+                idx = random.randrange(len(level_nodes))
+                seed = level_nodes[idx]
+                level_nodes[idx] = level_nodes[-1]
+                level_nodes.pop()
+
+                if seed not in grid.node_cell:
+                    continue
+
+                stack.append(seed)
+                stack_set.add(seed)
+
+            curr = stack[-1]
+            grid.remove(curr)
+            neighbor, _ = grid.get_nearest_neighbor(curr, ceil_2d)
+
+            if neighbor in stack_set:
+                # Mutual nearest neighbor found (or equal-distance tie cycle)
+                grid.remove(neighbor)
+
+                stack.pop()
+                stack_set.remove(curr)
+                if stack and stack[-1] is neighbor:
+                    stack.pop()
+                else:
+                    stack.remove(neighbor)
+                stack_set.remove(neighbor)
+
+                folded = RFANode((curr, neighbor))
+                grid.add(folded)
+                by_depth.setdefault(folded.depth, []).append(folded)
+
+                if renderer:
+                    renderer.record_fold(list(grid.node_cell.keys()), curr, neighbor, folded)
+            else:
+                # Extend the chain
+                grid.add(curr)
+                stack.append(neighbor)
+                stack_set.add(neighbor)
+
+        return list(grid.node_cell.keys())
+
+
 class FoldingStrategyRandomWithNearestNeighbor(FoldingStrategy):
     """
     Nodes are picked in random order. Each node is folded with its nearest neighbor
