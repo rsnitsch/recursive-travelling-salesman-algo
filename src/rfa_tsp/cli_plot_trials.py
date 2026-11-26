@@ -18,6 +18,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 
 from . import __version__
+from .common import setup_logging
 
 logger = logging.getLogger(__name__)
 
@@ -62,16 +63,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = create_argument_parser()
     args = parser.parse_args(argv)
 
-    if args.verbose:
-        log_format = "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
-    else:
-        log_format = "%(levelname)-8s | %(message)s"
-
-    logging.basicConfig(
-        format=log_format,
-        datefmt="%H:%M:%S",
-        level=logging.DEBUG if args.verbose else logging.INFO,
-    )
+    setup_logging(args.verbose)
 
     if not args.json_file.is_file():
         logger.error("File not found: %s", args.json_file)

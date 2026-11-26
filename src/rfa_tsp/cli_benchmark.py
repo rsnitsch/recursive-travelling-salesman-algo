@@ -19,7 +19,7 @@ from pathlib import Path
 from tabulate import tabulate
 
 from . import __version__
-from .common import Route, load_nodes_from_tsplib_file, tsplib_get_optimal_solution
+from .common import Route, load_nodes_from_tsplib_file, setup_logging, tsplib_get_optimal_solution
 from .rfa import (
     FoldingStrategy,
     FoldingStrategyBreadthFirst,
@@ -349,16 +349,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = create_argument_parser()
     args = parser.parse_args(argv)
 
-    if args.verbose:
-        log_format = "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
-    else:
-        log_format = "%(levelname)-8s | %(message)s"
-
-    logging.basicConfig(
-        format=log_format,
-        datefmt="%H:%M:%S",
-        level=logging.DEBUG if args.verbose else logging.INFO,
-    )
+    setup_logging(args.verbose)
 
     try:
         instances = resolve_tsplib_instances(args.tsplib, args.tsplib_dir)

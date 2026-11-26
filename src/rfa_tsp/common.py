@@ -7,11 +7,34 @@ Copyright (c) 2010-2026 Robert Nitsch
 
 from __future__ import annotations
 
+import logging
 import random
+from datetime import datetime
 from math import ceil, sqrt
 
 from rtree import index
 from shapely.geometry import LineString
+
+from . import __version__
+
+logger = logging.getLogger(__name__)
+
+
+def setup_logging(verbose: bool) -> None:
+    """Configure root logging and emit version and timestamp."""
+    if verbose:
+        log_format = "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
+    else:
+        log_format = "%(levelname)-8s | %(message)s"
+
+    logging.basicConfig(
+        format=log_format,
+        datefmt="%H:%M:%S",
+        level=logging.DEBUG if verbose else logging.INFO,
+    )
+
+    logger.info("rfa-tsp version:    %s", __version__)
+    logger.info("Timestamp:          %s", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
 
 class CoordinateNode:
