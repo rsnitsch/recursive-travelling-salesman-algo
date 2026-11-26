@@ -188,4 +188,4 @@ You may download and execute the RFA_demo scripts.
 The benchmark instances in ``TSPLIB/`` are taken from [TSPLIB95] (Gerhard Reinelt, Universität Heidelberg) and are
 provided strictly for academic and benchmarking purposes.
 
-[TSPLIB95]:http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/
+[TSPLIB95]:https://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/
