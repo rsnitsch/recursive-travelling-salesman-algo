@@ -317,7 +317,6 @@ def run_benchmark(
             f"  Total runtime:              {total_runtime:.3f}s"
         )
     else:
-        best_arith_mean = statistics.mean(best_overheads)
         headers = [
             "Instance",
             "Optimal",
@@ -331,7 +330,6 @@ def run_benchmark(
         avg_runtime_per_trial = total_runtime / trials
         summary = (
             f"Summary ({len(rows)}/{len(instances)} instances, {trials} trials each):\n"
-            f"  Mean of best overheads:     +{best_arith_mean:.2f}%\n"
             f"  Min mean overhead:          +{min_overhead:.2f}%\n"
             f"  Mean overhead (arithmetic): +{arith_mean:.2f}%\n"
             f"  Median mean overhead:       +{median_overhead:.2f}%\n"
