@@ -436,6 +436,7 @@ class RendererMatplotlib(Renderer):
         self,
         min_fps: float,
         max_fps: float,
+        hold_start_seconds: float,
         hold_anchor_seconds: float,
         hold_final_seconds: float,
     ) -> list[int]:
@@ -446,6 +447,11 @@ class RendererMatplotlib(Renderer):
 
         frame_indices: list[int] = []
         frame_budget = 0.0
+
+        # Fixed pause at the initial frame
+        if hold_start_seconds:
+            start_hold_frames = round(hold_start_seconds * max_fps)
+            frame_indices.extend([0] * start_hold_frames)
 
         for idx, step in enumerate(self.history):
             if anchor_idx is not None and min_fps < max_fps:
@@ -482,6 +488,7 @@ class RendererMatplotlib(Renderer):
         self,
         min_fps: float,
         max_fps: float,
+        hold_start_seconds: float,
         hold_anchor_seconds: float,
         hold_final_seconds: float,
     ) -> list[int]:
@@ -503,6 +510,8 @@ class RendererMatplotlib(Renderer):
                 step_fps = max_fps
 
             duration = 1000.0 / step_fps
+            if idx == 0 and hold_start_seconds > 0:
+                duration += hold_start_seconds * 1000.0
             if step.phase == Phase.ANCHOR and hold_anchor_seconds > 0:
                 duration += hold_anchor_seconds * 1000.0
             if idx == last_idx and hold_final_seconds > 0:
@@ -517,6 +526,7 @@ class RendererMatplotlib(Renderer):
         output_path: Path,
         fps: float | tuple[float, float] = 8,
         dpi: int = 120,
+        hold_start_seconds: float = 2.0,
         hold_anchor_seconds: float = 1.0,
         hold_final_seconds: float = 2.0,
     ) -> None:
@@ -574,6 +584,7 @@ class RendererMatplotlib(Renderer):
             durations_ms = self._compute_step_durations_ms(
                 min_fps=min_fps,
                 max_fps=max_fps,
+                hold_start_seconds=hold_start_seconds,
                 hold_anchor_seconds=hold_anchor_seconds,
                 hold_final_seconds=hold_final_seconds,
             )
@@ -612,6 +623,7 @@ class RendererMatplotlib(Renderer):
         frame_indices = self._build_export_frame_indices(
             min_fps=min_fps,
             max_fps=float(base_fps),
+            hold_start_seconds=hold_start_seconds,
             hold_anchor_seconds=hold_anchor_seconds,
             hold_final_seconds=hold_final_seconds,
         )
