@@ -144,7 +144,7 @@ def run_benchmark(
     logger.info("Running benchmark for %d TSPLIB instance(s): %s", len(instances), ", ".join(instances))
 
     rows: list[list[object]] = []
-    factors: list[float] = []
+    overheads: list[float] = []
     runtimes: list[float] = []
 
     try:
@@ -176,16 +176,16 @@ def run_benchmark(
 
             total_costs = route.get_total_costs(ceil_2d)
             optimal_costs = tsplib_get_optimal_solution(tspi)
-            factor_pct = float(total_costs) / optimal_costs * 100.0
+            overhead_pct = (float(total_costs) / optimal_costs - 1) * 100.0
 
-            factors.append(factor_pct)
+            overheads.append(overhead_pct)
             runtimes.append(runtime)
-            rows.append([tspi, optimal_costs, total_costs, f"{factor_pct:.2f}%", f"{runtime:.3f}s"])
+            rows.append([tspi, optimal_costs, total_costs, f"+{overhead_pct:.2f}%", f"{runtime:.3f}s"])
 
             logger.info(
-                "  Result: Total cost = %-10s | Factor = %.2f%% | Runtime = %.3fs",
+                "  Result: Total length = %-10s | Overhead vs. optimum = +%.2f%% | Runtime = %.3fs",
                 total_costs,
-                factor_pct,
+                overhead_pct,
                 runtime,
             )
     except KeyboardInterrupt:
@@ -195,24 +195,25 @@ def run_benchmark(
         logger.warning("No benchmark results to display.")
         return 1
 
+    ratios = [1.0 + overhead / 100.0 for overhead in overheads]
     # Summary statistics across all completed instances
-    min_factor = min(factors)
-    max_factor = max(factors)
-    arith_mean = statistics.mean(factors)
-    geom_mean = statistics.geometric_mean(factors)
-    median_factor = statistics.median(factors)
+    min_overhead = min(overheads)
+    max_overhead = max(overheads)
+    arith_mean = statistics.mean(overheads)
+    geom_mean = (statistics.geometric_mean(ratios) - 1.0) * 100.0
+    median_overhead = statistics.median(overheads)
     total_runtime = sum(runtimes)
 
-    headers = ["Instance", "Costs of optimal route", "Costs of RFA route", "Cost factor", "Runtime"]
+    headers = ["Instance", "Length of optimal route", "Length of RFA route", "RFA vs. optimum", "Runtime"]
     table = tabulate(rows, headers=headers)
     summary = (
         f"Summary ({len(rows)}/{len(instances)} instances):\n"
-        f"  Min cost factor:               {min_factor:.2f}%\n"
-        f"  Mean cost factor (arithmetic): {arith_mean:.2f}%\n"
-        f"  Mean cost factor (geometric):  {geom_mean:.2f}%\n"
-        f"  Median cost factor:            {median_factor:.2f}%\n"
-        f"  Max cost factor:               {max_factor:.2f}%\n"
-        f"  Total runtime:                 {total_runtime:.3f}s"
+        f"  Min overhead:               +{min_overhead:.2f}%\n"
+        f"  Mean overhead (arithmetic): +{arith_mean:.2f}%\n"
+        f"  Mean overhead (geometric):  +{geom_mean:.2f}%\n"
+        f"  Median overhead:            +{median_overhead:.2f}%\n"
+        f"  Max overhead:               +{max_overhead:.2f}%\n"
+        f"  Total runtime:              {total_runtime:.3f}s"
     )
 
     logger.info("\n%s\n\n%s", table, summary)

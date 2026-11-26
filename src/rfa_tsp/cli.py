@@ -233,11 +233,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     runtime = time.perf_counter() - start_time
 
     total_costs = route.get_total_costs(ceil_2d)
-    logger.info("Total costs:        %s", total_costs)
+    logger.info("Total length:       %s", total_costs)
     if tspi is not None and tspi in optimal_solutions:
         optimal_costs = optimal_solutions[tspi]
-        factor_pct = float(total_costs) / optimal_costs * 100.0
-        logger.info("Optimal costs:      %s (%.2f%%)", optimal_costs, factor_pct)
+        overhead_pct = (float(total_costs) / optimal_costs - 1) * 100.0
+        logger.info("Optimal route:      %s (overhead of RFA route: +%.2f%%)", optimal_costs, overhead_pct)
     logger.info("Runtime:            %.3fs", runtime)
 
     if args.export is not None:

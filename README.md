@@ -102,18 +102,18 @@ You can select a single TSPLIB instance from the ``TSPLIB/`` folder:
     INFO | Unfolding strategy: breadth-first-2opt
     INFO | Post-uncross:       False
     INFO | Seed:               0
-    INFO | Total costs:        2882
-    INFO | Optimal costs:      2579 (111.75%)
-    INFO | Runtime:            0.030s
+    INFO | Total length:       2882
+    INFO | Optimal route:      2579 (overhead of RFA route: +11.75%)
+    INFO | Runtime:            0.017s
 
 Results will vary slightly when you change the RNG seed:
 
     ❯ uv run rfa-tsp tsplib:a280 --seed 1
     ... (same as above) ...
     INFO | Seed:               1
-    INFO | Total costs:        2837
-    INFO | Optimal costs:      2579 (110.00%)
-    INFO | Runtime:            0.033s
+    INFO | Total length:       2837
+    INFO | Optimal route:      2579 (overhead of RFA route: +10.00%)
+    INFO | Runtime:            0.018s
 
 ### Processing a random TSP instance
 
@@ -125,7 +125,7 @@ To process a randomly generated set of nodes:
     INFO | Unfolding strategy: breadth-first-2opt
     INFO | Post-uncross:       False
     INFO | Seed:               0
-    INFO | Total costs:        3197
+    INFO | Total length:       3197
     INFO | Runtime:            0.003s
 
 In this case, ``your_seed`` is a separate RNG seed for generating the random nodes. The
@@ -152,32 +152,34 @@ The following command runs a benchmark using a subset of the [TSPLIB95] instance
     INFO | Seed:               0
     INFO | Running benchmark for 18 TSPLIB instance(s): ...
     ...
-    Instance      Costs of optimal route    Costs of RFA route  Cost factor    Runtime
-    ----------  ------------------------  --------------------  -------------  ---------
-    a280                            2579                  2882  111.75%        0.013s
-    berlin52                        7542                  8337  110.54%        0.003s
-    bier127                       118282                128084  108.29%        0.007s
-    brd14051                      469385                517022  110.15%        0.821s
-    ch150                           6528                  6900  105.70%        0.013s
-    d18512                        645238                708935  109.87%        1.104s
-    eil51                            426                   443  103.99%        0.008s
-    pla33810                    66048945              77483437  117.31%        1.734s
-    pla7397                     23260728              26482473  113.85%        0.362s
-    pla85900                   142382641             164304152  115.40%        4.739s
-    pr1002                        259045                279017  107.71%        0.081s
-    pr107                          44303                 44658  100.80%        0.006s
-    pr439                         107217                115989  108.18%        0.023s
-    pr76                          108159                114746  106.09%        0.005s
-    rat783                          8806                  9664  109.74%        0.040s
-    rat99                           1211                  1295  106.94%        0.006s
-    sw24978                       855597                944301  110.37%        1.506s
-    usa13509                    19982859              22192827  111.06%        0.825s
+    Instance      Length of optimal route    Length of RFA route  RFA vs. optimum    Runtime
+    ----------  -------------------------  ---------------------  -----------------  ---------
+    a280                             2579                   2882  +11.75%            0.014s
+    berlin52                         7542                   8337  +10.54%            0.003s
+    bier127                        118282                 128084  +8.29%             0.008s
+    brd14051                       469385                 517022  +10.15%            0.773s
+    ch150                            6528                   6900  +5.70%             0.012s
+    d18512                         645238                 708935  +9.87%             1.018s
+    eil51                             426                    443  +3.99%             0.006s
+    pla33810                     66048945               77483437  +17.31%            1.613s
+    pla7397                      23260728               26482473  +13.85%            0.357s
+    pla85900                    142382641              164304152  +15.40%            4.469s
+    pr1002                         259045                 279017  +7.71%             0.080s
+    pr107                           44303                  44658  +0.80%             0.006s
+    pr439                          107217                 115989  +8.18%             0.023s
+    pr76                           108159                 114746  +6.09%             0.004s
+    rat783                           8806                   9664  +9.74%             0.039s
+    rat99                            1211                   1295  +6.94%             0.006s
+    sw24978                        855597                 944301  +10.37%            1.373s
+    usa13509                     19982859               22192827  +11.06%            0.774s
     
     Summary (18/18 instances):
-      Mean cost factor (arithmetic): 109.32%
-      Mean cost factor (geometric):  109.25%
-      Median cost factor:            109.81%
-      Total runtime:                 11.296s
+      Min overhead:               +0.80%
+      Mean overhead (arithmetic): +9.32%
+      Mean overhead (geometric):  +9.25%
+      Median overhead:            +9.81%
+      Max overhead:               +17.31%
+      Total runtime:              10.578s
 
 ## License
 
