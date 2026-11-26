@@ -145,7 +145,7 @@ class SpatialGrid:
 class RFANode(CoordinateNode):
     __slots__ = ("children", "depth", "weight")
 
-    def __init__(self, children: tuple[CoordinateNode, CoordinateNode], weighted: bool = False):
+    def __init__(self, children: tuple[CoordinateNode, CoordinateNode], weighted: bool):
         child1, child2 = children
         self.children = children
 
@@ -168,6 +168,9 @@ class RFANode(CoordinateNode):
 
 
 class FoldingStrategy:
+    def __init__(self, weighted_centroids: bool):
+        self.weighted_centroids = weighted_centroids
+
     def fold(self, nodes: list[CoordinateNode], ceil_2d: bool, renderer: Renderer | None):
         """Fold nodes using the strategy defined in the subclass."""
         raise NotImplementedError("fold() must be implemented in subclasses")
@@ -200,7 +203,7 @@ class FoldingStrategyBreadthFirst(FoldingStrategy):
             node2, _ = grid.get_nearest_neighbor(node1, ceil_2d)
             grid.remove(node2)
 
-            folded = RFANode((node1, node2))
+            folded = RFANode((node1, node2), weighted=self.weighted_centroids)
             grid.add(folded)
             by_depth.setdefault(folded.depth, []).append(folded)
 
@@ -263,7 +266,7 @@ class FoldingStrategyBreadthFirstMutualNearestNeighbor(FoldingStrategy):
                     stack.remove(neighbor)
                 stack_set.remove(neighbor)
 
-                folded = RFANode((curr, neighbor))
+                folded = RFANode((curr, neighbor), weighted=self.weighted_centroids)
                 grid.add(folded)
                 by_depth.setdefault(folded.depth, []).append(folded)
 
@@ -308,7 +311,7 @@ class FoldingStrategyRandomWithNearestNeighbor(FoldingStrategy):
             remove_active(node2)
             grid.remove(node2)
 
-            folded = RFANode((node1, node2))
+            folded = RFANode((node1, node2), weighted=self.weighted_centroids)
             pos[folded] = len(active)
             active.append(folded)
             grid.add(folded)
@@ -369,7 +372,7 @@ class FoldingStrategyOutsideIn(FoldingStrategy):
             grid.remove(nearest_neighbor)
 
             # Create folded node
-            folded_node = RFANode((furthest_node, nearest_neighbor))
+            folded_node = RFANode((furthest_node, nearest_neighbor), weighted=self.weighted_centroids)
             grid.add(folded_node)
 
             dist_sq = (folded_node.x - center_x) ** 2 + (folded_node.y - center_y) ** 2

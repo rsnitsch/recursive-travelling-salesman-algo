@@ -106,6 +106,12 @@ def create_argument_parser() -> argparse.ArgumentParser:
         help="Remove intersecting edges from the final route via 2-opt moves (default: off).",
     )
     parser.add_argument(
+        "--weighted-centroids",
+        action="store_true",
+        default=False,
+        help="Compute folded node positions as mass-weighted centroids instead of unweighted midpoints (default: off).",
+    )
+    parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
@@ -149,13 +155,15 @@ def resolve_tsplib_instances(selector: str, tsplib_dir: Path) -> list[str]:
 
 
 def run_benchmark(
+    *,
     instances: list[str],
     tsplib_dir: Path,
     folding_strategy_name: str,
     unfolding_strategy_name: str,
     post_uncross: bool,
     seed: int,
-    trials: int = 1,
+    trials: int,
+    weighted_centroids: bool,
 ) -> int:
     if not instances:
         logger.error("No TSPLIB instances selected.")
@@ -192,7 +200,7 @@ def run_benchmark(
                 trial_seed = seed + trial_idx
                 random.seed(trial_seed)
 
-                folding_strategy = FOLDING_STRATEGIES[folding_strategy_name]()
+                folding_strategy = FOLDING_STRATEGIES[folding_strategy_name](weighted_centroids=weighted_centroids)
                 unfolding_strategy = UNFOLDING_STRATEGIES[unfolding_strategy_name]()
 
                 logger.debug(
@@ -342,6 +350,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         post_uncross=args.post_uncross,
         seed=args.seed,
         trials=args.trials,
+        weighted_centroids=args.weighted_centroids,
     )
 
 

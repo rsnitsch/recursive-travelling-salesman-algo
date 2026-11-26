@@ -138,6 +138,12 @@ def create_argument_parser() -> argparse.ArgumentParser:
         help="Remove intersecting edges from the final route via 2-opt moves (default: off).",
     )
     parser.add_argument(
+        "--weighted-centroids",
+        action="store_true",
+        default=False,
+        help="Compute folded node positions as mass-weighted centroids instead of unweighted midpoints (default: off).",
+    )
+    parser.add_argument(
         "--renderer",
         type=str,
         default="disabled",
@@ -290,7 +296,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         logger.error("--trials must be at least 1.")
         return 1
 
-    folding_strategy = FOLDING_STRATEGIES[args.folding_strategy]()
+    folding_strategy = FOLDING_STRATEGIES[args.folding_strategy](weighted_centroids=args.weighted_centroids)
     unfolding_strategy = UNFOLDING_STRATEGIES[args.unfolding_strategy]()
 
     # Automatically use matplotlib when export is requested without an interactive renderer
