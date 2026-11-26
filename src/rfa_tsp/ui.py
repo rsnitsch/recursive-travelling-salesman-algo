@@ -552,10 +552,10 @@ class RendererMatplotlib(Renderer):
         norm = Normalize(vmin=0, vmax=max_depth)
         cmap = plt.get_cmap("viridis")
 
-        fig, ax = plt.subplots(figsize=(8, 6.5), dpi=dpi)
-        plt.subplots_adjust(right=0.86)
+        fig, ax = plt.subplots(figsize=(7.6, 6.4), dpi=dpi)
+        plt.subplots_adjust(left=0.10, right=0.825, bottom=0.07, top=0.93)
 
-        cbar_ax = fig.add_axes((0.88, 0.12, 0.025, 0.76))
+        cbar_ax = fig.add_axes((0.845, 0.07, 0.026, 0.86))
         sm = ScalarMappable(norm=norm, cmap=cmap)
         cbar = fig.colorbar(sm, cax=cbar_ax)
         cbar.set_label("Folding Depth")
