@@ -98,14 +98,17 @@ Results will vary slightly when you change the RNG seed:
 
 To process a randomly generated set of nodes:
 
-    ❯ uv run rfa-tsp random --nodes 50
-    INFO | Instance:           random (50 nodes)
+    ❯ uv run rfa-tsp random:your_seed --nodes 50
+    INFO | Instance:           random:your_seed (50 nodes)
     INFO | Folding strategy:   breadth-first
     INFO | Unfolding strategy: breadth-first-2opt
     INFO | Post-uncross:       False
     INFO | Seed:               0
-    INFO | Total costs:        2991
-    INFO | Runtime:            0.005s
+    INFO | Total costs:        3197
+    INFO | Runtime:            0.003s
+
+In this case, ``your_seed`` is a separate RNG seed for generating the random nodes. The
+default seed is ``default``, so ``random`` is equal to specifying ``random:default``.
 
 ### Visualizing the steps of the algorithm
 

@@ -41,13 +41,16 @@ UNFOLDING_STRATEGIES: dict[str, type[UnfoldingStrategy]] = {
 
 def create_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Solve and optionally visualize a single TSP instance using the recursive-fold-algorithm (RFA)."
+        description="Compute an approximate route for a single TSP instance using the recursive-fold-algorithm (RFA)."
     )
 
     parser.add_argument(
         "instance",
         type=str,
-        help="Problem instance to solve: 'random' or 'tsplib:<name>' (e.g. 'tsplib:berlin52').",
+        help=(
+            "Problem instance to approximate: 'random[:<seed>]' (default seed: 'default') "
+            "or 'tsplib:<name>' (e.g. 'tsplib:berlin52')."
+        ),
     )
     parser.add_argument(
         "-n",
@@ -55,7 +58,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
         type=int,
         dest="number_of_nodes",
         default=100,
-        help="Number of nodes when instance is 'random' (default = 100).",
+        help="Number of nodes when instance is 'random[:<seed>]' (default = 100).",
     )
     parser.add_argument(
         "--tsplib-dir",
@@ -80,7 +83,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
         "--seed",
         type=int,
         default=0,
-        help="Random number generator seed (default = 0).",
+        help="Random number generator seed for the RFA algorithm (default = 0).",
     )
     parser.add_argument(
         "--post-uncross",
@@ -131,12 +134,18 @@ def get_renderer_by_name(name: str):
     raise ValueError(f"Unknown renderer: {name}")
 
 
-def load_instance(instance_spec: str, number_of_nodes: int, seed: int, tsplib_dir: Path):
-    """Load nodes for either 'random' or 'tsplib:<name>'."""
-    if instance_spec == "random":
+def load_instance(instance_spec: str, number_of_nodes: int, tsplib_dir: Path):
+    """Load nodes for either 'random[:<seed>]' or 'tsplib:<name>'."""
+    if instance_spec == "random" or instance_spec.startswith("random:"):
         if number_of_nodes < 3:
             raise ValueError("Number of nodes must be at least 3.")
-        nodes = generate_random_nodes(number_of_nodes, seed=seed, max_size=500)
+        if instance_spec == "random":
+            node_seed = "default"
+        else:
+            node_seed = instance_spec.removeprefix("random:").strip()
+            if not node_seed:
+                raise ValueError("Missing seed after 'random:'.")
+        nodes = generate_random_nodes(number_of_nodes, seed=node_seed, max_size=500)
         return nodes, False, None
 
     if instance_spec.startswith("tsplib:"):
@@ -149,7 +158,7 @@ def load_instance(instance_spec: str, number_of_nodes: int, seed: int, tsplib_di
         nodes, ceil_2d = load_nodes_from_tsplib_file(tsp_path)
         return nodes, ceil_2d, tspi
 
-    raise ValueError(f"Invalid instance '{instance_spec}'. Expected 'random' or 'tsplib:<name>'.")
+    raise ValueError(f"Invalid instance '{instance_spec}'. Expected 'random[:<seed>]' or 'tsplib:<name>'.")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -162,7 +171,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
 
     try:
-        nodes, ceil_2d, tspi = load_instance(args.instance, args.number_of_nodes, args.seed, args.tsplib_dir)
+        nodes, ceil_2d, tspi = load_instance(args.instance, args.number_of_nodes, args.tsplib_dir)
     except (ValueError, FileNotFoundError) as exc:
         logger.error("%s", exc)
         return 1
@@ -173,7 +182,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     logger.info("Post-uncross:       %s", args.post_uncross)
     logger.info("Seed:               %d", args.seed)
 
-    # Seed RNG for reproducible folding strategies
+    # Seed global RNG for reproducible RFA folding strategies
     random.seed(args.seed)
 
     folding_strategy = FOLDING_STRATEGIES[args.folding_strategy]()

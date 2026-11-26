@@ -140,21 +140,14 @@ class Route(list):
         return self
 
 
-def generate_random_nodes(count: int, seed=0, max_size=500) -> list[CoordinateNode]:
+def generate_random_nodes(count: int, seed: str | int, max_size: int = 500) -> list[CoordinateNode]:
     """
-    Generates count nodes with coordinates between 0 and max_size.
+    Generate `count` nodes with coordinates in [0, max_size].
 
-    Uses seed to initialize the random number generator.
-
-    Returns a list of nodes.
+    Uses an isolated RNG seeded with `seed` so the global random state is not affected.
     """
-    random.seed(seed)
-
-    nodes: list[CoordinateNode] = []
-    for i in range(count):
-        nodes.append(CoordinateNode(random.randint(0, max_size), random.randint(0, max_size)))
-
-    return nodes
+    rng = random.Random(seed)
+    return [CoordinateNode(rng.randint(0, max_size), rng.randint(0, max_size)) for _ in range(count)]
 
 
 def load_nodes_from_tsplib_file(filename) -> tuple[list[CoordinateNode], bool]:
