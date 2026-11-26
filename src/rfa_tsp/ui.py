@@ -432,13 +432,100 @@ class RendererMatplotlib(Renderer):
         go_to(0)
         plt.show()
 
-    def export(self, output_path: Path, fps: int = 8, dpi: int = 120, hold_final_seconds: float = 2.0) -> None:
+    def _build_export_frame_indices(
+        self,
+        min_fps: float,
+        max_fps: float,
+        hold_anchor_seconds: float,
+        hold_final_seconds: float,
+    ) -> list[int]:
+        """Build frame index sequence with variable step timing and pauses at anchor/final steps."""
+        n = len(self.history)
+        anchor_idx = next((i for i, step in enumerate(self.history) if step.phase == Phase.ANCHOR), None)
+        last_idx = n - 1
+
+        frame_indices: list[int] = []
+        frame_budget = 0.0
+
+        for idx, step in enumerate(self.history):
+            if anchor_idx is not None and min_fps < max_fps:
+                if idx <= anchor_idx:
+                    # Distance from anchor: 1.0 at start, 0.0 at anchor
+                    t = (anchor_idx - idx) / anchor_idx if anchor_idx > 0 else 0.0
+                else:
+                    # Distance from anchor: 0.0 at anchor, 1.0 at end
+                    span = last_idx - anchor_idx
+                    t = (idx - anchor_idx) / span if span > 0 else 1.0
+                step_fps = min_fps + (max_fps - min_fps) * t
+            else:
+                step_fps = max_fps
+
+            # Accumulate fractional frames so slow-to-fast transitions stay smooth
+            frame_budget += max_fps / step_fps
+            repeat_count = max(1, round(frame_budget))
+            frame_budget -= repeat_count
+            frame_indices.extend([idx] * repeat_count)
+
+            # Fixed pause at the recursion anchor
+            if step.phase == Phase.ANCHOR and hold_anchor_seconds > 0:
+                anchor_hold_frames = round(hold_anchor_seconds * max_fps)
+                frame_indices.extend([idx] * anchor_hold_frames)
+
+        # Fixed pause at the final frame
+        if hold_final_seconds > 0:
+            final_hold_frames = round(hold_final_seconds * max_fps)
+            frame_indices.extend([last_idx] * final_hold_frames)
+
+        return frame_indices
+
+    def _compute_step_durations_ms(
+        self,
+        min_fps: float,
+        max_fps: float,
+        hold_anchor_seconds: float,
+        hold_final_seconds: float,
+    ) -> list[int]:
+        """Compute display duration in milliseconds for each unique history step."""
+        n = len(self.history)
+        anchor_idx = next((i for i, step in enumerate(self.history) if step.phase == Phase.ANCHOR), None)
+        last_idx = n - 1
+        durations_ms: list[int] = []
+
+        for idx, step in enumerate(self.history):
+            if anchor_idx is not None and min_fps < max_fps:
+                if idx <= anchor_idx:
+                    t = (anchor_idx - idx) / anchor_idx if anchor_idx > 0 else 0.0
+                else:
+                    span = last_idx - anchor_idx
+                    t = (idx - anchor_idx) / span if span > 0 else 1.0
+                step_fps = min_fps + (max_fps - min_fps) * t
+            else:
+                step_fps = max_fps
+
+            duration = 1000.0 / step_fps
+            if step.phase == Phase.ANCHOR and hold_anchor_seconds > 0:
+                duration += hold_anchor_seconds * 1000.0
+            if idx == last_idx and hold_final_seconds > 0:
+                duration += hold_final_seconds * 1000.0
+
+            durations_ms.append(max(20, round(duration)))
+
+        return durations_ms
+
+    def export(
+        self,
+        output_path: Path,
+        fps: float | tuple[float, float] = 8,
+        dpi: int = 120,
+        hold_anchor_seconds: float = 1.0,
+        hold_final_seconds: float = 2.0,
+    ) -> None:
         if not self.history:
             logger.warning("No steps recorded; skipping export.")
             return
 
         import matplotlib.pyplot as plt
-        from matplotlib.animation import FFMpegWriter, FuncAnimation, PillowWriter
+        from matplotlib.animation import FFMpegWriter, FuncAnimation
         from matplotlib.cm import ScalarMappable
         from matplotlib.colors import Normalize
 
@@ -455,10 +542,10 @@ class RendererMatplotlib(Renderer):
         norm = Normalize(vmin=0, vmax=max_depth)
         cmap = plt.get_cmap("viridis")
 
-        fig, ax = plt.subplots(figsize=(8, 6.5))
+        fig, ax = plt.subplots(figsize=(8, 6.5), dpi=dpi)
         plt.subplots_adjust(right=0.86)
 
-        cbar_ax = fig.add_axes([0.88, 0.12, 0.025, 0.76])
+        cbar_ax = fig.add_axes((0.88, 0.12, 0.025, 0.76))
         sm = ScalarMappable(norm=norm, cmap=cmap)
         cbar = fig.colorbar(sm, cax=cbar_ax)
         cbar.set_label("Folding Depth")
@@ -477,16 +564,76 @@ class RendererMatplotlib(Renderer):
                 plt.close(fig)
             return
 
-        writer = PillowWriter(fps=fps) if suffix == ".gif" else FFMpegWriter(fps=fps)
-        hold_frames = max(0, int(round(hold_final_seconds * fps)))
-        frame_indices = list(range(len(self.history))) + [len(self.history) - 1] * hold_frames
+        min_fps, max_fps = fps if isinstance(fps, tuple) else (float(fps), float(fps))
 
-        logger.info("Exporting %d frames to %s (fps=%d, dpi=%d)...", len(frame_indices), output_path, fps, dpi)
+        # Native variable frame durations for GIF: render each step once, zero duplicate frames
+        if suffix == ".gif":
+            import numpy as np
+            from PIL import Image
+
+            durations_ms = self._compute_step_durations_ms(
+                min_fps=min_fps,
+                max_fps=max_fps,
+                hold_anchor_seconds=hold_anchor_seconds,
+                hold_final_seconds=hold_final_seconds,
+            )
+            logger.info(
+                "Exporting %d unique frames to %s (fps=%g-%g, dpi=%d)...",
+                len(self.history),
+                output_path,
+                min_fps,
+                max_fps,
+                dpi,
+            )
+            frames: list[Image.Image] = []
+            try:
+                for idx in range(len(self.history)):
+                    self._draw_step(ax, idx, bounds, norm, cmap)
+                    fig.canvas.draw()
+                    rgba = np.asarray(fig.canvas.buffer_rgba())
+                    frames.append(Image.fromarray(rgba).convert("RGB"))
+
+                frames[0].save(
+                    output_path,
+                    save_all=True,
+                    append_images=frames[1:],
+                    duration=durations_ms,
+                    loop=0,
+                    optimize=True,
+                )
+                logger.info("Export finished: %s", output_path)
+            finally:
+                plt.close(fig)
+            return
+
+        # Video export (MP4/MOV/WebM): skip redraws for repeated frames; codec handles compression
+        base_fps = max(1, round(max_fps))
+        writer = FFMpegWriter(fps=base_fps)
+        frame_indices = self._build_export_frame_indices(
+            min_fps=min_fps,
+            max_fps=float(base_fps),
+            hold_anchor_seconds=hold_anchor_seconds,
+            hold_final_seconds=hold_final_seconds,
+        )
+
+        logger.info(
+            "Exporting %d video frames to %s (fps=%g-%g, base_fps=%d, dpi=%d)...",
+            len(frame_indices),
+            output_path,
+            min_fps,
+            base_fps,
+            base_fps,
+            dpi,
+        )
+
+        last_drawn = {"idx": -1}
 
         def update(frame_idx: int) -> None:
-            self._draw_step(ax, frame_idx, bounds, norm, cmap)
+            if frame_idx != last_drawn["idx"]:
+                self._draw_step(ax, frame_idx, bounds, norm, cmap)
+                last_drawn["idx"] = frame_idx
 
-        anim = FuncAnimation(fig, update, frames=frame_indices, interval=1000 / fps, repeat=False)
+        anim = FuncAnimation(fig, update, frames=frame_indices, interval=1000 / base_fps, repeat=False)
         try:
             anim.save(str(output_path), writer=writer, dpi=dpi)
             logger.info("Export finished: %s", output_path)

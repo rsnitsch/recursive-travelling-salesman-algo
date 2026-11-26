@@ -40,6 +40,29 @@ UNFOLDING_STRATEGIES: dict[str, type[UnfoldingStrategy]] = {
 
 
 def create_argument_parser() -> argparse.ArgumentParser:
+    def parse_export_fps(value: str) -> tuple[float, float]:
+        """Parse either a single FPS value ('8') or a min-max range ('2-15')."""
+        if "-" in value:
+            parts = value.split("-", maxsplit=1)
+            try:
+                min_fps = float(parts[0])
+                max_fps = float(parts[1])
+            except ValueError as exc:
+                raise argparse.ArgumentTypeError(f"Invalid FPS range '{value}'. Expected '<min>-<max>'.") from exc
+            if min_fps <= 0 or max_fps < min_fps:
+                raise argparse.ArgumentTypeError(f"Invalid FPS range '{value}'. Must satisfy 0 < min <= max.")
+            return (min_fps, max_fps)
+
+        try:
+            fps = float(value)
+        except ValueError as exc:
+            raise argparse.ArgumentTypeError(
+                f"Invalid FPS value '{value}'. Expected a number or '<min>-<max>'."
+            ) from exc
+        if fps <= 0:
+            raise argparse.ArgumentTypeError("FPS must be greater than 0.")
+        return (fps, fps)
+
     parser = argparse.ArgumentParser(
         description="Compute an approximate route for a single TSP instance using the recursive-fold-algorithm (RFA)."
     )
@@ -106,9 +129,9 @@ def create_argument_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--export-fps",
-        type=int,
-        default=8,
-        help="Frames per second for exported animation (default = 8).",
+        type=parse_export_fps,
+        default=(8.0, 8.0),
+        help="FPS for exported animation: single value (e.g. '8') or 'min-max' range slowing down toward the recursion anchor (default = 8).",
     )
     parser.add_argument(
         "-v",
