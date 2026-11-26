@@ -32,37 +32,25 @@ logger = logging.getLogger(__name__)
 
 
 def create_option_parser():
-    parser = argparse.ArgumentParser(
-        description="Calculate and display routes for metric travelling-salesman-problems using the recursive-fold-algorithm."
-    )
+    # Shared arguments available to all subcommands.
+    common_parser = argparse.ArgumentParser(add_help=False)
 
-    # Add options to the OptionParser.
-    parser.add_argument("mode", type=str, action="store", choices=["demo", "benchmark"])
-
-    parser.add_argument(
+    common_parser.add_argument(
         "--folding-strategy",
         type=str,
         default="breadth-first",
         choices=["breadth-first", "random-nn", "outside-in"],
     )
 
-    parser.add_argument(
-        "--unfolding-strategy", type=str, default="breadth-first-2opt", choices=["breadth-first", "breadth-first-2opt"]
-    )
-
-    DEFAULT_NUMBER_OF_NODES = 100
-    parser.add_argument(
-        "-n",
-        "--nodes",
-        type=int,
-        action="store",
-        dest="number_of_nodes",
-        default=DEFAULT_NUMBER_OF_NODES,
-        help=("Number of nodes for demo mode (default = %d)" % DEFAULT_NUMBER_OF_NODES),
+    common_parser.add_argument(
+        "--unfolding-strategy",
+        type=str,
+        default="breadth-first-2opt",
+        choices=["breadth-first", "breadth-first-2opt"],
     )
 
     DEFAULT_SEED = 0
-    parser.add_argument(
+    common_parser.add_argument(
         "-s",
         "--seed",
         type=int,
@@ -72,18 +60,47 @@ def create_option_parser():
         help="Random number generator seed (default = %d)" % DEFAULT_SEED,
     )
 
-    parser.add_argument("--renderer", type=str, default="disabled", choices=["disabled", "turtle"])
+    common_parser.add_argument("--intersection-cleanup", action=argparse.BooleanOptionalAction, default=False)
 
-    parser.add_argument("--intersection-cleanup", action=argparse.BooleanOptionalAction, default=False)
+    common_parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging output")
 
-    parser.add_argument(
+    # Main parser with subcommands.
+    parser = argparse.ArgumentParser(
+        description="Calculate and display routes for metric travelling-salesman-problems using the recursive-fold-algorithm."
+    )
+    subparsers = parser.add_subparsers(dest="mode", required=True)
+
+    # 'demo' subcommand.
+    demo_parser = subparsers.add_parser(
+        "demo",
+        parents=[common_parser],
+        help="Run RFA on randomly generated nodes and optionally visualize the result.",
+    )
+    DEFAULT_NUMBER_OF_NODES = 100
+    demo_parser.add_argument(
+        "-n",
+        "--nodes",
+        type=int,
+        action="store",
+        dest="number_of_nodes",
+        default=DEFAULT_NUMBER_OF_NODES,
+        help=("Number of nodes (default = %d)" % DEFAULT_NUMBER_OF_NODES),
+    )
+    demo_parser.add_argument("--renderer", type=str, default="turtle", choices=["disabled", "turtle"])
+
+    # 'benchmark' subcommand.
+    benchmark_parser = subparsers.add_parser(
+        "benchmark",
+        parents=[common_parser],
+        help="Run RFA benchmark on TSPLIB instances.",
+    )
+    benchmark_parser.add_argument(
         "--tsplib",
         type=str,
         default="a280,berlin52,bier127,ch150,eil51,pla7397,pr76,pr107,pr439,pr1002,rat99,rat783,usa13509",
         help="TSPLIB instances to be executed (comma-separated or 'all') or <N for all instances with at most N nodes.",
     )
-
-    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging output")
+    benchmark_parser.add_argument("--renderer", type=str, default="disabled", choices=["disabled", "turtle"])
 
     return parser
 
@@ -125,14 +142,14 @@ def main():
 
     logging.basicConfig(format="%(levelname)s | %(message)s", level=logging.DEBUG if args.verbose else logging.INFO)
 
-    if args.number_of_nodes <= 2:
-        parser.error("Anzahl der nodes muss größer-gleich 3 sein.")
-
     logger.info("Folding strategy:   %s", args.folding_strategy)
     logger.info("Unfolding strategy: %s", args.unfolding_strategy)
     logger.info("Seed:               %d", args.seed)
 
     if args.mode == "demo":
+        if args.number_of_nodes <= 2:
+            parser.error("Anzahl der nodes muss größer-gleich 3 sein.")
+
         main_random(
             args.folding_strategy,
             args.unfolding_strategy,
