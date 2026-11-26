@@ -1,5 +1,10 @@
 # rfa-tsp <!-- omit from toc -->
 
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+
 The **recursive-fold-algorithm** (RFA) is a recursive algorithm for the metric **travelling-salesman-problem** (TSP). The objective of the TSP is to find a
 round trip through a number of cities/locations (more generally referred to as **nodes**). The round trip should be as short as possible. The TSP
 is a very hard problem with difficult computational properties (TSP belongs to the NP-hard problem class).
