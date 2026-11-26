@@ -37,7 +37,7 @@ def create_option_parser():
     )
 
     # Add options to the OptionParser.
-    parser.add_argument("mode", type=str, action="store", help="Either 'demo' or 'benchmark'.")
+    parser.add_argument("mode", type=str, action="store", choices=["demo", "benchmark"])
 
     parser.add_argument(
         "--folding-strategy",
@@ -124,9 +124,6 @@ def main():
     args = parser.parse_args()
 
     logging.basicConfig(format="%(levelname)s | %(message)s", level=logging.DEBUG if args.verbose else logging.INFO)
-
-    if not args.mode in ("demo", "benchmark"):
-        parser.error("Ungültiger Modus gewählt. Nur 'demo' oder 'benchmark' erlaubt.")
 
     if args.number_of_nodes <= 2:
         parser.error("Anzahl der nodes muss größer-gleich 3 sein.")
