@@ -1,6 +1,6 @@
 # rfa-tsp <!-- omit from toc -->
 
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.11 | 3.12 | 3.13 | 3.14 | 3.15](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14%20%7C%203.15-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Dependency Security Audit](https://github.com/rsnitsch/rfa-tsp/actions/workflows/pip-audit.yml/badge.svg?branch=develop)](https://github.com/rsnitsch/rfa-tsp/actions/workflows/pip-audit.yml)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
