@@ -14,6 +14,8 @@ import time
 from collections.abc import Sequence
 from pathlib import Path
 
+from tqdm import tqdm
+
 from . import __version__
 from .common import Route, generate_random_nodes, load_nodes_from_tsplib_file, optimal_solutions
 from .rfa import (
@@ -279,46 +281,42 @@ def main(argv: Sequence[str] | None = None) -> int:
         best_runtime = 0.0
         total_runtime = 0.0
         completed = 0
-        last_update = 0.0
-        is_tty = sys.stderr.isatty()
 
         try:
-            for i in range(args.trials):
-                current_seed = args.seed + i
-                _, cost, runtime = run_single_trial(
-                    nodes, ceil_2d, folding_strategy, unfolding_strategy, args.post_uncross, current_seed, renderer=None
-                )
-                completed += 1
-                total_runtime += runtime
-
-                is_new_best = best_cost is None or cost < best_cost
-                if is_new_best:
-                    best_cost = cost
-                    best_seed = current_seed
-                    best_runtime = total_runtime
-
-                # Throttle terminal redraws (~20 Hz) to avoid I/O overhead on small instances
-                now = time.perf_counter()
-                if is_tty and (is_new_best or completed == args.trials or (now - last_update) >= 0.05):
-                    avg_time = total_runtime / completed
-                    opt_str = ""
-                    if optimal_costs is not None and best_cost is not None:
-                        overhead_pct = (float(best_cost) / optimal_costs - 1.0) * 100.0
-                        opt_str = f" (+{overhead_pct:.2f}%)"
-                    sys.stderr.write(
-                        f"\rProgress: {completed}/{args.trials} | "
-                        f"Best: {best_cost}{opt_str} (seed {best_seed}, @runtime {best_runtime:.3f}s) | "
-                        f"Runtime: {avg_time:.5f}s/trial, {total_runtime:.1f}s total"
+            with tqdm(range(args.trials), desc="Trials", unit="trial") as pbar:
+                for i in pbar:
+                    current_seed = args.seed + i
+                    _, cost, runtime = run_single_trial(
+                        nodes,
+                        ceil_2d,
+                        folding_strategy,
+                        unfolding_strategy,
+                        args.post_uncross,
+                        current_seed,
+                        renderer=None,
                     )
-                    sys.stderr.flush()
-                    last_update = now
+                    completed += 1
+                    total_runtime += runtime
+
+                    if best_cost is None or cost < best_cost:
+                        best_cost = cost
+                        best_seed = current_seed
+                        best_runtime = total_runtime
+
+                        opt_str = ""
+                        if optimal_costs is not None:
+                            overhead_pct = (float(best_cost) / optimal_costs - 1.0) * 100.0
+                            opt_str = f" (+{overhead_pct:.2f}%)"
+
+                        # Update postfix only when a new best is found; tqdm handles redraw throttling
+                        pbar.set_postfix(
+                            best=f"{best_cost}{opt_str}",
+                            seed=best_seed,
+                            at=f"{best_runtime:.2f}s",
+                            refresh=False,
+                        )
         except KeyboardInterrupt:
-            if is_tty:
-                sys.stderr.write("\n")
             logger.info("Interrupted after %d/%d trials.", completed, args.trials)
-        else:
-            if is_tty:
-                sys.stderr.write("\n")
 
         if best_cost is None:
             logger.warning("No trials completed.")
