@@ -46,6 +46,14 @@ UNFOLDING_STRATEGIES: dict[str, type[UnfoldingStrategy]] = {
 }
 
 
+def positive_int(value: str) -> int:
+    """Argparse type validator for strictly positive integers."""
+    parsed = int(value)
+    if parsed < 1:
+        raise argparse.ArgumentTypeError("must be >= 1")
+    return parsed
+
+
 def create_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Run RFA benchmarks across multiple TSPLIB95 instances and report summary statistics."
@@ -82,7 +90,14 @@ def create_argument_parser() -> argparse.ArgumentParser:
         "--seed",
         type=int,
         default=0,
-        help="Random number generator seed (default = 0).",
+        help="Base random number generator seed; trial i uses seed + i (default = 0).",
+    )
+    parser.add_argument(
+        "-t",
+        "--trials",
+        type=positive_int,
+        default=1,
+        help="Number of trials per instance with incrementing seeds (default = 1).",
     )
     parser.add_argument(
         "--post-uncross",
@@ -140,6 +155,7 @@ def run_benchmark(
     unfolding_strategy_name: str,
     post_uncross: bool,
     seed: int,
+    trials: int = 1,
 ) -> int:
     if not instances:
         logger.error("No TSPLIB instances selected.")
@@ -149,11 +165,13 @@ def run_benchmark(
     logger.info("Unfolding strategy: %s", unfolding_strategy_name)
     logger.info("Post-uncross:       %s", post_uncross)
     logger.info("Seed:               %d", seed)
+    logger.info("Trials per instance:%d", trials)
     logger.info("Running benchmark for %d TSPLIB instance(s): %s", len(instances), ", ".join(instances))
 
     rows: list[list[object]] = []
-    overheads: list[float] = []
-    runtimes: list[float] = []
+    mean_overheads: list[float] = []
+    best_overheads: list[float] = []
+    total_runtime = 0.0
 
     try:
         for tspi in instances:
@@ -163,39 +181,90 @@ def run_benchmark(
                 return 1
 
             logger.info("Processing TSPLIB instance %s...", tspi)
-            random.seed(seed)
-
             nodes, ceil_2d = load_nodes_from_tsplib_file(tsp_path)
-            folding_strategy = FOLDING_STRATEGIES[folding_strategy_name]()
-            unfolding_strategy = UNFOLDING_STRATEGIES[unfolding_strategy_name]()
-
-            logger.debug("Folding %d nodes...", len(nodes))
-            start_time = time.perf_counter()
-            folded = folding_strategy.fold(nodes, ceil_2d, renderer=None)
-            assert len(folded) <= 3, "Folding did not reduce number of nodes to 3."
-
-            logger.debug("Unfolding...")
-            route = Route(unfolding_strategy.unfold(folded, ceil_2d, renderer=None))
-            if post_uncross:
-                logger.debug("Running post-uncross...")
-                route = route.intersection_cleanup()
-            runtime = time.perf_counter() - start_time
-            gc.collect()
-
-            total_costs = route.get_total_costs(ceil_2d)
             optimal_costs = tsplib_get_optimal_solution(tspi)
-            overhead_pct = (float(total_costs) / optimal_costs - 1) * 100.0
 
-            overheads.append(overhead_pct)
-            runtimes.append(runtime)
-            rows.append([tspi, optimal_costs, total_costs, f"+{overhead_pct:.2f}%", f"{runtime:.3f}s"])
+            trial_costs: list[int] = []
+            trial_overheads: list[float] = []
+            trial_runtimes: list[float] = []
 
-            logger.info(
-                "  Result: Total length = %-10s | Overhead vs. optimum = +%5.2f%% | Runtime = %.3fs",
-                total_costs,
-                overhead_pct,
-                runtime,
-            )
+            for trial_idx in range(trials):
+                trial_seed = seed + trial_idx
+                random.seed(trial_seed)
+
+                folding_strategy = FOLDING_STRATEGIES[folding_strategy_name]()
+                unfolding_strategy = UNFOLDING_STRATEGIES[unfolding_strategy_name]()
+
+                logger.debug(
+                    "Trial %d/%d (seed=%d): folding %d nodes...", trial_idx + 1, trials, trial_seed, len(nodes)
+                )
+                start_time = time.perf_counter()
+                folded = folding_strategy.fold(nodes, ceil_2d, renderer=None)
+                assert len(folded) <= 3, "Folding did not reduce number of nodes to 3."
+
+                logger.debug("Trial %d/%d: unfolding...", trial_idx + 1, trials)
+                route = Route(unfolding_strategy.unfold(folded, ceil_2d, renderer=None))
+                if post_uncross:
+                    logger.debug("Trial %d/%d: running post-uncross...", trial_idx + 1, trials)
+                    route = route.intersection_cleanup()
+                runtime = time.perf_counter() - start_time
+                gc.collect()
+
+                costs = route.get_total_costs(ceil_2d)
+                overhead_pct = (float(costs) / optimal_costs - 1.0) * 100.0
+
+                trial_costs.append(costs)
+                trial_overheads.append(overhead_pct)
+                trial_runtimes.append(runtime)
+
+            total_runtime += sum(trial_runtimes)
+
+            if trials == 1:
+                total_costs = trial_costs[0]
+                overhead_pct = trial_overheads[0]
+                runtime = trial_runtimes[0]
+
+                mean_overheads.append(overhead_pct)
+                best_overheads.append(overhead_pct)
+                rows.append([tspi, optimal_costs, total_costs, f"+{overhead_pct:.2f}%", f"{runtime:.3f}s"])
+
+                logger.info(
+                    "  Result: Total length = %-10s | Overhead vs. optimum = +%5.2f%% | Runtime = %.3fs",
+                    total_costs,
+                    overhead_pct,
+                    runtime,
+                )
+            else:
+                # best_costs = min(trial_costs)
+                mean_costs = statistics.mean(trial_costs)
+                best_oh = min(trial_overheads)
+                mean_oh = statistics.mean(trial_overheads)
+                std_oh = statistics.stdev(trial_overheads)
+                mean_rt = statistics.mean(trial_runtimes)
+
+                mean_overheads.append(mean_oh)
+                best_overheads.append(best_oh)
+                rows.append(
+                    [
+                        tspi,
+                        optimal_costs,
+                        # best_costs,
+                        mean_costs,
+                        # f"+{best_oh:.2f}%",
+                        f"+{mean_oh:.2f}%",
+                        f"±{std_oh:.2f}%",
+                        f"{mean_rt:.3f}s",
+                    ]
+                )
+
+                logger.info(
+                    "  Result (%d trials): Best = +%5.2f%% | Mean = +%5.2f%% (±%.2f%%) | Mean runtime = %.3fs",
+                    trials,
+                    best_oh,
+                    mean_oh,
+                    std_oh,
+                    mean_rt,
+                )
     except KeyboardInterrupt:
         logger.info("KeyboardInterrupt received, stopping benchmark.")
 
@@ -203,27 +272,48 @@ def run_benchmark(
         logger.warning("No benchmark results to display.")
         return 1
 
-    ratios = [1.0 + overhead / 100.0 for overhead in overheads]
-    # Summary statistics across all completed instances
-    min_overhead = min(overheads)
-    max_overhead = max(overheads)
-    arith_mean = statistics.mean(overheads)
+    ratios = [1.0 + overhead / 100.0 for overhead in mean_overheads]
+    min_overhead = min(mean_overheads)
+    max_overhead = max(mean_overheads)
+    arith_mean = statistics.mean(mean_overheads)
     geom_mean = (statistics.geometric_mean(ratios) - 1.0) * 100.0
-    median_overhead = statistics.median(overheads)
-    total_runtime = sum(runtimes)
+    median_overhead = statistics.median(mean_overheads)
 
-    headers = ["Instance", "Length of optimal route", "Length of RFA route", "RFA vs. optimum", "Runtime"]
-    table = tabulate(rows, headers=headers)
-    summary = (
-        f"Summary ({len(rows)}/{len(instances)} instances):\n"
-        f"  Min overhead:               +{min_overhead:.2f}%\n"
-        f"  Mean overhead (arithmetic): +{arith_mean:.2f}%\n"
-        f"  Mean overhead (geometric):  +{geom_mean:.2f}%\n"
-        f"  Median overhead:            +{median_overhead:.2f}%\n"
-        f"  Max overhead:               +{max_overhead:.2f}%\n"
-        f"  Total runtime:              {total_runtime:.3f}s"
-    )
+    if trials == 1:
+        headers = ["Instance", "Optimal route", "RFA route", "RFA vs. optimum", "Runtime"]
+        summary = (
+            f"Summary ({len(rows)}/{len(instances)} instances):\n"
+            f"  Min overhead:               +{min_overhead:.2f}%\n"
+            f"  Mean overhead (arithmetic): +{arith_mean:.2f}%\n"
+            f"  Mean overhead (geometric):  +{geom_mean:.2f}%\n"
+            f"  Median overhead:            +{median_overhead:.2f}%\n"
+            f"  Max overhead:               +{max_overhead:.2f}%\n"
+            f"  Total runtime:              {total_runtime:.3f}s"
+        )
+    else:
+        best_arith_mean = statistics.mean(best_overheads)
+        headers = [
+            "Instance",
+            "Optimal",
+            # "Best RFA",
+            "Mean RFA",
+            # "Best vs. opt.",
+            "Mean vs. opt.",
+            "Std",
+            "Mean runtime",
+        ]
+        summary = (
+            f"Summary ({len(rows)}/{len(instances)} instances, {trials} trials each):\n"
+            f"  Mean of best overheads:     +{best_arith_mean:.2f}%\n"
+            f"  Min mean overhead:          +{min_overhead:.2f}%\n"
+            f"  Mean overhead (arithmetic): +{arith_mean:.2f}%\n"
+            f"  Mean overhead (geometric):  +{geom_mean:.2f}%\n"
+            f"  Median mean overhead:       +{median_overhead:.2f}%\n"
+            f"  Max mean overhead:          +{max_overhead:.2f}%\n"
+            f"  Total runtime:              {total_runtime:.3f}s"
+        )
 
+    table = tabulate(rows, headers=headers, floatfmt=".1f")
     logger.info("\n%s\n\n%s", table, summary)
 
     return 0
@@ -251,6 +341,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         unfolding_strategy_name=args.unfolding_strategy,
         post_uncross=args.post_uncross,
         seed=args.seed,
+        trials=args.trials,
     )
 
 
