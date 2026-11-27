@@ -160,7 +160,7 @@ seeds (`--trials`) and compare a small instance (`tsplib:pr76`) with large insta
 ![Seed sensitivity for tsplib:usa13509](docs/rfa-tsp-seed-sensitivity_tsplib-usa13509.png)
 
 <details>
-<summary>Show plots for pla7397 and pr76)</summary>
+<summary>Show plots for pla7397 and pr76</summary>
 
 ![Seed sensitivity for tsplib:pla7397](docs/rfa-tsp-seed-sensitivity_tsplib-pla7397.png)
 
