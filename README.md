@@ -17,7 +17,7 @@ such, they're often very elegant.
 ## Contents <!-- omit from toc -->
 
 - [Visualization](#visualization)
-- [Recursion concept](#recursion-concept)
+- [Concept](#concept)
   - [Folding strategies](#folding-strategies)
   - [Unfolding strategies](#unfolding-strategies)
 - [Results](#results)
@@ -65,7 +65,7 @@ INFO | Export finished: docs\rfa-tsp_tsplib_pr76.gif
 
 </details>
 
-## Recursion concept
+## Concept
 
 RFA exploits the fact that the TSP can be trivially solved if there are only 3 nodes, because only a single round trip
 route exists for 3 nodes. The solution, a triangle, is self-evident:
