@@ -290,7 +290,7 @@ def run_benchmark(
                     mean_rt,
                 )
 
-            if cooldown > 0.0 and instance_index < len(instances) - 1:
+            if cooldown > 0.0 and sum(trial_runtimes) > 1.0 and instance_index < len(instances) - 1:
                 logger.debug("Cooling down for %.2fs before next instance...", cooldown)
                 time.sleep(cooldown)
 
