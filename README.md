@@ -144,54 +144,46 @@ uv run rfa-tsp random:default -n 4 -s 0 --export docs/rfa-tsp_concept.png
 
 ### Seed sensitivity
 
-The `breadth-first` (default) and `random-nn` folding strategies select nodes to fold randomly. Consequently, the
-quality of the resulting tour depends on the RNG seed.
+The `breadth-first-mutual-nn` (default), `breadth-first`, and `random-nn` folding strategies involve randomized
+tie-breaking or node selection. Consequently, the quality of the resulting tour can depend on the RNG seed.
 
 To quantify how strongly RFA depends on the seed across different problem sizes, we can evaluate multiple consecutive
-seeds (`--trials`) and compare a small instance (`tsplib:pr76`, 76 nodes) with large instances (`tsplib:pla7397`, 7,397
-nodes; `tsplib:usa13509`, 13,509 nodes):
+seeds (`--trials`) and compare a small instance (`tsplib:pr76`) with large instances (`tsplib:pla7397`,
+`tsplib:usa13509`):
 
-| Instance          |  Nodes | Trials | Mean overhead | Std. dev. ($\\sigma$) |   Best overhead    |
-| :---------------- | -----: | -----: | :-----------: | :-------------------: | :----------------: |
-| `tsplib:pr76`     |     76 |  5,000 |    +4.64%     |         2.06%         | +0.14% (seed 1015) |
-| `tsplib:pla7397`  |  7,397 |    300 |    +13.23%    |         0.60%         | +11.66% (seed 130) |
-| `tsplib:usa13509` | 13,509 |    200 |    +10.71%    |         0.31%         | +9.98% (seed 119)  |
+| Instance          |  Nodes | Trials | Mean overhead | Std. dev. ($\\sigma$) | Best overhead     |
+| :---------------- | -----: | -----: | ------------: | --------------------: | :---------------- |
+| `tsplib:pr76`     |     76 |  5,000 |        +3.65% |                 0.52% | +2.74% (seed 0)   |
+| `tsplib:pla7397`  |  7,397 |    300 |       +10.97% |                 0.49% | +9.90% (seed 128) |
+| `tsplib:usa13509` | 13,509 |    200 |        +9.16% |                 0.30% | +8.38% (seed 5)   |
 
-![Seed sensitivity for tsplib:pr76 over 5000 trials](docs/rfa-tsp-seed-sensitivity_tsplib-pr76.png)
+![Seed sensitivity for tsplib:pr76](docs/rfa-tsp-seed-sensitivity_tsplib-pr76.png)
 
 <details>
-<summary>Show plots for large instances (<code>pla7397</code>, <code>usa13509</code>)</summary>
+<summary>Show plots for large instances (pla7397, usa13509)</summary>
 
-![Seed sensitivity for tsplib:pla7397 over 300 trials](docs/rfa-tsp-seed-sensitivity_tsplib-pla7397.png)
+![Seed sensitivity for tsplib:pla7397](docs/rfa-tsp-seed-sensitivity_tsplib-pla7397.png)
 
-![Seed sensitivity for tsplib:usa13509 over 200 trials](docs/rfa-tsp-seed-sensitivity_tsplib-usa13509.png)
+![Seed sensitivity for tsplib:usa13509](docs/rfa-tsp-seed-sensitivity_tsplib-usa13509.png)
 
 </details>
 
 #### Key observations
 
-- **Variance shrinks with problem size:** On small instances (`pr76`), individual folding decisions have a large global
-  impact, producing a wide, right-skewed distribution ($\\sigma = 2.06%$). On large instances (`pla7397`, `usa13509`),
-  thousands of local folding steps average out, tightening the distribution into a narrow, roughly symmetric bell curve
-  ($\\sigma = 0.31%$ on `usa13509`).
-- **Multi-trial trade-off:** On small instances, a multi-trial sweep (`--trials 100`) can push the solution close to the
-  optimum (`+0.14%` on `pr76`). On large instances, diminishing returns set in quickly (~0.7–1.6 percentage points gain
-  over the mean), because the distribution is already tightly concentrated.
-- **Single-run reliability at scale:** Conversely, the low variance on large instances means that even a single RFA run
-  yields a highly predictable result without severe bad-luck outliers.
+- **Near-determinism on small instances:** Because mutual nearest-neighbor pairs are geometrically well-defined,
+  `breadth-first-mutual-nn` eliminates most of the randomness on small instances. Across 5,000 seeds on `pr76`, RFA
+  collapses into just two discrete solutions (+2.74% and +3.95%), with the better one already found on seed 0.
+- **Tight, symmetric distributions at scale:** On large instances (`pla7397`, `usa13509`), many local fallback and
+  tie-breaking steps accumulate into a narrow, roughly symmetric bell curve ($\\sigma = 0.30%$ on `usa13509`).
+- **High single-run reliability:** Because the variance is very low across all problem sizes, even a single RFA run
+  produces a highly predictable result without severe bad-luck outliers. Multi-trial sweeps (`--trials`) offer only
+  modest gains (~0.8–1.1 percentage points over the mean on large instances) and show rapid diminishing returns.
 
 <details>
 <summary>Show commands used to generate the above plots</summary>
 
-```bash
-uv run rfa-tsp tsplib:pr76 --trials 5000 --save-trials trial-pr76.json
-uv run rfa-tsp-plot-trials trial-pr76.json --export docs/rfa-tsp-seed-sensitivity_tsplib-pr76.png
-
-uv run rfa-tsp tsplib:pla7397 --trials 300 --save-trials trial-pla7397.json
-uv run rfa-tsp-plot-trials trial-pla7397.json --export docs/rfa-tsp-seed-sensitivity_tsplib-pla7397.png
-
-uv run rfa-tsp tsplib:usa13509 --trials 200 --save-trials trial-usa13509.json
-uv run rfa-tsp-plot-trials trial-usa13509.json --export docs/rfa-tsp-seed-sensitivity_tsplib-usa13509.png
+```console
+uv run scripts/examine_seed_sensitivity.py
 ```
 
 </details>
