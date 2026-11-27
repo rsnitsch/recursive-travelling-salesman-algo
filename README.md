@@ -152,10 +152,10 @@ seeds (`--trials`) and compare a small instance (`tsplib:pr76`) with large insta
 `tsplib:usa13509`):
 
 | Instance          |  Nodes | Trials | Mean overhead | Std. dev. ($\sigma$) | Best overhead     |
-| :---------------- | -----: | -----: | ------------: | --------------------: | :---------------- |
-| `tsplib:pr76`     |     76 |  5,000 |        +3.65% |                 0.52% | +2.74% (seed 0)   |
-| `tsplib:pla7397`  |  7,397 |    300 |       +10.97% |                 0.49% | +9.90% (seed 128) |
-| `tsplib:usa13509` | 13,509 |    200 |        +9.16% |                 0.30% | +8.38% (seed 5)   |
+| :---------------- | -----: | -----: | ------------: | -------------------: | :---------------- |
+| `tsplib:pr76`     |     76 |  5,000 |        +3.65% |                0.52% | +2.74% (seed 0)   |
+| `tsplib:pla7397`  |  7,397 |    300 |       +10.97% |                0.49% | +9.90% (seed 128) |
+| `tsplib:usa13509` | 13,509 |    200 |        +9.16% |                0.30% | +8.38% (seed 5)   |
 
 ![Seed sensitivity for tsplib:pr76](docs/rfa-tsp-seed-sensitivity_tsplib-pr76.png)
 
@@ -350,7 +350,8 @@ The benchmark instances in `TSPLIB/` are taken from [TSPLIB95] (Gerhard Reinelt,
 provided strictly for academic and benchmarking purposes.
 
 <!--
-This README was formatted with: uvx --with mdformat-gfm mdformat --wrap 120 README.md
+This README was formatted with:
+uvx --with mdformat-gfm --with mdformat-dollarmath mdformat --wrap 120 README.md
 -->
 
 [tsplib95]: https://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/
