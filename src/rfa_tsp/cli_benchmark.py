@@ -97,6 +97,12 @@ def create_argument_parser() -> argparse.ArgumentParser:
         help="Compute folded node positions as mass-weighted centroids instead of unweighted midpoints (default: off).",
     )
     parser.add_argument(
+        "--export-markdown",
+        type=Path,
+        default=None,
+        help="Export benchmark results table and summary as GitHub-Flavored Markdown to the specified file.",
+    )
+    parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
@@ -139,6 +145,55 @@ def resolve_tsplib_instances(selector: str, tsplib_dir: Path) -> list[str]:
     return [item.strip() for item in selector.split(",") if item.strip()]
 
 
+def export_markdown_report(
+    output_path: Path,
+    *,
+    rows: list[list[object]],
+    headers: list[str],
+    colalign: Sequence[str],
+    folding_strategy_name: str,
+    unfolding_strategy_name: str,
+    completed: int,
+    total_instances: int,
+    trials: int,
+    min_overhead: float,
+    arith_mean: float,
+    median_overhead: float,
+    max_overhead: float,
+    total_runtime: float,
+) -> None:
+    """Write benchmark table and summary in GitHub-Flavored Markdown format."""
+    # Wrap instance names in inline code backticks for readability
+    md_rows = [[f"`{row[0]}`", *row[1:]] for row in rows]
+    md_table = tabulate(md_rows, headers=headers, tablefmt="github", floatfmt=".1f", colalign=colalign)
+
+    if trials == 1:
+        summary_line = (
+            f"**Summary** (`rfa-tsp` v{__version__}, `{folding_strategy_name}` / `{unfolding_strategy_name}`, "
+            f"{completed}/{total_instances} instances, 1 trial): "
+            f"Min overhead: **+{min_overhead:.2f}%** · "
+            f"Mean overhead (arithmetic): **+{arith_mean:.2f}%** · "
+            f"Median overhead: **+{median_overhead:.2f}%** · "
+            f"Max overhead: **+{max_overhead:.2f}%** · "
+            f"Total runtime: **{total_runtime:.3f}s**"
+        )
+    else:
+        avg_runtime_per_trial = total_runtime / trials
+        summary_line = (
+            f"**Summary** (`rfa-tsp` v{__version__}, `{folding_strategy_name}` / `{unfolding_strategy_name}`, "
+            f"{completed}/{total_instances} instances, {trials} trials each): "
+            f"Min mean overhead: **+{min_overhead:.2f}%** · "
+            f"Mean overhead (arithmetic): **+{arith_mean:.2f}%** · "
+            f"Median mean overhead: **+{median_overhead:.2f}%** · "
+            f"Max mean overhead: **+{max_overhead:.2f}%** · "
+            f"Mean runtime / trial: **{avg_runtime_per_trial:.3f}s**"
+        )
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(f"{md_table}\n\n{summary_line}\n", encoding="utf-8")
+    logger.info("Exported Markdown benchmark report to %s", output_path)
+
+
 def run_benchmark(
     *,
     instances: list[str],
@@ -150,6 +205,7 @@ def run_benchmark(
     trials: int,
     cooldown: float,
     weighted_centroids: bool,
+    export_markdown: Path | None = None,
 ) -> int:
     if not instances:
         logger.error("No TSPLIB instances selected.")
@@ -293,6 +349,7 @@ def run_benchmark(
 
     if trials == 1:
         headers = ["Instance", "Optimal route", "RFA route", "RFA vs. optimum", "Runtime", "Runtime per node"]
+        colalign = ("left", "right", "right", "right", "right", "right")
         summary = (
             f"Summary ({len(rows)}/{len(instances)} instances):\n"
             f"  Min overhead:               +{min_overhead:.2f}%\n"
@@ -313,6 +370,7 @@ def run_benchmark(
             "Mean runtime",
             "Mean runtime per node",
         ]
+        colalign = ("left", "right", "right", "right", "right", "right", "right")
         avg_runtime_per_trial = total_runtime / trials
         summary = (
             f"Summary ({len(rows)}/{len(instances)} instances, {trials} trials each):\n"
@@ -325,6 +383,24 @@ def run_benchmark(
 
     table = tabulate(rows, headers=headers, floatfmt=".1f")
     logger.info("\n%s\n\n%s", table, summary)
+
+    if export_markdown is not None:
+        export_markdown_report(
+            export_markdown,
+            rows=rows,
+            headers=headers,
+            colalign=colalign,
+            folding_strategy_name=folding_strategy_name,
+            unfolding_strategy_name=unfolding_strategy_name,
+            completed=len(rows),
+            total_instances=len(instances),
+            trials=trials,
+            min_overhead=min_overhead,
+            arith_mean=arith_mean,
+            median_overhead=median_overhead,
+            max_overhead=max_overhead,
+            total_runtime=total_runtime,
+        )
 
     return 0
 
@@ -351,6 +427,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         trials=args.trials,
         cooldown=args.cooldown,
         weighted_centroids=args.weighted_centroids,
+        export_markdown=args.export_markdown,
     )
 
 
