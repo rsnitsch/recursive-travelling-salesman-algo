@@ -43,6 +43,8 @@ This is how the RFA finds a route for the TSPLIB problem `pr76`:
 <details>
 <summary>Show command that was used to generate the above animation</summary>
 
+Note: Version 1.0.0 was used.
+
 ```console
 ❯ uv run rfa-tsp tsplib:pr76 --seed 16 --export docs/rfa-tsp_tsplib_pr76.gif --export-fps 2-6
 INFO | Instance:           tsplib:pr76 (76 nodes)
@@ -203,15 +205,15 @@ size reveals a nearly constant runtime per node:
 
 | Instance   | Nodes ($n$) | Mean runtime | Time per node |
 | :--------- | ----------: | -----------: | ------------: |
-| `pr1002`   |       1,002 |       0.060s |       59.9 µs |
-| `pla7397`  |       7,397 |       0.367s |       49.6 µs |
-| `usa13509` |      13,509 |       0.793s |       58.7 µs |
-| `d18512`   |      18,512 |       1.046s |       56.5 µs |
-| `sw24978`  |      24,978 |       1.463s |       58.6 µs |
-| `pla33810` |      33,810 |       1.769s |       52.3 µs |
-| `pla85900` |      85,900 |       4.928s |       57.4 µs |
+| `pr1002`   |       1,002 |       0.061s |       61.2 µs |
+| `pla7397`  |       7,397 |       0.401s |       54.2 µs |
+| `usa13509` |      13,509 |       0.859s |       63.6 µs |
+| `d18512`   |      18,512 |       1.085s |       58.6 µs |
+| `sw24978`  |      24,978 |       1.580s |       63.3 µs |
+| `pla33810` |      33,810 |       1.819s |       53.8 µs |
+| `pla85900` |      85,900 |       4.953s |       57.7 µs |
 
-Increasing the problem size by a factor of ~11.6 (from `pla7397` to `pla85900`) increases runtime by a factor of ~13.4 —
+Increasing the problem size by a factor of ~11.6 (from `pla7397` to `pla85900`) increases runtime by a factor of ~12.4 —
 closely matching **linear $O(n)$ scaling** in practice.
 
 #### Algorithmic analysis
@@ -306,43 +308,44 @@ The rendering can also be exported as an animation:
 The following command runs a benchmark using a subset of the [TSPLIB95] instances (see `TSPLIB/` folder):
 
 ```console
-❯ uv run rfa-tsp-benchmark --trials 5
-INFO | Folding strategy:    breadth-first
-INFO | Unfolding strategy:  breadth-first-2opt
-INFO | Post-uncross:        False
-INFO | Seed:                0
-INFO | Trials per instance: 5
-INFO | Running benchmark for 18 TSPLIB instance(s): ...
+❯ uv run rfa-tsp-benchmark --cooldown 5 --trials 10
+INFO     | rfa-tsp version:    1.1.0
+INFO     | Timestamp:          2026-11-27 11:01:36
+INFO     | Folding strategy:    breadth-first-mutual-nn
+INFO     | Unfolding strategy:  breadth-first-2opt
+INFO     | Post-uncross:        False
+INFO     | Weighted centroids:  False
+INFO     | Seed:                0
+INFO     | Trials per instance: 10
+INFO     | Running benchmark for 18 TSPLIB instance(s): a280, berlin52, bier127, brd14051, ...
 ...
-Instance      Optimal     Mean RFA  Mean vs. opt.    Std     Mean runtime
-----------  ---------  -----------  ---------------  ------  --------------
-a280             2579       2904.8  +12.63%          ±2.01%  0.014s
-berlin52         7542       8068.8  +6.98%           ±3.47%  0.003s
-bier127        118282     125611.0  +6.20%           ±1.79%  0.007s
-brd14051       469385     515611.6  +9.85%           ±0.30%  0.781s
-ch150            6528       7041.8  +7.87%           ±2.48%  0.008s
-d18512         645238     709123.8  +9.90%           ±0.10%  1.046s
-eil51             426        448.6  +5.31%           ±1.49%  0.003s
-pla33810     66048945   77296506.2  +17.03%          ±0.40%  1.769s
-pla7397      23260728   26335915.4  +13.22%          ±0.79%  0.367s
-pla85900    142382641  164080525.0  +15.24%          ±0.24%  4.928s
-pr1002         259045     279848.8  +8.03%           ±0.73%  0.060s
-pr107           44303      44549.6  +0.56%           ±0.25%  0.006s
-pr439          107217     116500.0  +8.66%           ±0.39%  0.023s
-pr76           108159     112878.2  +4.36%           ±1.56%  0.004s
-rat783           8806       9655.0  +9.64%           ±1.70%  0.040s
-rat99            1211       1282.4  +5.90%           ±0.78%  0.005s
-sw24978        855597     944687.6  +10.41%          ±0.15%  1.463s
-usa13509     19982859   22126215.0  +10.73%          ±0.31%  0.793s
+Instance      Optimal     Mean RFA  Mean vs. opt.    Std     Mean runtime    Mean runtime per node
+----------  ---------  -----------  ---------------  ------  --------------  -----------------------
+a280             2579       2856.3  +10.75%          ±0.83%  0.015s          52.362µs
+berlin52         7542       7734.0  +2.55%           ±0.00%  0.003s          52.502µs
+bier127        118282     126178.4  +6.68%           ±1.04%  0.007s          58.160µs
+brd14051       469385     511991.3  +9.08%           ±0.17%  0.826s          58.763µs
+ch150            6528       6921.4  +6.03%           ±1.69%  0.009s          57.921µs
+d18512         645238     702822.7  +8.92%           ±0.11%  1.085s          58.608µs
+eil51             426        452.7  +6.27%           ±0.38%  0.003s          62.598µs
+pla33810     66048945   75668983.3  +14.57%          ±0.15%  1.819s          53.814µs
+pla7397      23260728   25790846.5  +10.88%          ±0.63%  0.401s          54.224µs
+pla85900    142382641  160896445.6  +13.00%          ±0.16%  4.953s          57.658µs
+pr1002         259045     275942.5  +6.52%           ±0.90%  0.061s          61.159µs
+pr107           44303      44693.6  +0.88%           ±0.42%  0.006s          54.554µs
+pr439          107217     115465.5  +7.69%           ±1.33%  0.025s          57.667µs
+pr76           108159     111647.2  +3.23%           ±0.62%  0.004s          56.710µs
+rat783           8806       9535.8  +8.29%           ±0.53%  0.043s          54.381µs
+rat99            1211       1289.1  +6.45%           ±2.91%  0.005s          54.809µs
+sw24978        855597     933939.1  +9.16%           ±0.26%  1.580s          63.268µs
+usa13509     19982859   21809555.9  +9.14%           ±0.37%  0.859s          63.560µs
 
-Summary (18/18 instances, 5 trials each):
-  Mean of best overheads:     +7.78%
-  Min mean overhead:          +0.56%
-  Mean overhead (arithmetic): +9.03%
-  Mean overhead (geometric):  +8.96%
-  Median mean overhead:       +9.15%
-  Max mean overhead:          +17.03%
-  Total runtime:              56.597s (11.31947s / trial)
+Summary (18/18 instances, 10 trials each):
+  Min mean overhead:          +0.88%
+  Mean overhead (arithmetic): +7.78%
+  Median mean overhead:       +7.99%
+  Max mean overhead:          +14.57%
+  Total runtime:              117.044s (11.70437s / trial)
 ```
 
 ## License
