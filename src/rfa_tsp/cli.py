@@ -315,8 +315,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         logger.info("Runtime per node:   %.3fµs", runtime / len(nodes) * 1e6)
     else:
         if args.folding_strategy == "outside-in":
-            parser.error(
-                "Folding strategy 'outside-in' is deterministic; multiple trials would yield identical results."
+            logger.warning(
+                "Folding strategy 'outside-in' is deterministic; multiple trials will yield identical results (except for runtime)."
             )
 
         logger.info("Trials:             %d (seeds %d..%d)", args.trials, args.seed, args.seed + args.trials - 1)
