@@ -101,8 +101,9 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--folding-strategy",
         type=str,
-        default="breadth-first",
+        default="breadth-first-mutual-nn",
         choices=list(FOLDING_STRATEGIES),
+        help="default: breadth-first-mutual-nn",
     )
     parser.add_argument(
         "--unfolding-strategy",
