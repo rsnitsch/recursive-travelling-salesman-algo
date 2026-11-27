@@ -20,32 +20,22 @@ from pathlib import Path
 from tqdm import tqdm
 
 from . import __version__
-from .common import Route, generate_random_nodes, load_nodes_from_tsplib_file, optimal_solutions, setup_logging
+from .cli_common import (
+    DEFAULT_FOLDING_STRATEGY,
+    DEFAULT_UNFOLDING_STRATEGY,
+    FOLDING_STRATEGIES,
+    UNFOLDING_STRATEGIES,
+    positive_int,
+    setup_logging,
+)
+from .common import Route, generate_random_nodes, load_nodes_from_tsplib_file, optimal_solutions
 from .rfa import (
     FoldingStrategy,
-    FoldingStrategyBreadthFirst,
-    FoldingStrategyBreadthFirstMutualNearestNeighbor,
-    FoldingStrategyOutsideIn,
-    FoldingStrategyRandomWithNearestNeighbor,
     UnfoldingStrategy,
-    UnfoldingStrategyBreadthFirst,
-    UnfoldingStrategyBreadthFirstWithLocal2Opt,
 )
 from .ui import Renderer
 
 logger = logging.getLogger(__name__)
-
-FOLDING_STRATEGIES: dict[str, type[FoldingStrategy]] = {
-    "breadth-first": FoldingStrategyBreadthFirst,
-    "breadth-first-mutual-nn": FoldingStrategyBreadthFirstMutualNearestNeighbor,
-    "random-nn": FoldingStrategyRandomWithNearestNeighbor,
-    "outside-in": FoldingStrategyOutsideIn,
-}
-
-UNFOLDING_STRATEGIES: dict[str, type[UnfoldingStrategy]] = {
-    "breadth-first": UnfoldingStrategyBreadthFirst,
-    "breadth-first-2opt": UnfoldingStrategyBreadthFirstWithLocal2Opt,
-}
 
 
 def create_argument_parser() -> argparse.ArgumentParser:
@@ -101,15 +91,16 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--folding-strategy",
         type=str,
-        default="breadth-first-mutual-nn",
+        default=DEFAULT_FOLDING_STRATEGY,
         choices=list(FOLDING_STRATEGIES),
-        help="default: breadth-first-mutual-nn",
+        help=f"default: {DEFAULT_FOLDING_STRATEGY}",
     )
     parser.add_argument(
         "--unfolding-strategy",
         type=str,
-        default="breadth-first-2opt",
+        default=DEFAULT_UNFOLDING_STRATEGY,
         choices=list(UNFOLDING_STRATEGIES),
+        help=f"default: {DEFAULT_UNFOLDING_STRATEGY}",
     )
     parser.add_argument(
         "-s",
@@ -121,7 +112,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-t",
         "--trials",
-        type=int,
+        type=positive_int,
         default=1,
         help="Number of consecutive seeds to try (starting from --seed), keeping the best route (default = 1).",
     )
@@ -292,10 +283,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     logger.info("Unfolding strategy: %s", args.unfolding_strategy)
     logger.info("Post-uncross:       %s", args.post_uncross)
     logger.info("Weighted centroids: %s", args.weighted_centroids)
-
-    if args.trials < 1:
-        logger.error("--trials must be at least 1.")
-        return 1
 
     folding_strategy = FOLDING_STRATEGIES[args.folding_strategy](weighted_centroids=args.weighted_centroids)
     unfolding_strategy = UNFOLDING_STRATEGIES[args.unfolding_strategy]()

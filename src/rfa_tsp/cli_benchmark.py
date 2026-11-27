@@ -19,47 +19,18 @@ from pathlib import Path
 from tabulate import tabulate
 
 from . import __version__
-from .common import Route, load_nodes_from_tsplib_file, setup_logging, tsplib_get_optimal_solution
-from .rfa import (
-    FoldingStrategy,
-    FoldingStrategyBreadthFirst,
-    FoldingStrategyBreadthFirstMutualNearestNeighbor,
-    FoldingStrategyOutsideIn,
-    FoldingStrategyRandomWithNearestNeighbor,
-    UnfoldingStrategy,
-    UnfoldingStrategyBreadthFirst,
-    UnfoldingStrategyBreadthFirstWithLocal2Opt,
+from .cli_common import (
+    DEFAULT_FOLDING_STRATEGY,
+    DEFAULT_UNFOLDING_STRATEGY,
+    FOLDING_STRATEGIES,
+    UNFOLDING_STRATEGIES,
+    non_negative_float,
+    positive_int,
+    setup_logging,
 )
+from .common import Route, load_nodes_from_tsplib_file, tsplib_get_optimal_solution
 
 logger = logging.getLogger(__name__)
-
-FOLDING_STRATEGIES: dict[str, type[FoldingStrategy]] = {
-    "breadth-first": FoldingStrategyBreadthFirst,
-    "breadth-first-mutual-nn": FoldingStrategyBreadthFirstMutualNearestNeighbor,
-    "random-nn": FoldingStrategyRandomWithNearestNeighbor,
-    "outside-in": FoldingStrategyOutsideIn,
-}
-
-UNFOLDING_STRATEGIES: dict[str, type[UnfoldingStrategy]] = {
-    "breadth-first": UnfoldingStrategyBreadthFirst,
-    "breadth-first-2opt": UnfoldingStrategyBreadthFirstWithLocal2Opt,
-}
-
-
-def positive_int(value: str) -> int:
-    """Argparse type validator for strictly positive integers."""
-    parsed = int(value)
-    if parsed < 1:
-        raise argparse.ArgumentTypeError("must be >= 1")
-    return parsed
-
-
-def non_negative_float(value: str) -> float:
-    """Argparse type validator for non-negative floats."""
-    parsed = float(value)
-    if parsed < 0.0:
-        raise argparse.ArgumentTypeError("must be >= 0")
-    return parsed
 
 
 def create_argument_parser() -> argparse.ArgumentParser:
@@ -82,16 +53,16 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--folding-strategy",
         type=str,
-        default="breadth-first-mutual-nn",
+        default=DEFAULT_FOLDING_STRATEGY,
         choices=list(FOLDING_STRATEGIES),
-        help="default: breadth-first-mutual-nn",
+        help=f"default: {DEFAULT_FOLDING_STRATEGY}",
     )
     parser.add_argument(
         "--unfolding-strategy",
         type=str,
-        default="breadth-first-2opt",
+        default=DEFAULT_UNFOLDING_STRATEGY,
         choices=list(UNFOLDING_STRATEGIES),
-        help="default: breadth-first-2opt",
+        help=f"default: {DEFAULT_UNFOLDING_STRATEGY}",
     )
     parser.add_argument(
         "-s",
