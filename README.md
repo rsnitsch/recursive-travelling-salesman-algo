@@ -121,19 +121,22 @@ uv run rfa-tsp random:default -n 4 -s 0 --export docs/rfa-tsp_concept.png
 
 ### Folding strategies
 
-- `FoldingStrategyBreadthFirst` (default): Randomly picks one of the least-folded nodes (minimum folding depth) and
-  folds it with its nearest neighbor across all active nodes, keeping the folding tree balanced.
-- `FoldingStrategyRandomWithNearestNeighbor`: A very simple yet highly efficient method which randomly picks a node and
-  folds it with the nearest-neighbor.
-- `FoldingStrategyOutsideIn`: The node furthest from the center point is folded with its nearest-neighbor. The center
-  point is only calculated once at the beginning.
+- `breadth-first` (default): Randomly picks one of the least-folded nodes (minimum folding depth) and folds it with its
+  nearest neighbor across all active nodes, keeping the folding tree balanced.
+- `breadth-first-mutual-nn`: Like `breadth-first`, processes the least-folded nodes first to keep the folding tree
+  balanced, but preferentially folds mutual nearest-neighbor pairs (two nodes that are each other's nearest neighbor),
+  avoiding asymmetric pairings.
+- `random-nn`: A very simple yet highly efficient method which randomly picks a node and folds it with the
+  nearest-neighbor.
+- `outside-in`: The node furthest from the center point is folded with its nearest-neighbor. The center point is only
+  calculated once at the beginning.
 
 ### Unfolding strategies
 
-- `UnfoldingStrategyBreadthFirst`: The list of folded nodes is processed repeatedly. During each iteration, only the
-  nodes with the maximum depth are unfolded.
-- `UnfoldingStrategyBreadthFirstWithLocal2Opt` (default): Same as UnfoldingStrategyBreadthFirst, but after each
-  unfolding step, a local 2-opt optimization around the inserted nodes is performed.
+- `breadth-first`: The list of folded nodes is processed repeatedly. During each iteration, only the nodes with the
+  maximum depth are unfolded.
+- `breadth-first-2opt` (default): Same as UnfoldingStrategyBreadthFirst, but after each unfolding step, a local 2-opt
+  optimization around the inserted nodes is performed.
 
 ## Algorithmic properties
 
