@@ -1,6 +1,6 @@
 [project]
 name = "rfa-tsp"
-version = "1.0.0"
+version = "1.1.0"
 description = "Recursive fold algorithm for the travelling-salesman-problem"
 license = "MIT"
 license-files = ["LICENSE"]
