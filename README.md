@@ -257,25 +257,29 @@ You can select a single TSPLIB instance from the `TSPLIB/` folder:
 
 ```console
 ❯ uv run rfa-tsp tsplib:a280
-INFO | Instance:           tsplib:a280 (280 nodes)
-INFO | Folding strategy:   breadth-first
-INFO | Unfolding strategy: breadth-first-2opt
-INFO | Post-uncross:       False
-INFO | Seed:               0
-INFO | Total length:       2882
-INFO | Optimal route:      2579 (overhead of RFA route: +11.75%)
-INFO | Runtime:            0.017s
+INFO     | rfa-tsp version:    1.1.0
+INFO     | Timestamp:          2026-11-27 11:43:58
+INFO     | Instance:           tsplib:a280 (280 nodes)
+INFO     | Folding strategy:   breadth-first-mutual-nn
+INFO     | Unfolding strategy: breadth-first-2opt
+INFO     | Post-uncross:       False
+INFO     | Weighted centroids: False
+INFO     | Seed:               0
+INFO     | Total length:       2860
+INFO     | Optimal route:      2579 (overhead of RFA route: +10.90%)
+INFO     | Runtime:            0.015s
+INFO     | Runtime per node:   52.501µs
 ```
 
 Results will vary slightly when you change the RNG seed:
 
 ```console
 ❯ uv run rfa-tsp tsplib:a280 --seed 1
-... (same as above) ...
-INFO | Seed:               1
-INFO | Total length:       2837
-INFO | Optimal route:      2579 (overhead of RFA route: +10.00%)
-INFO | Runtime:            0.018s
+...
+INFO     | Seed:               1
+INFO     | Total length:       2862
+INFO     | Optimal route:      2579 (overhead of RFA route: +10.97%)
+...
 ```
 
 ### Processing a random TSP instance
@@ -284,13 +288,17 @@ To process a randomly generated set of nodes:
 
 ```console
 ❯ uv run rfa-tsp random:your_seed --nodes 50
-INFO | Instance:           random:your_seed (50 nodes)
-INFO | Folding strategy:   breadth-first
-INFO | Unfolding strategy: breadth-first-2opt
-INFO | Post-uncross:       False
-INFO | Seed:               0
-INFO | Total length:       3197
-INFO | Runtime:            0.003s
+INFO     | rfa-tsp version:    1.1.0
+INFO     | Timestamp:          2026-11-27 11:45:15
+INFO     | Instance:           random:your_seed (50 nodes)
+INFO     | Folding strategy:   breadth-first-mutual-nn
+INFO     | Unfolding strategy: breadth-first-2opt
+INFO     | Post-uncross:       False
+INFO     | Weighted centroids: False
+INFO     | Seed:               0
+INFO     | Total length:       3197
+INFO     | Runtime:            0.003s
+INFO     | Runtime per node:   65.000µs
 ```
 
 In this case, `your_seed` is a separate RNG seed for generating the random nodes. The default seed is `default`, so
