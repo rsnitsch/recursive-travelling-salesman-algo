@@ -82,15 +82,15 @@ We can pick a node and its nearest neighbor and fold them. The new node will be 
 original nodes (the "children"):
 
 <img src="docs/rfa-tsp_concept_01_fold.png"
-     alt="A node is folded with its nearest neighbor, creating a new node in the center"
-     width="500">
+alt="A node is folded with its nearest neighbor, creating a new node in the center"
+width="500">
 
 At this point, the number of nodes is reduced to 3. This is the trivial case and a preliminary route can be constructed.
 The best route for 3 nodes is a simple triangle:
 
 <img src="docs/rfa-tsp_concept_02_anchor.png"
-     alt="With only 3 nodes left, the trivial case (recursion anchor) is reached"
-     width="500">
+alt="With only 3 nodes left, the trivial case (recursion anchor) is reached"
+width="500">
 
 Now we have to reverse the folding.
 
@@ -354,8 +354,8 @@ This project is licensed under the **MIT License** – see the [LICENSE](LICENSE
 The benchmark instances in `TSPLIB/` are taken from [TSPLIB95] (Gerhard Reinelt, Universität Heidelberg) and are
 provided strictly for academic and benchmarking purposes.
 
-[tsplib95]: https://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/
-
 <!--
 This README was formatted with: uvx --with mdformat-gfm mdformat --wrap 120 README.md
 -->
+
+[tsplib95]: https://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/
