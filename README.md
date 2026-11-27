@@ -138,8 +138,8 @@ uv run rfa-tsp random:default -n 4 -s 0 --export docs/rfa-tsp_concept.png
 
 - `breadth-first`: The list of folded nodes is processed repeatedly. During each iteration, only the nodes with the
   maximum depth are unfolded.
-- `breadth-first-2opt` (default): Same as UnfoldingStrategyBreadthFirst, but after each unfolding step, a local 2-opt
-  optimization around the inserted nodes is performed.
+- `breadth-first-2opt` (default): Same as `breadth-first`, but after each unfolding step, a local 2-opt optimization
+  around the inserted nodes is performed.
 
 ## Algorithmic properties
 
