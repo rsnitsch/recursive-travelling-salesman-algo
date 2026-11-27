@@ -20,6 +20,10 @@ such, they're often very elegant.
 - [Recursion concept](#recursion-concept)
   - [Folding strategies](#folding-strategies)
   - [Unfolding strategies](#unfolding-strategies)
+- [Results](#results)
+  - [Default configuration (with local 2-opt)](#default-configuration-with-local-2-opt)
+  - [Pure RFA (without local 2-opt)](#pure-rfa-without-local-2-opt)
+  - [Discussion](#discussion)
 - [Algorithmic properties](#algorithmic-properties)
   - [Seed sensitivity](#seed-sensitivity)
     - [Key observations](#key-observations)
@@ -140,6 +144,122 @@ uv run rfa-tsp random:default -n 4 -s 0 --export docs/rfa-tsp_concept.png
 - `breadth-first-2opt` (default): Same as `breadth-first`, but after each unfolding step, a local 2-opt optimization
   around the inserted nodes is performed.
 
+## Results
+
+The following benchmark results evaluate RFA across 18 instances from [TSPLIB95] (spanning 51 to 85,900 nodes, see
+`TSPLIB/`). Both tables can be reproduced and updated in place via `uv run scripts/update_readme_benchmarks.py`.
+
+### Default configuration (with local 2-opt)
+
+<!-- BEGIN:RESULTS_DEFAULT -->
+
+| Instance   | Optimal   | Mean RFA    | Mean vs. opt. | Std    | Mean runtime | Mean runtime per node |
+| ---------- | --------- | ----------- | ------------- | ------ | ------------ | --------------------- |
+| `a280`     | 2579      | 2861.3      | +10.95%       | ±1.64% | 0.015s       | 52.016µs              |
+| `berlin52` | 7542      | 7734.0      | +2.55%        | ±0.00% | 0.003s       | 51.672µs              |
+| `bier127`  | 118282    | 126238.7    | +6.73%        | ±0.97% | 0.007s       | 57.586µs              |
+| `brd14051` | 469385    | 511500.8    | +8.97%        | ±0.24% | 0.836s       | 59.486µs              |
+| `ch150`    | 6528      | 6897.9      | +5.67%        | ±1.39% | 0.008s       | 55.710µs              |
+| `d18512`   | 645238    | 702524.2    | +8.88%        | ±0.11% | 1.100s       | 59.411µs              |
+| `eil51`    | 426       | 452.8       | +6.30%        | ±0.38% | 0.003s       | 54.394µs              |
+| `pla33810` | 66048945  | 75672270.0  | +14.57%       | ±0.18% | 1.849s       | 54.693µs              |
+| `pla7397`  | 23260728  | 25807331.1  | +10.95%       | ±0.52% | 0.403s       | 54.436µs              |
+| `pla85900` | 142382641 | 160903241.7 | +13.01%       | ±0.14% | 5.233s       | 60.922µs              |
+| `pr1002`   | 259045    | 275593.9    | +6.39%        | ±0.66% | 0.061s       | 60.443µs              |
+| `pr107`    | 44303     | 44665.2     | +0.82%        | ±0.37% | 0.006s       | 54.315µs              |
+| `pr439`    | 107217    | 115302.3    | +7.54%        | ±1.24% | 0.026s       | 58.730µs              |
+| `pr76`     | 108159    | 111907.8    | +3.47%        | ±0.60% | 0.004s       | 57.781µs              |
+| `rat783`   | 8806      | 9538.8      | +8.32%        | ±0.47% | 0.043s       | 55.527µs              |
+| `rat99`    | 1211      | 1292.3      | +6.71%        | ±2.58% | 0.005s       | 53.998µs              |
+| `sw24978`  | 855597    | 934097.8    | +9.17%        | ±0.21% | 1.646s       | 65.905µs              |
+| `usa13509` | 19982859  | 21806077.5  | +9.12%        | ±0.34% | 0.909s       | 67.287µs              |
+
+**Summary statistics:**
+
+| Metric                     | Value       |
+| -------------------------- | ----------- |
+| Min mean overhead          | **+0.82%**  |
+| Mean overhead (arithmetic) | **+7.78%**  |
+| Median mean overhead       | **+7.93%**  |
+| Max mean overhead          | **+14.57%** |
+| Mean runtime / trial       | **12.157s** |
+
+**Details:**
+
+- `rfa-tsp` version: `1.1.0`
+- Folding strategy: `breadth-first-mutual-nn`
+- Unfolding strategy: `breadth-first-2opt`
+- Instances: 18/18
+- Trials per instance: 30
+
+<!-- END:RESULTS_DEFAULT -->
+
+### Pure RFA (without local 2-opt)
+
+To isolate the contribution of the recursive folding/unfolding hierarchy from the interleaved local 2-opt refinement,
+the same benchmark is run with `--unfolding-strategy breadth-first`:
+
+<details>
+<summary>Show per-instance results for pure RFA (breadth-first unfolding)</summary>
+
+<!-- BEGIN:RESULTS_PURE -->
+
+| Instance   | Optimal   | Mean RFA    | Mean vs. opt. | Std    | Mean runtime | Mean runtime per node |
+| ---------- | --------- | ----------- | ------------- | ------ | ------------ | --------------------- |
+| `a280`     | 2579      | 3063.9      | +18.80%       | ±2.53% | 0.003s       | 11.526µs              |
+| `berlin52` | 7542      | 8379.6      | +11.11%       | ±6.48% | 0.001s       | 13.422µs              |
+| `bier127`  | 118282    | 131821.1    | +11.45%       | ±3.18% | 0.002s       | 15.210µs              |
+| `brd14051` | 469385    | 547894.4    | +16.73%       | ±0.38% | 0.234s       | 16.675µs              |
+| `ch150`    | 6528      | 7153.6      | +9.58%        | ±1.51% | 0.002s       | 13.381µs              |
+| `d18512`   | 645238    | 752503.9    | +16.62%       | ±0.49% | 0.260s       | 14.057µs              |
+| `eil51`    | 426       | 489.0       | +14.80%       | ±2.77% | 0.001s       | 16.952µs              |
+| `pla33810` | 66048945  | 81360815.5  | +23.18%       | ±0.38% | 0.474s       | 14.019µs              |
+| `pla7397`  | 23260728  | 27931777.0  | +20.08%       | ±0.70% | 0.113s       | 15.328µs              |
+| `pla85900` | 142382641 | 173550880.1 | +21.89%       | ±0.21% | 1.562s       | 18.187µs              |
+| `pr1002`   | 259045    | 303816.3    | +17.28%       | ±2.22% | 0.013s       | 13.369µs              |
+| `pr107`    | 44303     | 45768.5     | +3.31%        | ±0.59% | 0.001s       | 12.859µs              |
+| `pr439`    | 107217    | 125372.0    | +16.93%       | ±1.40% | 0.006s       | 13.508µs              |
+| `pr76`     | 108159    | 119581.0    | +10.56%       | ±0.00% | 0.001s       | 13.190µs              |
+| `rat783`   | 8806      | 10217.0     | +16.02%       | ±1.76% | 0.009s       | 11.338µs              |
+| `rat99`    | 1211      | 1450.2      | +19.76%       | ±7.15% | 0.001s       | 13.170µs              |
+| `sw24978`  | 855597    | 1011981.5   | +18.28%       | ±0.49% | 0.455s       | 18.199µs              |
+| `usa13509` | 19982859  | 23872015.4  | +19.46%       | ±0.47% | 0.234s       | 17.321µs              |
+
+**Summary statistics:**
+
+| Metric                     | Value       |
+| -------------------------- | ----------- |
+| Min mean overhead          | **+3.31%**  |
+| Mean overhead (arithmetic) | **+15.88%** |
+| Median mean overhead       | **+16.83%** |
+| Max mean overhead          | **+23.18%** |
+| Mean runtime / trial       | **3.373s**  |
+
+**Details:**
+
+- `rfa-tsp` version: `1.1.0`
+- Folding strategy: `breadth-first-mutual-nn`
+- Unfolding strategy: `breadth-first`
+- Instances: 18/18
+- Trials per instance: 30
+
+<!-- END:RESULTS_PURE -->
+
+</details>
+
+### Discussion
+
+- **Pure RFA baseline:** Without any local search, pure recursive folding and unfolding achieves **+15.88%** mean
+  overhead (median **+16.83%**) at ~11–18 µs per node — outperforming classic Nearest Neighbor (~23–26%) and matching
+  Greedy / Multi-Fragment (~15–20%) while running in expected $O(n)$ time (`pla85900` in ~1.56 s in pure Python).
+- **Impact of interleaved local 2-opt:** Adding a constant-size local 2-opt window (`radius=5`, $O(1)$ per step) during
+  unfolding removes edge crossings early on coarse hierarchy levels before they accumulate. This more than halves the
+  mean overhead (from **+15.88%** down to **+7.78%**) at roughly 3.6× the runtime (~52–67 µs per node), while keeping
+  overall scaling linear.
+- **Variance damping:** Interleaved local 2-opt also absorbs unfavorable tie-breaking decisions from the folding phase,
+  substantially reducing seed variance on smaller instances (e.g., `berlin52` drops from ±6.48% to ±0.00%, `rat99` from
+  ±7.15% to ±2.58%).
+
 ## Algorithmic properties
 
 ### Seed sensitivity
@@ -192,21 +312,10 @@ uv run scripts/generate_seed_sensitivity_plots_for_readme.py
 
 #### Empirical scaling
 
-Looking at the [benchmark results](#benchmarking) across TSPLIB instances spanning nearly two orders of magnitude in
-size reveals a nearly constant runtime per node:
-
-| Instance   | Nodes ($n$) | Mean runtime | Time per node |
-| :--------- | ----------: | -----------: | ------------: |
-| `pr1002`   |       1,002 |       0.061s |       61.2 µs |
-| `pla7397`  |       7,397 |       0.401s |       54.2 µs |
-| `usa13509` |      13,509 |       0.859s |       63.6 µs |
-| `d18512`   |      18,512 |       1.085s |       58.6 µs |
-| `sw24978`  |      24,978 |       1.580s |       63.3 µs |
-| `pla33810` |      33,810 |       1.819s |       53.8 µs |
-| `pla85900` |      85,900 |       4.953s |       57.7 µs |
-
-Increasing the problem size by a factor of ~11.6 (from `pla7397` to `pla85900`) increases runtime by a factor of ~12.4 —
-closely matching **linear $O(n)$ scaling** in practice.
+Looking at the `Mean runtime per node` column in the [Results](#results) tables across TSPLIB instances spanning more
+than three orders of magnitude in size (from 51 nodes in `eil51` to 85,900 nodes in `pla85900`) reveals a nearly
+constant runtime per node — roughly **52–67 µs/node** with local 2-opt and **11–18 µs/node** without — closely matching
+**linear $O(n)$ scaling** in practice.
 
 #### Algorithmic analysis
 
@@ -320,48 +429,14 @@ The rendering can also be exported as an animation:
 
 ### Benchmarking
 
-The following command runs a benchmark using a subset of the [TSPLIB95] instances (see `TSPLIB/` folder):
+To run the full benchmark across the [TSPLIB95] instances in `TSPLIB/` (see [Results](#results) for benchmark output):
 
 ```console
 ❯ uv run rfa-tsp-benchmark --cooldown 5 --trials 10
-INFO     | rfa-tsp version:    1.1.0
-INFO     | Timestamp:          2026-11-27 11:01:36
-INFO     | Folding strategy:    breadth-first-mutual-nn
-INFO     | Unfolding strategy:  breadth-first-2opt
-INFO     | Post-uncross:        False
-INFO     | Weighted centroids:  False
-INFO     | Seed:                0
-INFO     | Trials per instance: 10
-INFO     | Running benchmark for 18 TSPLIB instance(s): a280, berlin52, bier127, brd14051, ...
-...
-Instance      Optimal     Mean RFA  Mean vs. opt.    Std     Mean runtime    Mean runtime per node
-----------  ---------  -----------  ---------------  ------  --------------  -----------------------
-a280             2579       2856.3  +10.75%          ±0.83%  0.015s          52.362µs
-berlin52         7542       7734.0  +2.55%           ±0.00%  0.003s          52.502µs
-bier127        118282     126178.4  +6.68%           ±1.04%  0.007s          58.160µs
-brd14051       469385     511991.3  +9.08%           ±0.17%  0.826s          58.763µs
-ch150            6528       6921.4  +6.03%           ±1.69%  0.009s          57.921µs
-d18512         645238     702822.7  +8.92%           ±0.11%  1.085s          58.608µs
-eil51             426        452.7  +6.27%           ±0.38%  0.003s          62.598µs
-pla33810     66048945   75668983.3  +14.57%          ±0.15%  1.819s          53.814µs
-pla7397      23260728   25790846.5  +10.88%          ±0.63%  0.401s          54.224µs
-pla85900    142382641  160896445.6  +13.00%          ±0.16%  4.953s          57.658µs
-pr1002         259045     275942.5  +6.52%           ±0.90%  0.061s          61.159µs
-pr107           44303      44693.6  +0.88%           ±0.42%  0.006s          54.554µs
-pr439          107217     115465.5  +7.69%           ±1.33%  0.025s          57.667µs
-pr76           108159     111647.2  +3.23%           ±0.62%  0.004s          56.710µs
-rat783           8806       9535.8  +8.29%           ±0.53%  0.043s          54.381µs
-rat99            1211       1289.1  +6.45%           ±2.91%  0.005s          54.809µs
-sw24978        855597     933939.1  +9.16%           ±0.26%  1.580s          63.268µs
-usa13509     19982859   21809555.9  +9.14%           ±0.37%  0.859s          63.560µs
-
-Summary (18/18 instances, 10 trials each):
-  Min mean overhead:          +0.88%
-  Mean overhead (arithmetic): +7.78%
-  Median mean overhead:       +7.99%
-  Max mean overhead:          +14.57%
-  Total runtime:              117.044s (11.70437s / trial)
 ```
+
+You can also export the results table directly as GitHub-Flavored Markdown (`--export-markdown results.md`) or compare
+against pure RFA without local 2-opt (`--unfolding-strategy breadth-first`).
 
 ## License
 
