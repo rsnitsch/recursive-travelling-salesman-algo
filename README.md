@@ -151,7 +151,7 @@ To quantify how strongly RFA depends on the seed across different problem sizes,
 seeds (`--trials`) and compare a small instance (`tsplib:pr76`) with large instances (`tsplib:pla7397`,
 `tsplib:usa13509`):
 
-| Instance          |  Nodes | Trials | Mean overhead | Std. dev. ($\\sigma$) | Best overhead     |
+| Instance          |  Nodes | Trials | Mean overhead | Std. dev. ($\sigma$) | Best overhead     |
 | :---------------- | -----: | -----: | ------------: | --------------------: | :---------------- |
 | `tsplib:pr76`     |     76 |  5,000 |        +3.65% |                 0.52% | +2.74% (seed 0)   |
 | `tsplib:pla7397`  |  7,397 |    300 |       +10.97% |                 0.49% | +9.90% (seed 128) |
@@ -174,7 +174,7 @@ seeds (`--trials`) and compare a small instance (`tsplib:pr76`) with large insta
   `breadth-first-mutual-nn` eliminates most of the randomness on small instances. Across 5,000 seeds on `pr76`, RFA
   collapses into just two discrete solutions (+2.74% and +3.95%), with the better one already found on seed 0.
 - **Tight, symmetric distributions at scale:** On large instances (`pla7397`, `usa13509`), many local fallback and
-  tie-breaking steps accumulate into a narrow, roughly symmetric bell curve ($\\sigma = 0.30%$ on `usa13509`).
+  tie-breaking steps accumulate into a narrow, roughly symmetric bell curve ($\sigma = 0.30%$ on `usa13509`).
 - **High single-run reliability:** Because the variance is very low across all problem sizes, even a single RFA run
   produces a highly predictable result without severe bad-luck outliers. Multi-trial sweeps (`--trials`) offer only
   modest gains (~0.8–1.1 percentage points over the mean on large instances) and show rapid diminishing returns.
