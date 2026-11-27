@@ -162,35 +162,49 @@ def export_markdown_report(
     max_overhead: float,
     total_runtime: float,
 ) -> None:
-    """Write benchmark table and summary in GitHub-Flavored Markdown format."""
+    """Write benchmark table, summary statistics table, and run details in GitHub-Flavored Markdown format."""
     # Wrap instance names in inline code backticks for readability
     md_rows = [[f"`{row[0]}`", *row[1:]] for row in rows]
     md_table = tabulate(md_rows, headers=headers, tablefmt="github", floatfmt=".1f", colalign=colalign)
 
     if trials == 1:
-        summary_line = (
-            f"**Summary** (`rfa-tsp` v{__version__}, `{folding_strategy_name}` / `{unfolding_strategy_name}`, "
-            f"{completed}/{total_instances} instances, 1 trial): "
-            f"Min overhead: **+{min_overhead:.2f}%** · "
-            f"Mean overhead (arithmetic): **+{arith_mean:.2f}%** · "
-            f"Median overhead: **+{median_overhead:.2f}%** · "
-            f"Max overhead: **+{max_overhead:.2f}%** · "
-            f"Total runtime: **{total_runtime:.3f}s**"
-        )
+        stats_rows = [
+            ["Min overhead", f"**+{min_overhead:.2f}%**"],
+            ["Mean overhead (arithmetic)", f"**+{arith_mean:.2f}%**"],
+            ["Median overhead", f"**+{median_overhead:.2f}%**"],
+            ["Max overhead", f"**+{max_overhead:.2f}%**"],
+            ["Total runtime", f"**{total_runtime:.3f}s**"],
+        ]
     else:
         avg_runtime_per_trial = total_runtime / trials
-        summary_line = (
-            f"**Summary** (`rfa-tsp` v{__version__}, `{folding_strategy_name}` / `{unfolding_strategy_name}`, "
-            f"{completed}/{total_instances} instances, {trials} trials each): "
-            f"Min mean overhead: **+{min_overhead:.2f}%** · "
-            f"Mean overhead (arithmetic): **+{arith_mean:.2f}%** · "
-            f"Median mean overhead: **+{median_overhead:.2f}%** · "
-            f"Max mean overhead: **+{max_overhead:.2f}%** · "
-            f"Mean runtime / trial: **{avg_runtime_per_trial:.3f}s**"
-        )
+        stats_rows = [
+            ["Min mean overhead", f"**+{min_overhead:.2f}%**"],
+            ["Mean overhead (arithmetic)", f"**+{arith_mean:.2f}%**"],
+            ["Median mean overhead", f"**+{median_overhead:.2f}%**"],
+            ["Max mean overhead", f"**+{max_overhead:.2f}%**"],
+            ["Mean runtime / trial", f"**{avg_runtime_per_trial:.3f}s**"],
+        ]
 
+    stats_table = tabulate(
+        stats_rows,
+        headers=["Metric", "Value"],
+        tablefmt="github",
+        colalign=("left", "right"),
+    )
+
+    details = "\n".join(
+        [
+            f"- `rfa-tsp` version: `{__version__}`",
+            f"- Folding strategy: `{folding_strategy_name}`",
+            f"- Unfolding strategy: `{unfolding_strategy_name}`",
+            f"- Instances: {completed}/{total_instances}",
+            f"- Trials per instance: {trials}",
+        ]
+    )
+
+    content = f"{md_table}\n\n**Summary statistics:**\n\n{stats_table}\n\n**Details:**\n\n{details}\n"
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(f"{md_table}\n\n{summary_line}\n", encoding="utf-8")
+    output_path.write_text(content, encoding="utf-8")
     logger.info("Exported Markdown benchmark report to %s", output_path)
 
 
