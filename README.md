@@ -27,6 +27,7 @@ such, they're often very elegant.
   - [Time complexity](#time-complexity)
     - [Empirical scaling](#empirical-scaling)
     - [Algorithmic analysis](#algorithmic-analysis)
+  - [Memory complexity](#memory-complexity)
 - [Usage](#usage)
   - [Processing a single TSPLIB instance](#processing-a-single-tsplib-instance)
   - [Processing a random TSP instance](#processing-a-random-tsp-instance)
@@ -231,6 +232,21 @@ Both phases perform exactly $n - 3$ steps:
   dictionaries), so replacing a folded node with its two children takes $O(1)$ time. With `breadth-first-2opt`, the
   local 2-opt refinement operates only on a fixed-size neighborhood window (`radius=5`, at most 12 nodes), which also
   runs in $O(1)$ per step. Thus, unfolding is **strictly $O(n)$** even in the worst case.
+
+### Memory complexity
+
+RFA has **strictly $O(n)$ space complexity** — even in the worst case — because Euclidean distances are computed on the
+fly from node coordinates rather than stored in an $n \times n$ distance matrix:
+
+- **Folding tree:** Exactly $n - 3$ folded nodes are created in addition to the $n$ original nodes, totaling $2n - 3$
+  nodes.
+- **Spatial hash grid (`SpatialGrid`):** Stores only the currently active nodes ($\le n$) and their cell assignments,
+  using $O(n)$ space.
+- **Tour representation:** The circular doubly-linked structure (`nxt`/`prv`) holds at most $n$ entries.
+
+In contrast, algorithms that require a full distance matrix scale as $O(n^2)$ in memory — for `pla85900`
+($n = 85{,}900$), a `float64` distance matrix alone would require ~59 GB of RAM, whereas RFA processes the instance with
+a small linear memory footprint.
 
 ## Usage
 
