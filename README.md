@@ -174,7 +174,7 @@ seeds (`--trials`) and compare a small instance (`tsplib:pr76`) with large insta
   `breadth-first-mutual-nn` eliminates most of the randomness on small instances. Across 5,000 seeds on `pr76`, RFA
   collapses into just two discrete solutions (+2.74% and +3.95%), with the better one already found on seed 0.
 - **Tight, symmetric distributions at scale:** On large instances (`pla7397`, `usa13509`), many local fallback and
-  tie-breaking steps accumulate into a narrow, roughly symmetric bell curve ($\sigma = 0.30%$ on `usa13509`).
+  tie-breaking steps accumulate into a narrow, roughly symmetric bell curve ($\sigma = 0.30\%$ on `usa13509`).
 - **High single-run reliability:** Because the variance is very low across all problem sizes, even a single RFA run
   produces a highly predictable result without severe bad-luck outliers. Multi-trial sweeps (`--trials`) offer only
   modest gains (~0.8–1.1 percentage points over the mean on large instances) and show rapid diminishing returns.
@@ -214,10 +214,10 @@ Both phases perform exactly $n - 3$ steps:
 
 - **Folding — expected $O(n)$, worst-case $O(n^2)$:** In each step, a node is folded with its nearest neighbor using a
   dynamic 2D spatial hash grid (`SpatialGrid`). Whenever the number of active nodes halves, the grid is rebuilt with
-  coarser cells so that cell density stays roughly constant; across the entire run, all rebuilds sum to $O(n + n/2 + n/4
-  \+ \\dots) = O(n)$. For reasonably distributed 2D point sets, each nearest-neighbor query inspects only a constant
-  number of neighboring cells ($O(1)$ expected), yielding **$O(n)$ expected total time** for `breadth-first` and
-  `random-nn` (and $O(n \\log n)$ for `outside-in` due to its max-heap).
+  coarser cells so that cell density stays roughly constant; across the entire run, all rebuilds sum to $O(n + n/2 +
+  n/4 + \dots) = O(n)$. For reasonably distributed 2D point sets, each nearest-neighbor query inspects only a constant
+  number of neighboring cells ($O(1)$ expected), yielding **$O(n)$ expected total time** for `breadth-first-mutual-nn`,
+  `breadth-first` and `random-nn` (and $O(n \log n)$ for `outside-in` due to its max-heap).
 
   In the **worst case**, however, pathological point distributions (e.g., almost all nodes tightly clustered in a tiny
   area while a few distant outliers stretch the bounding box) cause many nodes to collapse into a single grid cell or
@@ -225,7 +225,7 @@ Both phases perform exactly $n - 3$ steps:
   **$O(n^2)$ worst-case time**. This is a deliberate trade-off of using a lightweight spatial hash grid to support fast
   dynamic insertions and deletions at every folding step, rather than an inherent limitation of the RFA concept itself;
   density-adaptive structures such as an R-tree or quadtree handle skewed distributions more robustly in practice, but
-  raise the expected time complexity from $O(n)$ to $O(n \\log n)$.
+  raise the expected time complexity from $O(n)$ to $O(n \log n)$.
 
 - **Unfolding — strictly $O(n)$:** The tour is maintained as a circular doubly-linked structure (`nxt`/`prv`
   dictionaries), so replacing a folded node with its two children takes $O(1)$ time. With `breadth-first-2opt`, the
