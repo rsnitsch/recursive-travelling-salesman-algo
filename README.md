@@ -183,7 +183,7 @@ seeds (`--trials`) and compare a small instance (`tsplib:pr76`) with large insta
 <summary>Show commands used to generate the above plots</summary>
 
 ```console
-uv run scripts/examine_seed_sensitivity.py
+uv run scripts/generate_seed_sensitivity_plots_for_readme.py
 ```
 
 </details>
