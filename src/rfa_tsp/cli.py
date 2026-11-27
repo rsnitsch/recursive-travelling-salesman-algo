@@ -325,6 +325,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             overhead_pct = (float(total_costs) / optimal_costs - 1.0) * 100.0
             logger.info("Optimal route:      %s (overhead of RFA route: +%.2f%%)", optimal_costs, overhead_pct)
         logger.info("Runtime:            %.3fs", runtime)
+        logger.info("Runtime per node:   %.3fµs", runtime / len(nodes) * 1e6)
     else:
         if args.folding_strategy == "outside-in":
             parser.error(
@@ -437,6 +438,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             logger.info("Best overhead:      +%.2f%%", best_oh)
             logger.info("Mean overhead:      +%.2f%% ± %.2f%% (σ)", mean_oh, std_oh)
         logger.info("Runtime:            %.3fs total (%.5fs/trial avg)", total_runtime, avg_time)
+        logger.info("Runtime per node:   %.3fµs", avg_time / len(nodes) * 1e6)
 
         # Replay only the winning seed if visualization or export was requested
         if renderer_instance is not None:

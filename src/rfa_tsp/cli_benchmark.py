@@ -247,16 +247,27 @@ def run_benchmark(
                 total_costs = trial_costs[0]
                 overhead_pct = trial_overheads[0]
                 runtime = trial_runtimes[0]
+                runtime_per_node = runtime / len(nodes) * 1e6
 
                 mean_overheads.append(overhead_pct)
                 best_overheads.append(overhead_pct)
-                rows.append([tspi, optimal_costs, total_costs, f"+{overhead_pct:.2f}%", f"{runtime:.3f}s"])
+                rows.append(
+                    [
+                        tspi,
+                        optimal_costs,
+                        total_costs,
+                        f"+{overhead_pct:.2f}%",
+                        f"{runtime:.3f}s",
+                        f"{runtime_per_node:.3f}µs",
+                    ]
+                )
 
                 logger.info(
-                    "  Result: Total length = %-10s | Overhead vs. optimum = +%5.2f%% | Runtime = %.3fs",
+                    "  Result: Total length = %-10s | Overhead vs. optimum = +%5.2f%% | Runtime = %.3fs, per node = %.3fµs",
                     total_costs,
                     overhead_pct,
                     runtime,
+                    runtime_per_node,
                 )
             else:
                 # best_costs = min(trial_costs)
@@ -265,6 +276,7 @@ def run_benchmark(
                 mean_oh = statistics.mean(trial_overheads)
                 std_oh = statistics.stdev(trial_overheads)
                 mean_rt = statistics.mean(trial_runtimes)
+                mean_rt_per_node = mean_rt / len(nodes) * 1e6
 
                 mean_overheads.append(mean_oh)
                 best_overheads.append(best_oh)
@@ -278,16 +290,18 @@ def run_benchmark(
                         f"+{mean_oh:.2f}%",
                         f"±{std_oh:.2f}%",
                         f"{mean_rt:.3f}s",
+                        f"{mean_rt_per_node:.3f}µs",
                     ]
                 )
 
                 logger.info(
-                    "  Result (%d trials): Best = +%5.2f%% | Mean = +%5.2f%% (±%.2f%%) | Mean runtime = %.3fs",
+                    "  Result (%d trials): Best = +%5.2f%% | Mean = +%5.2f%% (±%.2f%%) | Mean runtime = %.3fs, per node = %.3fµs",
                     trials,
                     best_oh,
                     mean_oh,
                     std_oh,
                     mean_rt,
+                    mean_rt_per_node,
                 )
 
             if cooldown > 0.0 and sum(trial_runtimes) > 1.0 and instance_index < len(instances) - 1:
@@ -307,7 +321,7 @@ def run_benchmark(
     median_overhead = statistics.median(mean_overheads)
 
     if trials == 1:
-        headers = ["Instance", "Optimal route", "RFA route", "RFA vs. optimum", "Runtime"]
+        headers = ["Instance", "Optimal route", "RFA route", "RFA vs. optimum", "Runtime", "Runtime per node"]
         summary = (
             f"Summary ({len(rows)}/{len(instances)} instances):\n"
             f"  Min overhead:               +{min_overhead:.2f}%\n"
@@ -326,6 +340,7 @@ def run_benchmark(
             "Mean vs. opt.",
             "Std",
             "Mean runtime",
+            "Mean runtime per node",
         ]
         avg_runtime_per_trial = total_runtime / trials
         summary = (
