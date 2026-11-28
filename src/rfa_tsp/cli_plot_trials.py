@@ -18,7 +18,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 
 from . import __version__
-from .common import setup_logging
+from .cli_common import setup_logging
 
 logger = logging.getLogger(__name__)
 
