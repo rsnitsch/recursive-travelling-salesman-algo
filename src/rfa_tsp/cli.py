@@ -172,7 +172,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
 
 def get_renderer_by_name(name: str) -> Renderer | None:
     if name == "matplotlib":
-        from .ui import RendererMatplotlib
+        from .ui_matplotlib import RendererMatplotlib
 
         return RendererMatplotlib()
     if name == "disabled":
