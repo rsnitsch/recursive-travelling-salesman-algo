@@ -10,7 +10,7 @@ import random
 from collections.abc import Callable
 from math import ceil, floor, sqrt
 
-from .common import CoordinateNode
+from .common import CoordinateNode, RFANode
 from .ui import Renderer
 
 
@@ -141,31 +141,6 @@ class SpatialGrid:
 
         assert best_node is not None
         return best_node, query.get_travel_costs(best_node, ceil_2d)
-
-
-class RFANode(CoordinateNode):
-    __slots__ = ("children", "depth", "weight")
-
-    def __init__(self, children: tuple[CoordinateNode, CoordinateNode], weighted: bool):
-        child1, child2 = children
-        self.children = children
-
-        if weighted:
-            w1 = child1.weight if isinstance(child1, RFANode) else 1
-            w2 = child2.weight if isinstance(child2, RFANode) else 1
-            self.weight = w1 + w2
-            x = (w1 * child1.x + w2 * child2.x) / self.weight
-            y = (w1 * child1.y + w2 * child2.y) / self.weight
-        else:
-            self.weight = 1
-            x = (child1.x + child2.x) / 2
-            y = (child1.y + child2.y) / 2
-
-        CoordinateNode.__init__(self, x, y)
-
-        d1 = child1.depth if isinstance(child1, RFANode) else 0
-        d2 = child2.depth if isinstance(child2, RFANode) else 0
-        self.depth = max(d1, d2) + 1
 
 
 class FoldingStrategy:
