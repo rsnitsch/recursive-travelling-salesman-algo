@@ -4,7 +4,7 @@ version = "1.1.0"
 description = "Recursive fold algorithm for the travelling-salesman-problem"
 license = "MIT"
 license-files = ["LICENSE"]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 authors = [
     { name = "Robert Nitsch" }
 ]
@@ -24,7 +24,6 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
