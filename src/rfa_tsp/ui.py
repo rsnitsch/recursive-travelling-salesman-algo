@@ -11,6 +11,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
+from .common import CoordinateNode, RFANode
+
 logger = logging.getLogger(__name__)
 
 
@@ -40,11 +42,11 @@ class StepSnapshot:
     cost: int | None = None
 
 
-def _snapshot_node(node) -> NodeSnapshot:
+def _snapshot_node(node: CoordinateNode) -> NodeSnapshot:
     return NodeSnapshot(x=node.x, y=node.y, depth=getattr(node, "depth", 0))
 
 
-def _snapshot_nodes(nodes: Iterable) -> tuple[NodeSnapshot, ...]:
+def _snapshot_nodes(nodes: Iterable[CoordinateNode]) -> tuple[NodeSnapshot, ...]:
     return tuple(_snapshot_node(n) for n in nodes)
 
 
@@ -54,10 +56,12 @@ class Renderer:
     def __init__(self) -> None:
         self.history: list[StepSnapshot] = []
 
-    def record_init(self, nodes: Iterable) -> None:
+    def record_init(self, nodes: Iterable[CoordinateNode]) -> None:
         self.history.append(StepSnapshot(phase=Phase.INIT, nodes=_snapshot_nodes(nodes)))
 
-    def record_fold(self, active_nodes: Iterable, node1, node2, folded_node) -> None:
+    def record_fold(
+        self, active_nodes: Iterable[CoordinateNode], node1: CoordinateNode, node2: CoordinateNode, folded_node: RFANode
+    ) -> None:
         self.history.append(
             StepSnapshot(
                 phase=Phase.FOLD,
@@ -67,10 +71,16 @@ class Renderer:
             )
         )
 
-    def record_anchor(self, route_nodes: Iterable) -> None:
+    def record_anchor(self, route_nodes: Iterable[CoordinateNode]) -> None:
         self.history.append(StepSnapshot(phase=Phase.ANCHOR, nodes=_snapshot_nodes(route_nodes)))
 
-    def record_unfold(self, route_nodes: Iterable, parent_node, child1, child2) -> None:
+    def record_unfold(
+        self,
+        route_nodes: Iterable[CoordinateNode],
+        parent_node: RFANode,
+        child1: CoordinateNode,
+        child2: CoordinateNode,
+    ) -> None:
         self.history.append(
             StepSnapshot(
                 phase=Phase.UNFOLD,
@@ -80,7 +90,7 @@ class Renderer:
             )
         )
 
-    def record_post_process(self, route_nodes: Iterable, cost: int | None = None) -> None:
+    def record_post_process(self, route_nodes: Iterable[CoordinateNode], cost: int | None = None) -> None:
         self.history.append(
             StepSnapshot(
                 phase=Phase.POST_PROCESS,
