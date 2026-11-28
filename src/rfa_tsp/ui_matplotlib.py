@@ -3,12 +3,15 @@ import logging
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
+from matplotlib.backend_bases import Event, KeyEvent
 from matplotlib.cm import ScalarMappable
-from matplotlib.colors import Normalize
+from matplotlib.colors import Colormap, Normalize
 from matplotlib.widgets import Slider
 
 from .ui import Phase, Renderer
 
+# pyright: reportUnknownMemberType=false
 logger = logging.getLogger(__name__)
 
 
@@ -41,7 +44,9 @@ class RendererMatplotlib(Renderer):
         # Scale marker area linearly with folding depth so deeper nodes stand out
         return 22.0 + depth * 28.0
 
-    def _draw_step(self, ax, idx: int, bounds: tuple[float, float, float, float], norm, cmap) -> None:
+    def _draw_step(
+        self, ax: Axes, idx: int, bounds: tuple[float, float, float, float], norm: Normalize, cmap: Colormap
+    ) -> None:
         step = self.history[idx]
         init_nodes = self.history[0].nodes
 
@@ -215,7 +220,7 @@ class RendererMatplotlib(Renderer):
 
         timer.add_callback(on_timer)
 
-        def on_key(event) -> None:
+        def on_key(event: KeyEvent) -> None:
             if event.key == "right":
                 go_to(self.current_idx + 1)
             elif event.key == "left":
@@ -245,7 +250,7 @@ class RendererMatplotlib(Renderer):
                 timer.interval = self.interval_ms
                 logger.debug("Playback interval: %d ms", self.interval_ms)
 
-        def on_close(_event) -> None:
+        def on_close(_event: Event) -> None:
             self.is_playing = False
             timer.stop()
 
