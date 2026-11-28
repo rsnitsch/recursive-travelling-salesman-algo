@@ -2,6 +2,7 @@
 """Basic smoke tests to verify rfa-tsp across Python versions."""
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -99,3 +100,45 @@ def test_benchmark_with_trials(trials: str) -> None:
         check=False,
     )
     assert result.returncode == 0, result.stderr
+
+
+def _run_plot_trials(*args: str) -> subprocess.CompletedProcess[str]:
+    """Run rfa_tsp.cli_plot_trials as a module with a headless matplotlib backend."""
+    env = {**os.environ, "MPLBACKEND": "Agg"}
+    return subprocess.run(
+        [sys.executable, "-m", "rfa_tsp.cli_plot_trials", *args],
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
+    )
+
+
+def test_plot_trials_help() -> None:
+    """Verify the plot-trials CLI starts and prints help."""
+    result = _run_plot_trials("--help")
+    assert result.returncode == 0
+    assert "usage:" in result.stdout.lower()
+
+
+def test_plot_trials_end_to_end_export(tmp_path: Path) -> None:
+    """Verify generating trials JSON and exporting a plot image succeeds end-to-end."""
+    trials_file = tmp_path / "trials.json"
+    plot_file = tmp_path / "plot.png"
+
+    # Generate real trial output to catch schema mismatches between writer and plotter
+    run_res = _run_cli("tsplib:pr76", "--trials", "5", "--save-trials", str(trials_file))
+    assert run_res.returncode == 0, run_res.stderr
+    assert trials_file.is_file()
+
+    plot_res = _run_plot_trials(str(trials_file), "--export", str(plot_file))
+    assert plot_res.returncode == 0, plot_res.stderr
+    assert plot_file.is_file()
+    assert plot_file.stat().st_size > 0
+
+
+def test_plot_trials_missing_file(tmp_path: Path) -> None:
+    """Verify the plot-trials CLI exits with status 1 on a missing input file."""
+    missing_file = tmp_path / "does_not_exist.json"
+    result = _run_plot_trials(str(missing_file))
+    assert result.returncode == 1
