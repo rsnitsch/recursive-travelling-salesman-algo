@@ -373,7 +373,7 @@ class FoldingStrategyOutsideIn(FoldingStrategy):
 
 class UnfoldingStrategy:
     def unfold(
-        self, nodes_to_unfold: list[RFANode | CoordinateNode], ceil_2d: bool, renderer: Renderer
+        self, nodes_to_unfold: list[RFANode | CoordinateNode], ceil_2d: bool, renderer: Renderer | None
     ) -> list[CoordinateNode]:
         """Unfold nodes using the strategy defined in the subclass."""
         raise NotImplementedError("unfold() must be implemented in subclasses")
@@ -390,7 +390,7 @@ class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
         self.enable_local_2opt = False
 
     def unfold(
-        self, nodes_to_unfold: list[RFANode | CoordinateNode], ceil_2d: bool, renderer: Renderer
+        self, nodes_to_unfold: list[RFANode | CoordinateNode], ceil_2d: bool, renderer: Renderer | None
     ) -> list[CoordinateNode]:
         nodes = list(nodes_to_unfold)
         n = len(nodes)

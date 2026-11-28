@@ -135,7 +135,7 @@ def resolve_tsplib_instances(selector: str, tsplib_dir: Path) -> list[str]:
 
         # Match trailing node count (handles mixed-case names like kroA100)
         node_count_re = re.compile(r"^[a-zA-Z]+([0-9]+)$")
-        selected = []
+        selected: list[str] = []
         for name in available:
             match = node_count_re.match(name)
             if match and int(match.group(1)) <= max_requested_nodes:

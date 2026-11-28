@@ -162,7 +162,8 @@ class RendererMatplotlib(Renderer):
         cmap = plt.get_cmap("viridis")
 
         fig, ax = plt.subplots(figsize=(9, 7))
-        fig.canvas.manager.set_window_title("RFA-TSP Visualizer")
+        if fig.canvas.manager:
+            fig.canvas.manager.set_window_title("RFA-TSP Visualizer")
         plt.subplots_adjust(bottom=0.16, right=0.86)
 
         # Colorbar for folding depth
