@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 import random
 from math import ceil, sqrt
+from pathlib import Path
 
 from rtree import index
 from shapely.geometry import LineString
@@ -39,7 +40,7 @@ class CoordinateNode:
         else:
             return round(euc_distance)
 
-    def get_nearest_neighbor(self, candidates, ceil_2d):
+    def get_nearest_neighbor(self, candidates: list[CoordinateNode], ceil_2d: bool):
         sx = self.x
         sy = self.y
         best_node = candidates[0]
@@ -96,8 +97,8 @@ def segments_intersect(a: CoordinateNode, b: CoordinateNode, c: CoordinateNode, 
     return (ccw(a, c, d) != ccw(b, c, d)) and (ccw(a, b, c) != ccw(a, b, d))
 
 
-class Route(list):
-    def get_total_costs(self, ceil_2d):
+class Route(list[CoordinateNode]):
+    def get_total_costs(self, ceil_2d: bool):
         """Returns the total travel costs for this route."""
         total = 0
         for i in range(len(self) - 1):
@@ -155,7 +156,7 @@ def generate_random_nodes(count: int, seed: str | int, max_size: int = 500) -> l
     return [CoordinateNode(rng.randint(0, max_size), rng.randint(0, max_size)) for _ in range(count)]
 
 
-def load_nodes_from_tsplib_file(filename) -> tuple[list[CoordinateNode], bool]:
+def load_nodes_from_tsplib_file(filename: Path) -> tuple[list[CoordinateNode], bool]:
     """
     Loads all nodes specified in the given tsplib-file.
 
@@ -307,5 +308,5 @@ optimal_solutions = {
 }
 
 
-def tsplib_get_optimal_solution(tsp_instance):
+def tsplib_get_optimal_solution(tsp_instance: str):
     return optimal_solutions[tsp_instance]

@@ -7,6 +7,7 @@ Copyright (c) 2010-2026 Robert Nitsch
 
 import heapq
 import random
+from collections.abc import Callable
 from math import ceil, floor, sqrt
 
 from .common import CoordinateNode
@@ -171,13 +172,17 @@ class FoldingStrategy:
     def __init__(self, weighted_centroids: bool):
         self.weighted_centroids = weighted_centroids
 
-    def fold(self, nodes: list[CoordinateNode], ceil_2d: bool, renderer: Renderer | None):
+    def fold(
+        self, nodes: list[CoordinateNode], ceil_2d: bool, renderer: Renderer | None
+    ) -> list[CoordinateNode | RFANode]:
         """Fold nodes using the strategy defined in the subclass."""
         raise NotImplementedError("fold() must be implemented in subclasses")
 
 
 class FoldingStrategyBreadthFirst(FoldingStrategy):
-    def fold(self, nodes: list[CoordinateNode], ceil_2d: bool, renderer: Renderer | None):
+    def fold(
+        self, nodes: list[CoordinateNode], ceil_2d: bool, renderer: Renderer | None
+    ) -> list[CoordinateNode | RFANode]:
         active = list(nodes)
         if renderer:
             renderer.record_init(active)
@@ -220,7 +225,9 @@ class FoldingStrategyBreadthFirstMutualNearestNeighbor(FoldingStrategy):
     Chains are seeded breadth-first (lowest depth first) to keep the fold tree balanced.
     """
 
-    def fold(self, nodes: list[CoordinateNode], ceil_2d: bool, renderer: Renderer | None):
+    def fold(
+        self, nodes: list[CoordinateNode], ceil_2d: bool, renderer: Renderer | None
+    ) -> list[CoordinateNode | RFANode]:
         active = list(nodes)
         if renderer:
             renderer.record_init(active)
@@ -287,7 +294,9 @@ class FoldingStrategyRandomWithNearestNeighbor(FoldingStrategy):
     using a dynamic 2D spatial hash grid for fast lookup.
     """
 
-    def fold(self, nodes: list[CoordinateNode], ceil_2d: bool, renderer: Renderer | None):
+    def fold(
+        self, nodes: list[CoordinateNode], ceil_2d: bool, renderer: Renderer | None
+    ) -> list[CoordinateNode | RFANode]:
         active = list(nodes)
         if renderer:
             renderer.record_init(active)
@@ -328,7 +337,9 @@ class FoldingStrategyOutsideIn(FoldingStrategy):
     accelerated with SpatialGrid and a max-heap for furthest-node selection.
     """
 
-    def fold(self, nodes: list[CoordinateNode], ceil_2d: bool, renderer: Renderer | None):
+    def fold(
+        self, nodes: list[CoordinateNode], ceil_2d: bool, renderer: Renderer | None
+    ) -> list[CoordinateNode | RFANode]:
         active = list(nodes)
         if renderer:
             renderer.record_init(active)
@@ -386,7 +397,9 @@ class FoldingStrategyOutsideIn(FoldingStrategy):
 
 
 class UnfoldingStrategy:
-    def unfold(self, nodes_to_unfold: list[RFANode | CoordinateNode], ceil_2d, renderer):
+    def unfold(
+        self, nodes_to_unfold: list[RFANode | CoordinateNode], ceil_2d: bool, renderer: Renderer
+    ) -> list[CoordinateNode]:
         """Unfold nodes using the strategy defined in the subclass."""
         raise NotImplementedError("unfold() must be implemented in subclasses")
 
@@ -401,7 +414,9 @@ class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
     def __init__(self):
         self.enable_local_2opt = False
 
-    def unfold(self, nodes_to_unfold: list[RFANode | CoordinateNode], ceil_2d, renderer):
+    def unfold(
+        self, nodes_to_unfold: list[RFANode | CoordinateNode], ceil_2d: bool, renderer: Renderer
+    ) -> list[CoordinateNode]:
         nodes = list(nodes_to_unfold)
         n = len(nodes)
         if n == 0:
@@ -428,7 +443,7 @@ class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
                 max_depth = max(max_depth, node.depth)
 
         # Localize cost helper to avoid Route object allocations in inner loop
-        cost_fn = (
+        cost_fn: Callable[[CoordinateNode, CoordinateNode], int] = (
             (lambda a, b: ceil(sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2)))
             if ceil_2d
             else (lambda a, b: round(sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2)))
@@ -503,7 +518,17 @@ class UnfoldingStrategyBreadthFirst(UnfoldingStrategy):
 
         return materialize_tour()
 
-    def local_2opt_segment(self, nxt, prv, head, first, second, tour_len, cost_fn, radius=5):
+    def local_2opt_segment(
+        self,
+        nxt: dict[CoordinateNode, CoordinateNode],
+        prv: dict[CoordinateNode, CoordinateNode],
+        head: RFANode | CoordinateNode,
+        first: RFANode | CoordinateNode,
+        second: RFANode | CoordinateNode,
+        tour_len: int,
+        cost_fn: Callable[[CoordinateNode, CoordinateNode], int],
+        radius: int = 5,
+    ):
         """
         Perform a local 2-opt in a small neighborhood window around (first, second)
         directly on the doubly-linked tour without O(n) list scans or index() lookups.

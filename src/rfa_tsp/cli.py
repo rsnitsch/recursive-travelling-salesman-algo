@@ -28,7 +28,7 @@ from .cli_common import (
     positive_int,
     setup_logging,
 )
-from .common import Route, generate_random_nodes, load_nodes_from_tsplib_file, optimal_solutions
+from .common import CoordinateNode, Route, generate_random_nodes, load_nodes_from_tsplib_file, optimal_solutions
 from .rfa import (
     FoldingStrategy,
     UnfoldingStrategy,
@@ -240,7 +240,7 @@ def write_trials_json(path: Path, meta: dict[str, object], trials: list[dict[str
 
 def run_single_trial(
     *,
-    nodes,
+    nodes: list[CoordinateNode],
     ceil_2d: bool,
     folding_strategy: FoldingStrategy,
     unfolding_strategy: UnfoldingStrategy,
